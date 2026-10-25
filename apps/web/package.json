@@ -18,13 +18,15 @@
     "onnxruntime-web": "1.22.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "react-router-dom": "^7.6.0"
+    "react-router-dom": "^7.6.0",
+    "three": "0.170.0"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",
     "@types/dom-speech-recognition": "^0.0.6",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
+    "@types/three": "0.170.0",
     "@vitejs/plugin-react": "^5.0.0",
     "jsdom": "^26.1.0",
     "typescript": "~5.9.3",

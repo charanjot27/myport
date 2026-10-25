@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { Icon, Silhouette } from "./landing-icons";
+import { Icon, ProIcon, Silhouette, type Hue, type ProIconName } from "./landing-icons";
+import type { Laptop3D, ScreenMode } from "./laptop3d";
 import "./landing.css";
 
 /**
@@ -114,7 +115,7 @@ export function LandingPage() {
     <div className="landing" ref={root}>
       <Nav />
       <Hero onWatch={() => setDemoOpen(true)} />
-      <Showcase />
+      <CloserLook />
       <Screens />
       <Features />
       <HowItWorks />
@@ -225,7 +226,7 @@ function Hero({ onWatch }: { onWatch: () => void }) {
     <section className="lg-hero">
       <div className="lg-bloom" aria-hidden />
       <div className="lg-rays" aria-hidden />
-      <NotchDemo />
+      <NotchDemo className="hero" lines={2} />
       <div className="lg-hero-copy">
         <span className="lg-badge" data-reveal>
           <span className="pulse" /> Early access · free in Chrome
@@ -256,25 +257,126 @@ function Hero({ onWatch }: { onWatch: () => void }) {
   );
 }
 
-/** A laptop that tilts upright as it scrolls into view (CSS scroll-driven animation where supported). */
-function Showcase() {
+/** CSS laptop, shown where WebGL is unavailable. */
+function CssLaptop() {
   return (
-    <section className="lg-showcase" aria-label="JOTR on a laptop during a video call">
-      <div className="lg-laptop">
-        <div className="lg-lid">
-          <div className="lg-display">
-            <div className="lg-call">
-              {["You", "Priya", "Marco", "Aiko"].map((n, k) => (
-                <div key={n} className={`lg-tile${k === 0 ? " me" : ""}`}>
-                  <Silhouette />
-                  <span className="lg-name">{n}</span>
-                </div>
-              ))}
-            </div>
-            <NotchDemo className="in-laptop" lines={2} speed={360} script="Thanks for joining, everyone. Today I'll walk you through our launch plan, the three numbers that matter, and what we need from each team this week." />
+    <div className="lg-laptop">
+      <div className="lg-lid">
+        <div className="lg-display">
+          <div className="lg-call">
+            {["You", "Priya", "Marco", "Aiko"].map((n, k) => (
+              <div key={n} className={`lg-tile${k === 0 ? " me" : ""}`}>
+                <Silhouette />
+                <span className="lg-name">{n}</span>
+              </div>
+            ))}
           </div>
+          <NotchDemo className="in-laptop" lines={2} speed={360} script="Thanks for joining, everyone. Today I'll walk you through our launch plan, the three numbers that matter, and what we need from each team this week." />
         </div>
-        <div className="lg-base" />
+      </div>
+      <div className="lg-base" />
+    </div>
+  );
+}
+
+const LOOKS: Array<{ id: ScreenMode; label: string; text: string }> = [
+  { id: "voice", label: "Follows your voice", text: "The line you're on stays lit and scrolls as you speak. Pause, skip a paragraph or ad-lib, and it finds you again." },
+  { id: "notch", label: "Under the camera", text: "Your script hangs right below the lens, no wider than the notch, so your eyes stay where your audience is looking." },
+  { id: "glare", label: "No glare", text: "JOTR reads your room and your glasses through the camera and dims the text until no reflection shows." },
+  { id: "float", label: "Over any call", text: "An always-on-top window that sits over Meet, Zoom, Teams or any tab. Only you can see it." },
+  { id: "coach", label: "Coach report", text: "After every take: your pace, filler words, eye contact and the stumbles JOTR caught early." },
+];
+
+/** Apple-style "closer look": a 3D laptop whose lid opens as you scroll, with pills that change the view. */
+function CloserLook() {
+  const section = useRef<HTMLElement>(null);
+  const canvas = useRef<HTMLCanvasElement>(null);
+  const engine = useRef<Laptop3D | null>(null);
+  const [mode, setMode] = useState<ScreenMode>("voice");
+  const modeRef = useRef(mode);
+  const [fallback, setFallback] = useState(false);
+
+  useEffect(() => {
+    const ac = new AbortController();
+    import("./laptop3d")
+      .then(({ Laptop3D, webglAvailable }) => {
+        const el = canvas.current;
+        if (ac.signal.aborted || !el) return;
+        if (!webglAvailable()) return setFallback(true);
+        let e: Laptop3D;
+        try {
+          e = new Laptop3D(el);
+        } catch {
+          return setFallback(true);
+        }
+        engine.current = e;
+        e.setMode(modeRef.current);
+        const onScroll = () => {
+          const r = section.current?.getBoundingClientRect();
+          if (r) e.setProgress((innerHeight - r.top) / (innerHeight * 0.95));
+        };
+        onScroll();
+        addEventListener("scroll", onScroll, { passive: true, signal: ac.signal });
+        const io = new IntersectionObserver(([en]) => (en?.isIntersecting ? e.start() : e.stop()));
+        io.observe(el);
+        const ro = new ResizeObserver(() => e.resize());
+        ro.observe(el);
+        el.dataset.ready = "1";
+        ac.signal.addEventListener("abort", () => {
+          io.disconnect();
+          ro.disconnect();
+          e.dispose();
+          engine.current = null;
+        });
+      })
+      .catch(() => setFallback(true));
+    return () => ac.abort();
+  }, []);
+
+  useEffect(() => {
+    modeRef.current = mode;
+    engine.current?.setMode(mode);
+  }, [mode]);
+
+  const onPointer = (e: React.PointerEvent) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    engine.current?.setPointer(((e.clientX - r.left) / r.width) * 2 - 1, ((e.clientY - r.top) / r.height) * -2 + 1);
+  };
+  const active = LOOKS.find((l) => l.id === mode)!;
+
+  return (
+    <section className="lg-look" ref={section} id="look" aria-label="Take a closer look">
+      <h2 className="lg-apple-h" data-reveal>
+        Take a closer look.
+      </h2>
+      <div className="lg-look-panel" data-reveal>
+        <div className="lg-look-stage" onPointerMove={onPointer} onPointerLeave={() => engine.current?.setPointer(0, 0)}>
+          {fallback ? <CssLaptop /> : <canvas ref={canvas} className="lg-look-canvas" role="img" aria-label="A laptop running JOTR, with the script right under the camera" />}
+        </div>
+        <div className="lg-look-pills" role="tablist" aria-label="Closer look">
+          {LOOKS.map((l) => {
+            const on = l.id === mode;
+            return (
+              <button key={l.id} role="tab" aria-selected={on} className={`lg-pill${on ? " on" : ""}`} onClick={() => setMode(l.id)}>
+                <span className="lg-pill-icon" aria-hidden>
+                  <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10.5" />
+                    <path d={on ? "M7.5 12h9" : "M7.5 12h9M12 7.5v9"} />
+                  </svg>
+                </span>
+                <span className="lg-pill-text">
+                  <b>{l.label}</b>
+                  <span className="lg-pill-more">
+                    <span>{l.text}</span>
+                  </span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        <p className="lg-look-desc" aria-live="polite">
+          <b>{active.label}.</b> {active.text}
+        </p>
       </div>
     </section>
   );
@@ -430,84 +532,80 @@ function Shot({ title, tone, children, d }: { title: string; tone: string; child
 
 /* --------------------------------------------------------------- features */
 
+const CARDS: Array<{ icon: ProIconName; hue: Hue; lead: string; rest: string; size?: "tall" | "wide"; visual?: ReactNode }> = [
+  {
+    icon: "sparkles",
+    hue: "violet",
+    lead: "Predicts a stumble",
+    rest: " a second before it happens, and slows down while you get there.",
+    size: "tall",
+    visual: (
+      <div className="fv-stumble" aria-hidden>
+        <span className="said">and our research builds on </span>
+        <span className="hard">psycholinguistics</span>
+        <div className="risk">
+          <i />
+        </div>
+      </div>
+    ),
+  },
+  { icon: "glasses", hue: "sun", lead: "No glare", rest: " in your glasses. Brightness follows your room." },
+  {
+    icon: "voice",
+    hue: "rose",
+    lead: "Scrolls with your voice.",
+    rest: " Pause, skip or ad-lib and it finds you again.",
+    size: "tall",
+    visual: (
+      <div className="fv-voice" aria-hidden>
+        <div className="wave">
+          {Array.from({ length: 30 }, (_, k) => (
+            <i key={k} style={{ animationDelay: `${(k * 73) % 900}ms` }} />
+          ))}
+        </div>
+        <p>
+          <span className="said">Today I'll show you </span>
+          <span className="now">how</span> it follows me.
+        </p>
+      </div>
+    ),
+  },
+  { icon: "pip", hue: "sky", lead: "Floats over", rest: " Meet, Zoom, Teams and any tab." },
+  { icon: "eye", hue: "mint", lead: "Eye contact", rest: " that stays natural. Corrected only while you read." },
+  { icon: "shield", hue: "sky", lead: "Verified live,", rest: " not a recording or a deepfake." },
+  { icon: "gauge", hue: "sun", lead: "A coach report", rest: " after every take: pace, fillers and eye contact." },
+  { icon: "hand", hue: "violet", lead: "Hands-free.", rest: " Open palm to pause, peace sign to skip ahead." },
+  { icon: "lock", hue: "mint", lead: "Private by design.", rest: " Video is processed on your device. Nothing uploaded, nothing stored.", size: "wide" },
+];
+
 function Features() {
   return (
-    <section className="lg-paper" id="features">
-      <div className="lg-section">
-        <div className="lg-head" data-reveal>
-          <span className="lg-eyebrow dark">Features</span>
-          <h2>
-            More than a <span className="lg-ember-text">teleprompter</span>
-          </h2>
-          <p>Speak naturally, stay in control, and get better with every take.</p>
-        </div>
-        <div className="lg-bento">
-          <Feature icon={Icon.voice} title="Follows your voice" text="Scrolls as you speak. Pause, skip, repeat or ad-lib and it finds you again." wide d={0}>
-            <div className="pv-voice">
-              <div className="wave">
-                {Array.from({ length: 28 }, (_, k) => (
-                  <i key={k} style={{ animationDelay: `${(k * 73) % 900}ms` }} />
-                ))}
-              </div>
-              <p>
-                <span className="said">Today I'll show you </span>
-                <span className="now">how</span> <span>it follows me.</span>
-              </p>
-            </div>
-          </Feature>
-          <Feature icon={Icon.bolt} title="Predicts stumbles" text="Tracks your eyes against your voice and slows down before a hard word." d={60}>
-            <div className="pv-stumble">
-              <span>…built on </span>
-              <b>psycholinguistics</b>
-            </div>
-          </Feature>
-          <Feature icon={Icon.window} title="Floats over any app" text="An always-on-top window for Meet, Zoom, Teams or any tab." dark d={120}>
-            <div className="pv-float">
-              <div className="desk">
-                <span />
-                <span />
-                <span />
-              </div>
-              <div className="win">Hi everyone, thanks for…</div>
-            </div>
-          </Feature>
-          <Feature icon={Icon.glasses} title="No glare, auto brightness" text="Measures your room and your glasses through the camera and dims the text until no reflection shows." wide d={0}>
-            <div className="pv-bright">
-              <span className="lbl">Text brightness</span>
-              <div className="track">
-                <i />
-              </div>
-              <span className="val">auto</span>
-            </div>
-          </Feature>
-          <Feature icon={Icon.eye} title="Natural eye contact" text="Corrects your gaze only while you read. Glances and pauses stay human." d={60} />
-          <Feature icon={Icon.shield} title="Verified live" text="A screen-light check proves it's really you, live, not a recording or a deepfake." d={120}>
-            <div className="pv-live">
-              <i />
-              <i />
-              <i />
-              <i />
-              <b>Verified live</b>
-            </div>
-          </Feature>
-          <Feature icon={Icon.chart} title="Coach report" text="Pace, filler words, stumbles, eye contact and posture after every take." d={0} />
-          <Feature icon={Icon.hand} title="Hands-free control" text="Open palm to pause, peace sign to jump a section." d={60} />
-          <Feature icon={Icon.lock} title="Private by design" text="Video is processed on your device. Nothing uploaded, nothing stored." d={120} />
-        </div>
+    <section className="lg-section lg-cards-section" id="features">
+      <h2 className="lg-apple-h" data-reveal>
+        <span className="dim">Here’s what you get with</span> JOTR.
+      </h2>
+      <div className="lg-cards">
+        {CARDS.map((c, k) => (
+          <FeatureCard key={c.icon} {...c} d={(k % 2) * 80} />
+        ))}
       </div>
     </section>
   );
 }
 
-function Feature({ icon, title, text, wide, dark, d, children }: { icon: ReactNode; title: string; text: string; wide?: boolean; dark?: boolean; d: number; children?: ReactNode }) {
-  const ref = useTilt<HTMLElement>(3);
+function FeatureCard({ icon, hue, lead, rest, size, visual, d }: (typeof CARDS)[number] & { d: number }) {
+  const ref = useTilt<HTMLElement>(2.5);
   return (
-    <div className={`lg-feature-cell${wide ? " wide" : ""}`} data-reveal style={{ ["--d" as string]: `${d}ms` }}>
-      <article ref={ref} className={`lg-feature${dark ? " dark" : ""}`}>
-        <div className="lg-ficon">{icon}</div>
-        <h3>{title}</h3>
-        <p>{text}</p>
-        {children && <div className="lg-preview">{children}</div>}
+    <div className={`lg-card-cell${size ? ` ${size}` : ""}`} data-reveal style={{ ["--d" as string]: `${d}ms` }}>
+      <article ref={ref} className={`lg-card hue-${hue}`}>
+        {visual && <div className="lg-card-visual">{visual}</div>}
+        <div className="lg-card-body">
+          <ProIcon name={icon} hue={hue} size={size === "tall" ? 64 : 58} />
+          <h3>
+            <span className="lead">{lead}</span>
+            <span className="rest">{rest}</span>
+          </h3>
+        </div>
       </article>
     </div>
   );

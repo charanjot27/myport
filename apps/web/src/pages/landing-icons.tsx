@@ -1,3 +1,4 @@
+import { useId } from "react";
 /** Line icons for the landing page (24px grid, 1.8px stroke, round joins). */
 const P = { fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
 
@@ -112,6 +113,109 @@ export function Silhouette({ className = "" }: { className?: string }) {
         stroke="url(#sil-rim)"
         strokeWidth="2"
       />
+    </svg>
+  );
+}
+
+/* ------------------------------------------------------------------------------------------------
+ * Feature icons: SF Symbols-style line art on a 48px grid, stroked with a two-colour gradient.
+ * ---------------------------------------------------------------------------------------------- */
+
+export type Hue = "rose" | "sun" | "violet" | "sky" | "mint";
+const HUES: Record<Hue, [string, string]> = {
+  rose: ["#ff3d77", "#ff9a3d"],
+  sun: ["#ff8a3d", "#ffd23c"],
+  violet: ["#b65cff", "#ff4d9d"],
+  sky: ["#2f8bff", "#3de0ff"],
+  mint: ["#22d39b", "#b8f55a"],
+};
+
+const PRO_PATHS = {
+  voice: (
+    <>
+      <rect x="18.5" y="5" width="11" height="22" rx="5.5" />
+      <path d="M11 22.5a13 13 0 0 0 26 0M24 35.5V43M17 43h14" />
+      <path d="M4 19v7M43.5 17v11" />
+    </>
+  ),
+  sparkles: (
+    <>
+      <path d="M21 8c1.3 7.6 4.9 11.2 12.5 12.5C25.9 21.8 22.3 25.4 21 33c-1.3-7.6-4.9-11.2-12.5-12.5C16.1 19.2 19.7 15.6 21 8z" />
+      <path d="M36 29c.7 3.8 2.4 5.5 6.2 6.2-3.8.7-5.5 2.4-6.2 6.2-.7-3.8-2.4-5.5-6.2-6.2 3.8-.7 5.5-2.4 6.2-6.2z" />
+      <path d="M36.5 5.5v6M33.5 8.5h6" />
+    </>
+  ),
+  pip: (
+    <>
+      <rect x="4" y="8" width="40" height="32" rx="6" />
+      <rect x="23" y="13" width="16" height="11" rx="3" />
+      <path d="M10 33h9" />
+    </>
+  ),
+  glasses: (
+    <>
+      <path d="M4 26h40" />
+      <rect x="5" y="22" width="15" height="13" rx="6.5" />
+      <rect x="28" y="22" width="15" height="13" rx="6.5" />
+      <path d="M20 26.5a5 5 0 0 1 8 0" />
+      <path d="M24 5v4M12.5 9.5l2.6 2.6M35.5 9.5l-2.6 2.6" />
+    </>
+  ),
+  eye: (
+    <>
+      <path d="M3.5 24S11 11 24 11s20.5 13 20.5 13S37 37 24 37 3.5 24 3.5 24z" />
+      <circle cx="24" cy="24" r="7" />
+      <circle cx="21.8" cy="21.8" r="1.2" />
+    </>
+  ),
+  shield: (
+    <>
+      <path d="M24 4.5 9 10v11.5c0 9.6 6.3 16.8 15 20 8.7-3.2 15-10.4 15-20V10z" />
+      <path d="m17 23.5 5 5 9-10" />
+    </>
+  ),
+  gauge: (
+    <>
+      <path d="M7.5 34a18 18 0 1 1 33 0" />
+      <path d="m24 31 8-11" />
+      <circle cx="24" cy="31" r="2.6" />
+      <path d="M12 23.5h2.5M33.5 23.5H36M24 11.5V14M15.5 15l1.8 1.8" />
+    </>
+  ),
+  hand: (
+    <>
+      <path d="M15 25V11a3 3 0 0 1 6 0v11M21 21V7.5a3 3 0 0 1 6 0V21M27 21V10a3 3 0 0 1 6 0v13" />
+      <path d="M33 23v-4a3 3 0 0 1 6 0v9c0 9-6.5 15.5-15.5 15.5h-1.5c-5 0-8.7-2.3-11.4-6.3l-5.4-8a3 3 0 0 1 4.9-3.4L15 30" />
+    </>
+  ),
+  lock: (
+    <>
+      <rect x="9" y="21" width="30" height="22" rx="5" />
+      <path d="M15.5 21v-5.5a8.5 8.5 0 0 1 17 0V21" />
+      <path d="M24 30v5" />
+    </>
+  ),
+  camera: (
+    <>
+      <rect x="4" y="12" width="28" height="24" rx="6" />
+      <path d="m32 21 10-6v18l-10-6" />
+    </>
+  ),
+};
+export type ProIconName = keyof typeof PRO_PATHS;
+
+export function ProIcon({ name, hue, size = 56 }: { name: ProIconName; hue: Hue; size?: number }) {
+  const id = `pi-${useId().replace(/:/g, "")}`;
+  const [a, b] = HUES[hue];
+  return (
+    <svg className="pro-icon" width={size} height={size} viewBox="0 0 48 48" fill="none" stroke={`url(#${id})`} strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <defs>
+        <linearGradient id={id} x1="4" y1="4" x2="44" y2="44" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor={a} />
+          <stop offset="1" stopColor={b} />
+        </linearGradient>
+      </defs>
+      {PRO_PATHS[name]}
     </svg>
   );
 }

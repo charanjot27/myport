@@ -26,3 +26,18 @@ test("landing page: hero, demo popup and start", async ({ page }) => {
   await page.getByRole("link", { name: /Start free in your browser/ }).click();
   await expect(page).toHaveURL(/\/welcome$/);
 });
+
+test("closer look: the 3D laptop loads and the pills switch views", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await page.goto("/");
+  await page.locator("#look").scrollIntoViewIfNeeded();
+  // WebGL scene (or the CSS laptop where WebGL is unavailable) appears under the production CSP.
+  await expect(page.locator(".lg-look-canvas[data-ready], .lg-look-stage .lg-laptop")).toBeVisible();
+  const notch = page.getByRole("tab", { name: /Under the camera/ });
+  await notch.click();
+  await expect(notch).toHaveAttribute("aria-selected", "true");
+  await expect(notch).toContainText("no wider than the notch");
+  await expect(page.getByRole("heading", { name: /Here’s what you get with JOTR/ })).toBeAttached();
+  expect(errors).toEqual([]);
+});

@@ -4,6 +4,8 @@ import { Icon, ProIcon, Silhouette, type Hue, type ProIconName } from "./landing
 import type { Laptop3D, ScreenMode } from "./laptop3d";
 import type { StarField } from "./starfield";
 import { AddToChrome } from "../components/AddToChrome";
+import { AnimatedNumber } from "../components/Animated";
+import { useUserCount } from "../lib/counter";
 import "./landing.css";
 
 /**
@@ -262,14 +264,31 @@ function NotchDemo({ script = HERO_SCRIPT, speed = 320, lines = 3, className = "
 }
 
 function Hero({ onWatch }: { onWatch: () => void }) {
+  const count = useUserCount();
   return (
     <section className="lg-hero">
       <div className="lg-bloom" aria-hidden />
       <div className="lg-rays" aria-hidden />
       <NotchDemo className="hero" lines={2} />
       <div className="lg-hero-copy">
-        <span className="lg-badge" data-reveal>
-          <span className="pulse" /> Early access · free in Chrome
+        <span className="lg-badge" data-reveal data-testid="user-count">
+          <span className="pulse" />{" "}
+          {count ? (
+            count.isNew ? (
+              <>
+                Welcome! You're user <b className="lg-count">#{<AnimatedNumber value={count.users} duration={1600} format={(n) => Math.round(n).toLocaleString()} />}</b>
+              </>
+            ) : (
+              <>
+                <b className="lg-count">
+                  <AnimatedNumber value={count.users} duration={1600} format={(n) => Math.round(n).toLocaleString()} />
+                </b>{" "}
+                {count.users === 1 ? "person uses" : "people use"} JOTR · free in Chrome
+              </>
+            )
+          ) : (
+            "Early access · free in Chrome"
+          )}
         </span>
         <h1 data-reveal style={{ ["--d" as string]: "80ms" }}>
           Read your script.

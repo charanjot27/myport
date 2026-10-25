@@ -16,6 +16,7 @@ import { WelcomePage } from "./pages/Welcome";
 import { LandingPage } from "./pages/Landing";
 import { Icon } from "./pages/landing-icons";
 import { AddToChrome } from "./components/AddToChrome";
+import { userCount } from "./lib/counter";
 
 export function App() {
   const settings = useSettings();
@@ -27,6 +28,11 @@ export function App() {
   useEffect(() => {
     document.documentElement.dataset.theme = settings.theme;
   }, [settings.theme]);
+
+  // Count this browser once in the public user counter (anonymous: a random ID, no account).
+  useEffect(() => {
+    void userCount();
+  }, []);
 
   return (
     <>

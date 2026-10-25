@@ -71,6 +71,12 @@ export interface AttestationTable {
   created_at: string;
 }
 
+/** One row per browser that opened JOTR: a hash of a random ID it made, nothing else. */
+export interface InstallTable {
+  id_hash: string;
+  first_seen: string;
+}
+
 export interface Database {
   users: UserTable;
   session_tokens: SessionTokenTable;
@@ -79,6 +85,7 @@ export interface Database {
   research_sessions: ResearchSessionTable;
   liveness_challenges: LivenessChallengeTable;
   attestations: AttestationTable;
+  installs: InstallTable;
   schema_migrations: { version: number; applied_at: string };
 }
 
@@ -175,6 +182,14 @@ const MIGRATIONS: Migration[] = [
       .addColumn("created_at", "varchar(32)", (c) => c.notNull())
       .execute();
     await db.schema.createIndex("session_tokens_user").on("session_tokens").column("user_id").execute();
+  },
+  // 2: anonymous user counter
+  async (db) => {
+    await db.schema
+      .createTable("installs")
+      .addColumn("id_hash", "varchar(64)", (c) => c.primaryKey())
+      .addColumn("first_seen", "varchar(32)", (c) => c.notNull())
+      .execute();
   },
 ];
 

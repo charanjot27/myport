@@ -7,6 +7,7 @@ import { userFromRequest } from "./auth.js";
 import type { Config } from "./config.js";
 import type { DB, UserTable } from "./db.js";
 import { accountRoutes } from "./routes/account.js";
+import { statsRoutes } from "./routes/stats.js";
 import { asrRoutes } from "./routes/asr.js";
 import { authRoutes } from "./routes/auth.js";
 import { billingRoutes } from "./routes/billing.js";
@@ -103,5 +104,6 @@ export async function buildApp({ db, config, fetchImpl = fetch }: AppDeps): Prom
   await app.register(livenessRoutes, { prefix: "/liveness" });
   await app.register(billingRoutes, { prefix: "/billing" });
   await app.register(accountRoutes, { prefix: "/account" });
+  await app.register(statsRoutes, { prefix: "/stats" });
   return app;
 }

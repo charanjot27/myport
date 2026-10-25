@@ -99,3 +99,17 @@ test("Add to Chrome opens the install guide, and shows Added once installed", as
   await expect(p2.getByText("Added to Chrome").first()).toBeVisible();
   await ctx.close();
 });
+
+test("the user counter counts a new browser once and shows the total", async ({ page }) => {
+  await page.addInitScript(() => {
+    if (!localStorage.getItem("promptsense.settings.v1")) localStorage.setItem("promptsense.settings.v1", JSON.stringify({ apiUrl: "/api" }));
+  });
+  await page.goto("/");
+  const badge = page.getByTestId("user-count");
+  await expect(badge).toContainText(/Welcome! You're user #\d+/);
+  const first = Number((await badge.textContent())!.match(/#([\d,]+)/)![1]!.replace(/,/g, ""));
+  await page.reload();
+  // Counted once: the same browser now sees the total, which includes it.
+  await expect(badge).toContainText(/(people use|person uses) JOTR/);
+  await expect.poll(async () => Number((await badge.textContent())!.match(/([\d,]+)\s+(people|person)/)?.[1]?.replace(/,/g, "") ?? 0)).toBeGreaterThanOrEqual(first);
+});

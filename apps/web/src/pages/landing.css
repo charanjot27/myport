@@ -2410,3 +2410,11 @@ html.landing-root body {
 .lg-mini-body {
   cursor: inherit;
 }
+.lg-count {
+  font-variant-numeric: tabular-nums;
+  background: var(--ember);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-weight: 800;
+}

@@ -247,3 +247,19 @@ describe("misc", () => {
     expect(await migrate(db)).toBe(0);
   });
 });
+
+describe("anonymous user counter", () => {
+  it("counts each browser once, by a hash of its random id", async () => {
+    const id1 = randomUUID();
+    const hello = (id: string) => app.inject({ method: "POST", url: "/stats/hello", headers: { origin: ORIGIN }, payload: { id } });
+    expect((await app.inject({ method: "GET", url: "/stats" })).json()).toEqual({ users: 0 });
+    expect((await hello(id1)).json()).toEqual({ users: 1, new: true });
+    expect((await hello(id1)).json()).toEqual({ users: 1, new: false }); // same browser again
+    expect((await hello(randomUUID())).json()).toEqual({ users: 2, new: true });
+    expect((await app.inject({ method: "GET", url: "/stats" })).json().users).toBe(2);
+    // Only the hash is stored, never the id itself.
+    const rows = await db.selectFrom("installs").selectAll().execute();
+    expect(rows.map((r) => r.id_hash).some((h) => h.includes(id1))).toBe(false);
+    expect((await hello("not-a-uuid")).statusCode).toBe(400);
+  });
+});

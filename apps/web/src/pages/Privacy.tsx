@@ -12,6 +12,10 @@ export function PrivacyPage() {
       <h2>What can leave your device</h2>
       <ul>
         <li>
+          A random ID your browser makes the first time you open JOTR, so the public user counter counts you once. The server keeps only a hash of it: no
+          account, email, name or IP address. Clear site data to remove it from your browser.
+        </li>
+        <li>
           <strong>Microphone audio for speech recognition.</strong> Browser recognition in Chrome is processed by Google. Cloud recognition (Pro) streams audio to
           Deepgram. Choose “Off” in Settings to keep audio local (voice-following is then unavailable).
         </li>

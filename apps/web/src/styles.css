@@ -1,0 +1,624 @@
+:root {
+  --bg: #0d1117;
+  --bg-raised: #161b22;
+  --bg-sunken: #010409;
+  --border: #30363d;
+  --text: #e6edf3;
+  --text-muted: #8b949e;
+  --accent: #2f81f7;
+  --accent-text: #ffffff;
+  --good: #3fb950;
+  --warn: #d29922;
+  --bad: #f85149;
+  --hard: #ffd33d;
+  --spoken: #6e7681;
+  --radius: 10px;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Noto Sans Devanagari", sans-serif;
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --bg: #ffffff;
+  --bg-raised: #f6f8fa;
+  --bg-sunken: #eaeef2;
+  --border: #d0d7de;
+  --text: #1f2328;
+  --text-muted: #59636e;
+  --accent: #0969da;
+  --spoken: #8c959f;
+  --hard: #bf8700;
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--accent);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-raised);
+  border-radius: 8px;
+  padding: 7px 14px;
+  text-decoration: none;
+  color: var(--text);
+  white-space: nowrap;
+}
+.btn:hover {
+  border-color: var(--text-muted);
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+.btn.danger {
+  color: var(--bad);
+}
+.btn.small {
+  padding: 4px 10px;
+  font-size: 0.875rem;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-raised);
+  flex-wrap: wrap;
+}
+.app-header .brand {
+  font-weight: 700;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  text-decoration: none;
+}
+.app-header nav {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.app-header nav a {
+  color: var(--text-muted);
+  text-decoration: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+.app-header nav a.active,
+.app-header nav a:hover {
+  color: var(--text);
+  background: var(--bg-sunken);
+}
+.app-header .spacer {
+  flex: 1;
+}
+
+main.page {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 24px 16px 64px;
+}
+
+h1 {
+  font-size: 1.6rem;
+  margin: 0 0 16px;
+}
+h2 {
+  font-size: 1.15rem;
+  margin: 28px 0 12px;
+}
+.muted {
+  color: var(--text-muted);
+}
+.row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.grow {
+  flex: 1;
+}
+
+.card {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+.card h3 {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+}
+
+.tiles {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+}
+.tile {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+.tile .label {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.tile .value {
+  font-size: 1.6rem;
+  font-weight: 650;
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.tile .sub {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.field label {
+  font-weight: 600;
+}
+.field .hint {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="url"],
+input[type="number"],
+select,
+textarea {
+  background: var(--bg-sunken);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  width: 100%;
+}
+textarea {
+  resize: vertical;
+  line-height: 1.5;
+}
+.check {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.check input {
+  margin-top: 4px;
+}
+
+.alert {
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--warn);
+  background: var(--bg-raised);
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin: 12px 0;
+}
+.alert.error {
+  border-left-color: var(--bad);
+}
+.alert.ok {
+  border-left-color: var(--good);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 10px;
+  background: var(--bg-raised);
+  color: var(--text-muted);
+}
+.chip .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+.chip.good .dot {
+  background: var(--good);
+}
+.chip.warn .dot {
+  background: var(--warn);
+}
+.chip.bad .dot {
+  background: var(--bad);
+}
+
+table.list {
+  width: 100%;
+  border-collapse: collapse;
+}
+table.list th,
+table.list td {
+  text-align: left;
+  padding: 8px;
+  border-bottom: 1px solid var(--border);
+}
+table.list th {
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+/* ---------------------------------------------------------------- prompter */
+
+.prompter {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  color: #f0f0f0;
+  overflow: hidden;
+}
+.prompter .viewport {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.prompter .content {
+  margin: 0 auto;
+  padding: 0 24px 80vh;
+  will-change: transform;
+  line-height: 1.45;
+  font-weight: 560;
+}
+.prompter.mirrored .viewport {
+  transform: scaleX(-1);
+}
+.prompter .w {
+  transition: color 120ms linear, background-color 160ms linear;
+  border-radius: 6px;
+  color: #f5f5f5;
+}
+.prompter .w.spoken {
+  color: #6e7681;
+}
+.prompter .w.current {
+  color: #ffffff;
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 4px;
+  text-underline-offset: 8px;
+}
+.prompter .w.hard {
+  color: #111;
+  background: var(--hard);
+  box-shadow: 0 0 0 4px var(--hard);
+}
+.prompter .w.emph {
+  font-style: italic;
+  color: #9ecbff;
+}
+.prompter .w.spoken.emph {
+  color: #4d6a87;
+}
+.prompter .cue {
+  display: inline-block;
+  font-size: 0.45em;
+  vertical-align: middle;
+  border: 1px solid #555;
+  color: #bbb;
+  border-radius: 999px;
+  padding: 0 0.7em;
+  margin-right: 0.3em;
+  font-weight: 500;
+}
+.prompter .section-title {
+  font-size: 0.42em;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #8b949e;
+  margin: 1.6em 0 0.3em;
+  font-weight: 600;
+}
+.prompter .para {
+  margin: 0 0 0.9em;
+}
+.prompter .reading-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+  border-top: 2px dashed rgba(47, 129, 247, 0.35);
+  pointer-events: none;
+}
+.prompter .reading-line::before {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: -9px;
+  border: 8px solid transparent;
+  border-left: 12px solid rgba(47, 129, 247, 0.8);
+}
+
+.prompter .toolbar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.92) 35%);
+  transition: opacity 300ms;
+  z-index: 5;
+}
+.prompter .toolbar.hidden {
+  opacity: 0;
+}
+.prompter .toolbar:hover {
+  opacity: 1;
+}
+.prompter .toolbar .btn {
+  background: rgba(30, 30, 30, 0.9);
+  border-color: #444;
+  color: #eee;
+}
+.prompter .toolbar .btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.prompter .toolbar .chip {
+  background: rgba(30, 30, 30, 0.9);
+  border-color: #444;
+  color: #bbb;
+}
+.prompter .cam {
+  position: absolute;
+  right: 14px;
+  bottom: 70px;
+  width: 220px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #333;
+  z-index: 4;
+  background: #111;
+}
+.prompter .cam video,
+.prompter .cam canvas {
+  display: block;
+  width: 100%;
+  transform: scaleX(-1);
+}
+.prompter .banner {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 14px;
+  z-index: 6;
+  background: rgba(20, 20, 20, 0.92);
+  border: 1px solid #444;
+  border-radius: 999px;
+  padding: 6px 16px;
+  font-size: 0.95rem;
+}
+.prompter .risk {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  z-index: 4;
+  background: #222;
+}
+.prompter .risk > div {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to top, var(--good), var(--warn), var(--bad));
+  transition: height 150ms linear;
+}
+.prompter .gaze-dot {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 211, 61, 0.8);
+  pointer-events: none;
+  z-index: 7;
+}
+.prompter .overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.82);
+  z-index: 10;
+  padding: 16px;
+}
+.prompter .overlay .panel {
+  max-width: 520px;
+  width: 100%;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 14px;
+  padding: 22px;
+  color: #e6edf3;
+}
+.prompter .countdown {
+  font-size: 9rem;
+  font-weight: 800;
+  color: #fff;
+}
+.gesture-ring {
+  width: 36px;
+  height: 36px;
+}
+
+/* ------------------------------------------------------------- calibration */
+
+.fullscreen {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  color: #eee;
+  z-index: 20;
+}
+.calib-dot {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  margin: -14px 0 0 -14px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 6px rgba(47, 129, 247, 0.35);
+  transition: left 500ms ease, top 500ms ease, transform 300ms;
+}
+.calib-dot.collect {
+  transform: scale(0.45);
+  background: #ffd33d;
+}
+.center-panel {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 520px;
+  width: calc(100% - 32px);
+  text-align: center;
+}
+
+/* ------------------------------------------------------------------ report */
+
+.chart {
+  width: 100%;
+  height: 160px;
+}
+.script-review {
+  line-height: 1.9;
+  font-size: 1.05rem;
+}
+.script-review .stumble {
+  background: rgba(248, 81, 73, 0.25);
+  border-bottom: 2px solid var(--bad);
+  border-radius: 3px;
+}
+.script-review .unspoken {
+  color: var(--text-muted);
+}
+.score-ring {
+  font-size: 2.8rem;
+  font-weight: 750;
+}
+.timeline-bar {
+  position: relative;
+  height: 34px;
+  background: var(--bg-sunken);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+.timeline-bar .mark {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  width: 4px;
+  border-radius: 2px;
+}
+.timeline-bar .mark.restart {
+  background: var(--bad);
+}
+.timeline-bar .mark.hesitation {
+  background: var(--warn);
+}
+.timeline-bar .mark.filler {
+  background: #a371f7;
+}
+.timeline-bar .mark.misread {
+  background: #db61a2;
+}
+.timeline-bar .warnzone {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: rgba(210, 153, 34, 0.18);
+}
+
+.editor textarea {
+  min-height: 420px;
+  font-size: 1.05rem;
+}
+.hard-list span {
+  display: inline-block;
+  margin: 2px 6px 2px 0;
+  padding: 1px 8px;
+  border-radius: 6px;
+  background: rgba(255, 211, 61, 0.15);
+  border: 1px solid rgba(255, 211, 61, 0.4);
+}
+
+@media (max-width: 640px) {
+  .prompter .cam {
+    width: 120px;
+  }
+  .app-header {
+    gap: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .prompter .w,
+  .calib-dot {
+    transition: none;
+  }
+}

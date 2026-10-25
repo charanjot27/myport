@@ -13,3 +13,5 @@ services/api/data/
 ml/runs/
 ml/data/raw/
 *.onnx.tmp
+apps/web/public/mediapipe/
+apps/web/public/onnx/

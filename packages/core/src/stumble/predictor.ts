@@ -34,7 +34,11 @@ export class HeuristicStumblePredictor implements StumblePredictor {
   predict(window: Float32Array[]): number {
     const f = window[window.length - 1];
     if (!f || f.length !== FEATURE_COUNT) return 0;
-    if (!f[I.valid]) return sigmoid(-3 + 2.2 * f[I.diffMax]!);
+    if (!f[I.valid]) {
+      // No gaze (uncalibrated or looking away): fall back to speech hesitation before hard words.
+      const z = -3.4 + 2.6 * f[I.diffMax]! + 0.9 * Math.min(1.5, f[I.sinceAdvance]!) - 0.8 * f[I.breakAhead]!;
+      return sigmoid(z);
+    }
     const evsWords = f[I.evs]! * 10;
     const shrink = Math.max(0, 1.5 - evsWords); // words below a healthy span
     const collapsing = Math.max(0, -f[I.evsDelta]! * 10);

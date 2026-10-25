@@ -159,8 +159,10 @@ export function buildReport(record: SessionRecord): CoachReport {
   const gaze = record.gaze;
   let eyeContactPct: number | null = null;
   let lookAways = 0;
-  if (gaze.length) {
-    const facing = gaze.filter((g) => g.valid && Math.abs(g.yaw) < 15 && Math.abs(g.pitch) < 15);
+  // Blinks count as "face present"; frames with no face at all are not valid.
+  const faceSeen = gaze.some((g) => g.valid || g.blink);
+  if (gaze.length && faceSeen) {
+    const facing = gaze.filter((g) => (g.valid || g.blink) && Math.abs(g.yaw) < 15 && Math.abs(g.pitch) < 15);
     eyeContactPct = Math.round((facing.length / gaze.length) * 100);
     let awaySince: number | null = null;
     for (const g of gaze) {
@@ -218,7 +220,7 @@ export function buildReport(record: SessionRecord): CoachReport {
   else if (wpm && wpm < 115) tips.push(`You averaged ${wpm} words per minute. A little more pace will sound more confident.`);
   if (fillerCount / Math.max(1, minutes) > 3) tips.push("Several filler words. Try a silent pause instead of “um”.");
   if (stumbles.length) {
-    const hard = mostCommon(stumbles.map((s) => s.word.replace(/[^\p{L}\p{N}]/gu, "")).filter(Boolean));
+    const hard = mostCommon(stumbles.filter((s) => s.kind !== "filler").map((s) => s.word.replace(/[^\p{L}\p{N}]/gu, "")).filter(Boolean));
     tips.push(hard ? `Most stumbles were around “${hard}”. Rehearse that line or rephrase it.` : "Rehearse the lines marked on the timeline.");
   }
   if (eyeContactPct !== null && eyeContactPct < 70) tips.push("You often looked away from the camera. Move the prompter window closer to your webcam.");

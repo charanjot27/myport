@@ -21,8 +21,9 @@ test("calibration dot moves through the points", async ({ page }) => {
   await page.getByRole("button", { name: "Start (8 s)" }).click();
 
   const positions = new Set<string>();
-  for (let i = 0; i < 30; i++) {
-    const style = await page.getByTestId("calib-dot").getAttribute("style").catch(() => null);
+  for (let i = 0; i < 30 && positions.size < 3; i++) {
+    // Short timeout: with no face in the fake camera the run can end before we finish sampling.
+    const style = await page.getByTestId("calib-dot").getAttribute("style", { timeout: 500 }).catch(() => null);
     if (style) positions.add(style);
     await page.waitForTimeout(200);
   }

@@ -3,8 +3,6 @@ import { Link } from "react-router-dom";
 import { Icon, ProIcon, Silhouette, type Hue, type ProIconName } from "./landing-icons";
 import type { Laptop3D, ScreenMode } from "./laptop3d";
 import type { StarField } from "./starfield";
-import "@fontsource-variable/bricolage-grotesque";
-import "@fontsource-variable/space-grotesk";
 import "./landing.css";
 
 /**

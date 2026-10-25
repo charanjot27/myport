@@ -2,7 +2,7 @@ import { detectScriptLanguage } from "@promptsense/core";
 
 /** Languages offered in Settings. "auto" picks one from the script's writing system. */
 export const LANGUAGES: Array<{ code: string; label: string }> = [
-  { code: "auto", label: "Auto: match the script (Hindi, Punjabi or English)" },
+  { code: "auto", label: "Auto (from the script)" },
   { code: "en-US", label: "English (US)" },
   { code: "en-GB", label: "English (UK)" },
   { code: "en-IN", label: "English (India)" },

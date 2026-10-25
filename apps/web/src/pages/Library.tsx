@@ -1,4 +1,4 @@
-import { buildReport, estimateDuration, parseScript } from "@promptsense/core";
+import { buildReport, detectScriptLanguage, estimateDuration, parseScript } from "@promptsense/core";
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../lib/auth";
@@ -6,6 +6,8 @@ import { useSettings } from "../lib/settings";
 import { LANGUAGE_SAMPLES, newId, SAMPLE_SCRIPT, scripts, sessions, type StoredScript, type StoredSession } from "../lib/storage";
 import { syncScripts } from "../lib/sync";
 import { formatDuration } from "../lib/format";
+import { MiniScore, PageHeader, relativeTime } from "../components/ui";
+import { Icon } from "./landing-icons";
 
 export function LibraryPage() {
   const [items, setItems] = useState<StoredScript[] | null>(null);
@@ -53,44 +55,78 @@ export function LibraryPage() {
     await reload();
   };
 
+  const takes = recent.length;
+  const best = recent.reduce((m, r) => Math.max(m, buildReport(r.record).score), 0);
+
   return (
     <main className="page">
-      <div className="hero">
-        <div className="grow">
-          <div className="eyebrow">JOTR</div>
-          <h1 style={{ margin: 0 }}>
+      <PageHeader
+        eyebrow="Library"
+        title={
+          <>
             Your <span className="gradient-text">scripts</span>
-          </h1>
-          <p>Speak naturally. Your words stay right under the camera, follow your voice and never glare in your glasses.</p>
+          </>
+        }
+        actions={
+          <>
+            <button className="btn" onClick={() => fileRef.current?.click()}>
+              {Icon.upload} Import .txt / .md
+            </button>
+            <button className="btn primary" onClick={() => void create("Untitled script", "")}>
+              {Icon.plus} New script
+            </button>
+          </>
+        }
+      >
+        Write once, then just talk. Your words stay right under the camera and follow your voice, in English, हिन्दी or ਪੰਜਾਬੀ.
+      </PageHeader>
+      <input
+        ref={fileRef}
+        type="file"
+        accept=".txt,.md,text/plain,text/markdown"
+        hidden
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) void importFile(f);
+        }}
+      />
+
+      {items && items.length > 0 && (
+        <div className="stat-strip" aria-label="Summary">
+          <span>
+            <b>{items.length}</b> {items.length === 1 ? "script" : "scripts"}
+          </span>
+          <span>
+            <b>{takes}</b> recent {takes === 1 ? "take" : "takes"}
+          </span>
+          {takes > 0 && (
+            <span>
+              best score <b>{best}</b>
+            </span>
+          )}
         </div>
-        <button className="btn" onClick={() => fileRef.current?.click()}>
-          Import .txt / .md
-        </button>
-        <button className="btn primary" onClick={() => void create("Untitled script", "")}>
-          ＋ New script
-        </button>
-        <input
-          ref={fileRef}
-          type="file"
-          accept=".txt,.md,text/plain,text/markdown"
-          hidden
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) void importFile(f);
-          }}
-        />
-      </div>
+      )}
       {syncMsg && <div className="alert ok">{syncMsg}</div>}
       {!settings.gazeModel && (
-        <div className="alert">
-          Tip: <Link to="/calibrate">calibrate your gaze</Link> (30 seconds) to turn on stumble prediction from where your eyes are on the script.
+        <div className="banner">
+          <span className="banner-icon">{Icon.eye}</span>
+          <span>
+            <b>Turn on stumble prediction.</b> A 30-second gaze calibration lets JOTR see where your eyes are on the script.
+          </span>
+          <Link to="/calibrate" className="btn small" viewTransition>
+            Calibrate
+          </Link>
         </div>
       )}
 
       {items === null ? (
-        <p className="muted">Loading…</p>
+        <div className="script-grid" aria-busy>
+          {[0, 1, 2].map((k) => (
+            <div key={k} className="script-card skeleton" />
+          ))}
+        </div>
       ) : items.length === 0 ? (
-        <div className="card empty-state">
+        <div className="empty-state">
           <div className="orb" aria-hidden />
           <h3>No scripts yet</h3>
           <p className="muted">Start with a sample to see how voice-following works.</p>
@@ -107,67 +143,80 @@ export function LibraryPage() {
           </div>
         </div>
       ) : (
-        <div className="grid">
-          {items.map((s) => {
+        <div className="script-grid">
+          {items.map((s, k) => {
             const parsed = parseScript(s.source);
+            const lang = LANG_TAG[detectScriptLanguage(s.source)];
             return (
-              <div className="card interactive" key={s.id} data-testid="script-card">
+              <article className="script-card" key={s.id} data-testid="script-card" style={{ ["--i" as string]: k }}>
+                <div className="script-card-top">
+                  <span className={`lang-tag ${lang.cls}`}>{lang.label}</span>
+                  <span className="muted small">{relativeTime(s.updatedAt)}</span>
+                </div>
                 <h3>{s.title || "Untitled"}</h3>
-                <p className="script-preview">{parsed.words.slice(0, 40).map((w) => w.display).join(" ") || "Empty script"}</p>
-                <div className="meta">
-                  <span className="chip">{parsed.words.length} words</span>
-                  <span className="chip">~{formatDuration(estimateDuration(parsed))}</span>
-                  <span className="chip">{new Date(s.updatedAt).toLocaleDateString()}</span>
+                <p className="script-preview" lang={lang.lang}>
+                  {parsed.words.slice(0, 48).map((w) => w.display).join(" ") || "Empty script. Click Edit to write it."}
+                </p>
+                <div className="script-card-foot">
+                  <span className="script-stats">
+                    {parsed.words.length} words · ~{formatDuration(estimateDuration(parsed))}
+                  </span>
+                  <div className="script-actions">
+                    <Link className="btn ghost small" to={`/edit/${s.id}`}>
+                      Edit
+                    </Link>
+                    <button className="btn ghost small danger" onClick={() => void remove(s.id)}>
+                      Delete
+                    </button>
+                    <Link className="btn primary small play" to={`/prompt/${s.id}`}>
+                      {Icon.play} Start
+                    </Link>
+                  </div>
                 </div>
-                <div className="row">
-                  <Link className="btn primary small" to={`/prompt/${s.id}`}>
-                    Start
-                  </Link>
-                  <Link className="btn small" to={`/edit/${s.id}`}>
-                    Edit
-                  </Link>
-                  <button className="btn small danger" onClick={() => void remove(s.id)}>
-                    Delete
-                  </button>
-                </div>
-              </div>
+              </article>
             );
           })}
+          <button className="script-card new" onClick={() => void create("Untitled script", "")} style={{ ["--i" as string]: items.length }}>
+            <span className="new-plus">{Icon.plus}</span>
+            <b>New script</b>
+            <span className="muted small">Write, paste or import a .txt / .md</span>
+          </button>
         </div>
       )}
 
       {recent.length > 0 && (
-        <>
-          <h2>Recent sessions</h2>
-          <table className="list">
-            <thead>
-              <tr>
-                <th>Script</th>
-                <th>When</th>
-                <th>Length</th>
-                <th>Score</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {recent.map((s) => (
-                <tr key={s.id}>
-                  <td>
+        <section className="sessions">
+          <div className="section-head">
+            <h2>Recent sessions</h2>
+            <span className="muted small">Your coach report for every take</span>
+          </div>
+          <ul className="session-list">
+            {recent.map((s, k) => (
+              <li key={s.id} style={{ ["--i" as string]: k }}>
+                <Link to={`/report/${s.id}`} className="session-row" aria-label={`Report for ${s.scriptTitle}`}>
+                  <MiniScore score={buildReport(s.record).score} />
+                  <span className="session-title">
                     {s.scriptTitle}
-                    {s.research && <span className="chip" style={{ marginLeft: 8 }}>research</span>}
-                  </td>
-                  <td>{new Date(s.startedAt).toLocaleString()}</td>
-                  <td>{formatDuration(s.durationMs / 1000)}</td>
-                  <td>{buildReport(s.record).score}</td>
-                  <td>
-                    <Link to={`/report/${s.id}`}>Report</Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </>
+                    {s.research && <span className="chip">research</span>}
+                  </span>
+                  <span className="muted">{relativeTime(s.startedAt)}</span>
+                  <span className="session-len">{formatDuration(s.durationMs / 1000)}</span>
+                  <span className="session-go">
+                    Report {Icon.arrow}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
     </main>
   );
 }
+
+const LANG_TAG = {
+  hi: { label: "हिन्दी", cls: "hi", lang: "hi" },
+  pa: { label: "ਪੰਜਾਬੀ", cls: "pa", lang: "pa" },
+  latin: { label: "EN", cls: "en", lang: undefined },
+  other: { label: "Other", cls: "en", lang: undefined },
+} as const;

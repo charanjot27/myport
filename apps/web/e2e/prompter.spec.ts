@@ -158,7 +158,8 @@ test("multilingual: a Hinglish script follows Hindi speech in Devanagari, and sc
   const samples = await page.evaluate(() => (window as unknown as { __ys: Array<[number, number]> }).__ys);
   const ys = samples.map(([, y]) => y);
   const moved = ys.filter((y, i) => i > 0 && y !== ys[i - 1]!);
-  const steps = ys.slice(1).map((y, i) => Math.abs(y - ys[i]!));
+  // Movement per 60 fps frame: a stalled main thread makes one frame cover several, which is not a jump.
+  const steps = samples.slice(1).map(([t, y], i) => Math.abs(y - samples[i]![1]) / Math.max(1, (t - samples[i]![0]) / 16.7));
   const lineHeight = await page.locator(".content").evaluate((el) => parseFloat(getComputedStyle(el).fontSize) * 1.45);
   expect(Math.min(...ys)).toBeLessThan(-20); // it scrolled
   expect(moved.length).toBeGreaterThan(30); // in many small frames

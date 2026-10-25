@@ -7,6 +7,16 @@ import { openMedia, stopMedia } from "../lib/media";
 import { EyeGlareMeter, runReflectionCheck, type ReflectionResult } from "../lib/reflection";
 import { getSettings, updateSettings, useSettings, type CameraPlacement } from "../lib/settings";
 import { resolveLanguage } from "../lib/languages";
+import { ProIcon, type Hue, type ProIconName } from "./landing-icons";
+
+const TOUR_ICONS: Array<[ProIconName, Hue]> = [
+  ["sparkles", "rose"],
+  ["camera", "sky"],
+  ["pip", "sun"],
+  ["glasses", "violet"],
+  ["eye", "mint"],
+  ["voice", "rose"],
+];
 import { createSpeechProvider, type SpeechProvider } from "../speech";
 import { VoiceActivity } from "../speech/vad";
 import { sharedVision, type VisionFrame } from "../vision/visionEngine";
@@ -266,7 +276,11 @@ export function WelcomePage() {
           Step {step + 1} of {STEPS.length} · {STEPS[step]}
         </div>
         <div className="tour-step" key={step}>
-        {!dark && <div className="tour-icon" aria-hidden>{["👋", "🎥", "📍", "✨", "🎯", "🗣️"][step]}</div>}
+        {!dark && (
+          <div className="tour-icon" aria-hidden>
+            <ProIcon name={TOUR_ICONS[step]![0]} hue={TOUR_ICONS[step]![1]} size={30} />
+          </div>
+        )}
 
         {step === 0 && (
           <>

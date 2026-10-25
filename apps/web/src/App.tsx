@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, Navigate, NavLink, Route, Routes, useLocation } from "react-router-dom";
 import { useSettings } from "./lib/settings";
 import { useAuth } from "./lib/auth";
@@ -14,6 +14,7 @@ import { SettingsPage } from "./pages/Settings";
 import { VerifyPage } from "./pages/Verify";
 import { WelcomePage } from "./pages/Welcome";
 import { LandingPage } from "./pages/Landing";
+import { Icon } from "./pages/landing-icons";
 
 export function App() {
   const settings = useSettings();
@@ -29,30 +30,8 @@ export function App() {
   return (
     <>
       {!fullscreen && <div className="aurora" aria-hidden />}
-      {!fullscreen && (
-        <header className="app-header">
-          <Link to="/" className="brand">
-            <img src="/favicon.svg" width={26} height={26} alt="" /> JOTR
-          </Link>
-          <nav aria-label="Main">
-            <NavLink to="/app" end>
-              Scripts
-            </NavLink>
-            <NavLink to="/welcome">Setup tour</NavLink>
-            <NavLink to="/calibrate">Calibrate</NavLink>
-            <NavLink to="/verify">Verify live</NavLink>
-            {settings.researchConsent && <NavLink to="/label">Research</NavLink>}
-            <NavLink to="/settings">Settings</NavLink>
-          </nav>
-          <div className="spacer" />
-          {settings.apiUrl && (
-            <NavLink to="/account" className="btn small">
-              {user ? user.email : "Sign in"}
-            </NavLink>
-          )}
-        </header>
-      )}
-      <Routes>
+      {!fullscreen && <AppHeader researcher={settings.researchConsent} apiUrl={settings.apiUrl} user={user?.email ?? null} />}
+      <Routes location={location} key={location.pathname}>
         <Route path="/" element={<LandingPage />} />
         <Route path="/app" element={settings.onboarded ? <LibraryPage /> : <Navigate to="/welcome" replace />} />
         <Route path="/welcome" element={<WelcomePage />} />
@@ -76,5 +55,59 @@ export function App() {
         />
       </Routes>
     </>
+  );
+}
+
+const NAV = [
+  { to: "/app", label: "Scripts" },
+  { to: "/welcome", label: "Setup tour" },
+  { to: "/calibrate", label: "Calibrate" },
+  { to: "/verify", label: "Verify live" },
+  { to: "/settings", label: "Settings" },
+];
+
+/** App bar with a pill that glides to the active tab. */
+function AppHeader({ researcher, apiUrl, user }: { researcher: boolean; apiUrl: string; user: string | null }) {
+  const location = useLocation();
+  const navRef = useRef<HTMLElement>(null);
+  const [pill, setPill] = useState<{ x: number; w: number } | null>(null);
+  const items = researcher ? [...NAV.slice(0, 4), { to: "/label", label: "Research" }, NAV[4]!] : NAV;
+
+  useLayoutEffect(() => {
+    const measure = () => {
+      const a = navRef.current?.querySelector<HTMLElement>("a.active");
+      setPill(a ? { x: a.offsetLeft, w: a.offsetWidth } : null);
+    };
+    measure();
+    void document.fonts?.ready.then(measure);
+    addEventListener("resize", measure);
+    return () => removeEventListener("resize", measure);
+  }, [location.pathname, researcher]);
+
+  return (
+    <header className="app-header">
+      <Link to="/" className="brand" aria-label="JOTR home">
+        <img src="/favicon.svg" width={28} height={28} alt="" />
+        <span>JOTR</span>
+      </Link>
+      <nav aria-label="Main" ref={navRef}>
+        {pill && <span className="nav-pill" style={{ transform: `translateX(${pill.x}px)`, width: pill.w }} aria-hidden />}
+        {items.map((n) => (
+          <NavLink key={n.to} to={n.to} end={n.to === "/app"} viewTransition>
+            {n.label}
+          </NavLink>
+        ))}
+      </nav>
+      <div className="spacer" />
+      <a className="header-star" href="https://github.com/charanjot27/myport" target="_blank" rel="noopener noreferrer" aria-label="Star JOTR on GitHub">
+        {Icon.github}
+        <span>Star</span>
+      </a>
+      {apiUrl && (
+        <NavLink to="/account" className="btn small">
+          {user ?? "Sign in"}
+        </NavLink>
+      )}
+    </header>
   );
 }

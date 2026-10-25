@@ -102,6 +102,16 @@ export const Icon = {
       <path d="m12 2.8 2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z" />
     </svg>
   ),
+  plus: (
+    <svg viewBox="0 0 24 24" {...P} strokeWidth={2.2}>
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  ),
+  upload: (
+    <svg viewBox="0 0 24 24" {...P}>
+      <path d="M12 15V4M7.5 8.5 12 4l4.5 4.5M4.5 14v3.5a2.5 2.5 0 0 0 2.5 2.5h10a2.5 2.5 0 0 0 2.5-2.5V14" />
+    </svg>
+  ),
   menu: (
     <svg viewBox="0 0 24 24" {...P}>
       <path d="M4 7h16M4 12h16M4 17h16" />

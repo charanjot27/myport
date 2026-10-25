@@ -1,218 +1,244 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
+import { PageHeader, Row, Slider, Switch } from "../components/ui";
 import { LANGUAGES } from "../lib/languages";
 import { listDevices } from "../lib/media";
 import { DEFAULT_SETTINGS, updateSettings, useSettings, type Settings } from "../lib/settings";
 import { webSpeechSupported } from "../speech/webSpeech";
+import { ProIcon, type Hue, type ProIconName } from "./landing-icons";
+
+const SECTIONS: Array<{ id: string; title: string; icon: ProIconName; hue: Hue }> = [
+  { id: "speech", title: "Speech & language", icon: "voice", hue: "rose" },
+  { id: "camera-text", title: "Text under the camera", icon: "glasses", hue: "sun" },
+  { id: "prompter", title: "Prompter", icon: "pip", hue: "sky" },
+  { id: "recording", title: "Recording", icon: "eye", hue: "mint" },
+  { id: "devices", title: "Devices", icon: "camera", hue: "violet" },
+  { id: "appearance", title: "Appearance", icon: "sparkles", hue: "violet" },
+  { id: "account", title: "Account & data", icon: "lock", hue: "mint" },
+];
 
 export function SettingsPage() {
   const s = useSettings();
   const [devices, setDevices] = useState<{ cameras: MediaDeviceInfo[]; mics: MediaDeviceInfo[] }>({ cameras: [], mics: [] });
+  const [active, setActive] = useState(SECTIONS[0]!.id);
 
   useEffect(() => {
     void listDevices().then(setDevices).catch(() => undefined);
   }, []);
 
+  // Highlight the section being read in the side menu.
+  useEffect(() => {
+    const io = new IntersectionObserver(
+      (entries) => {
+        const top = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+        if (top) setActive(top.target.id);
+      },
+      { rootMargin: "-20% 0px -60% 0px" },
+    );
+    SECTIONS.forEach((x) => {
+      const el = document.getElementById(x.id);
+      if (el) io.observe(el);
+    });
+    return () => io.disconnect();
+  }, []);
+
   const set = <K extends keyof Settings>(k: K) => (v: Settings[K]) => updateSettings({ [k]: v } as Partial<Settings>);
+  const pct = (v: number) => `${Math.round(v)}%`;
 
   return (
-    <main className="page" style={{ maxWidth: 780 }}>
-      <h1>
-        <span className="gradient-text">Settings</span>
-      </h1>
+    <main className="page settings-page">
+      <PageHeader eyebrow="Preferences" title="Settings">
+        Everything is saved on this device as you change it.
+      </PageHeader>
 
-      <section className="card settings-section">
-        <h2 style={{ marginTop: 0 }}>Speech</h2>
-      <div className="field">
-        <label htmlFor="speech">Speech recognition</label>
-        <select id="speech" value={s.speechProvider} onChange={(e) => set("speechProvider")(e.target.value as Settings["speechProvider"])}>
-          <option value="webspeech">Browser built-in (free{webSpeechSupported() ? "" : ", not available in this browser"})</option>
-          <option value="deepgram">Deepgram cloud (Pro, most accurate, needs the API)</option>
-          <option value="none">Off (fixed-speed or manual scrolling only)</option>
-        </select>
-        <span className="hint">
-          Browser recognition in Chrome sends audio to Google. Cloud recognition streams audio to Deepgram through a short-lived token. Video never leaves your device.
-        </span>
-      </div>
-      <div className="field">
-        <label htmlFor="lang">Language</label>
-        <select id="lang" value={s.language} onChange={(e) => set("language")(e.target.value)}>
-          {LANGUAGES.map((l) => (
-            <option key={l.code} value={l.code}>
-              {l.label}
-            </option>
+      <div className="settings-layout">
+        <nav className="settings-nav" aria-label="Settings sections">
+          {SECTIONS.map((x) => (
+            <a key={x.id} href={`#${x.id}`} className={active === x.id ? "on" : ""} onClick={() => setActive(x.id)}>
+              <ProIcon name={x.icon} hue={x.hue} size={20} />
+              {x.title}
+            </a>
           ))}
-          {!LANGUAGES.some((l) => l.code === s.language) && <option value={s.language}>{s.language}</option>}
-        </select>
-        <span className="hint">
-          Scripts can be written in English, Hindi (Devanagari), Punjabi (Gurmukhi) or Hinglish typed in English letters, and can mix them. JOTR matches words across
-          scripts, so “meeting” in your script follows “मीटिंग” or “ਮੀਟਿੰਗ” in your speech.
-          {s.speechProvider === "deepgram" && s.language === "pa-IN" ? " Deepgram has no Punjabi model, so Punjabi uses the browser recogniser." : ""}
-        </span>
-      </div>
+        </nav>
 
-      </section>
-      <section className="card settings-section">
-        <h2 style={{ marginTop: 0 }}>Text under the camera</h2>
-      <div className="field">
-        <label htmlFor="layout">Layout</label>
-        <select id="layout" value={s.layout} onChange={(e) => set("layout")(e.target.value as Settings["layout"])}>
-          <option value="camera">A few lines right under my camera (recommended)</option>
-          <option value="full">Full-screen text</option>
-        </select>
-        <span className="hint">Keeping the text next to the lens makes you look at the viewer.</span>
-      </div>
-      <div className="field">
-        <label htmlFor="campos">Camera position: {Math.round(s.cameraPlacement.x * 100)}% across, {s.cameraPlacement.edge} edge</label>
-        <input id="campos" type="range" min={5} max={95} value={Math.round(s.cameraPlacement.x * 100)} onChange={(e) => set("cameraPlacement")({ ...s.cameraPlacement, x: Number(e.target.value) / 100 })} />
-        <label className="check">
-          <input type="checkbox" checked={s.cameraPlacement.edge === "bottom"} onChange={(e) => set("cameraPlacement")({ ...s.cameraPlacement, edge: e.target.checked ? "bottom" : "top" })} />
-          <span>My camera is below the screen</span>
-        </label>
-      </div>
-      <div className="field">
-        <label htmlFor="lines">Visible lines: {s.focusLines}</label>
-        <input id="lines" type="range" min={1} max={8} value={s.focusLines} onChange={(e) => set("focusLines")(Number(e.target.value))} />
-      </div>
-      <div className="field">
-        <label htmlFor="colw">Column width: {Math.round(s.columnWidth * 100)}% of the screen</label>
-        <input id="colw" type="range" min={20} max={90} value={Math.round(s.columnWidth * 100)} onChange={(e) => set("columnWidth")(Number(e.target.value) / 100)} />
-        <span className="hint">Narrower keeps your eyes closer to the lens; wider fits more words per line.</span>
-      </div>
-      <div className="field">
-        <label htmlFor="bright">Text brightness: {Math.round(s.textBrightness * 100)}%</label>
-        <input id="bright" type="range" min={20} max={100} value={Math.round(s.textBrightness * 100)} onChange={(e) => set("textBrightness")(Number(e.target.value) / 100)} />
-        <span className="hint">
-          {s.reflectionCheck
-            ? `Reflection check on ${new Date(s.reflectionCheck.at).toLocaleDateString()} chose ${Math.round(s.reflectionCheck.level * 100)}%.`
-            : "Run the setup tour to measure the brightest level that doesn't reflect in your eyes or glasses."}{" "}
-          <Link to="/welcome">Run setup tour</Link>
-        </span>
-      </div>
-      <Toggle
-        label="Auto brightness: adapt the text to room light and keep checking that it doesn't reflect in your eyes or glasses (a brief, subtle dimming pulse about every 30 s)"
-        value={s.autoBrightness}
-        onChange={set("autoBrightness")}
-      />
-      <div className="field">
-        <label htmlFor="tone">Text colour</label>
-        <select id="tone" value={s.textTone} onChange={(e) => set("textTone")(e.target.value as Settings["textTone"])}>
-          <option value="warm">Warm (less glare, recommended)</option>
-          <option value="neutral">Neutral white</option>
-        </select>
-      </div>
+        <div className="settings-body">
+          <Section id="speech">
+            <Row label="Speech recognition" htmlFor="speech-provider" hint="Browser recognition in Chrome sends audio to Google. Cloud recognition streams audio to Deepgram. Video never leaves your device.">
+              <select id="speech-provider" value={s.speechProvider} onChange={(e) => set("speechProvider")(e.target.value as Settings["speechProvider"])}>
+                <option value="webspeech">Browser built-in (free{webSpeechSupported() ? "" : ", unavailable here"})</option>
+                <option value="deepgram">Deepgram cloud (Pro)</option>
+                <option value="none">Off (fixed speed or manual)</option>
+              </select>
+            </Row>
+            <Row
+              label="Language"
+              htmlFor="lang"
+              hint={
+                <>
+                  Write in English, हिन्दी, ਪੰਜਾਬੀ or Hinglish and mix them freely: “meeting” in your script follows “मीटिंग” or “ਮੀਟਿੰਗ” in your speech.
+                  {s.speechProvider === "deepgram" && s.language === "pa-IN" ? " Deepgram has no Punjabi model, so Punjabi uses the browser recogniser." : ""}
+                </>
+              }
+            >
+              <select id="lang" value={s.language} onChange={(e) => set("language")(e.target.value)}>
+                {LANGUAGES.map((l) => (
+                  <option key={l.code} value={l.code}>
+                    {l.label}
+                  </option>
+                ))}
+                {!LANGUAGES.some((l) => l.code === s.language) && <option value={s.language}>{s.language}</option>}
+              </select>
+            </Row>
+          </Section>
 
-      </section>
-      <section className="card settings-section">
-        <h2 style={{ marginTop: 0 }}>Prompter</h2>
-      <div className="field">
-        <label htmlFor="font">Text size: {s.fontSize}px</label>
-        <input id="font" type="range" min={18} max={120} value={s.fontSize} onChange={(e) => set("fontSize")(Number(e.target.value))} />
-      </div>
-      <div className="field">
-        <label htmlFor="width">Line width: {s.lineWidth} characters</label>
-        <input id="width" type="range" min={16} max={70} value={s.lineWidth} onChange={(e) => set("lineWidth")(Number(e.target.value))} />
-        <span className="hint">Shorter lines keep your eyes near the camera.</span>
-      </div>
-      <div className="field">
-        <label htmlFor="line">Reading line: {Math.round(s.readingLine * 100)}% from the top</label>
-        <input id="line" type="range" min={5} max={60} value={Math.round(s.readingLine * 100)} onChange={(e) => set("readingLine")(Number(e.target.value) / 100)} />
-      </div>
-      <div className="field">
-        <label htmlFor="speed">Fixed scroll speed: {s.fixedSpeed}px/s</label>
-        <input id="speed" type="range" min={10} max={160} value={s.fixedSpeed} onChange={(e) => set("fixedSpeed")(Number(e.target.value))} />
-      </div>
-      <Toggle label="Mirror text (for beam-splitter teleprompter glass)" value={s.mirror} onChange={set("mirror")} />
-      <Toggle label="Pause when I look away" value={s.pauseOnLookAway} onChange={set("pauseOnLookAway")} />
-      <Toggle label="Stumble assist: slow down and highlight hard words before I reach them" value={s.stumbleAssist} onChange={set("stumbleAssist")} />
-      <Toggle label="Hand gestures: open palm = pause, ✌ = next section, ☝ = rewind sentence, 👍 = resume, 👎 = previous section" value={s.gestureControl} onChange={set("gestureControl")} />
-      <Toggle label="Show camera preview (full-screen layout only; a bright preview reflects in glasses)" value={s.showCamera} onChange={set("showCamera")} />
+          <Section id="camera-text">
+            <Row label="Layout" htmlFor="layout" hint="Keeping the text next to the lens makes you look at the viewer.">
+              <select id="layout" value={s.layout} onChange={(e) => set("layout")(e.target.value as Settings["layout"])}>
+                <option value="camera">A few lines under my camera</option>
+                <option value="full">Full-screen text</option>
+              </select>
+            </Row>
+            <Slider label="Camera position" value={Math.round(s.cameraPlacement.x * 100)} min={5} max={95} format={(v) => `${v}% across`} onChange={(v) => set("cameraPlacement")({ ...s.cameraPlacement, x: v / 100 })} />
+            <Switch label="My camera is below the screen" checked={s.cameraPlacement.edge === "bottom"} onChange={(v) => set("cameraPlacement")({ ...s.cameraPlacement, edge: v ? "bottom" : "top" })} />
+            <Slider label="Visible lines" value={s.focusLines} min={1} max={8} onChange={set("focusLines")} />
+            <Slider
+              label="Column width"
+              hint="Narrower keeps your eyes closer to the lens; wider fits more words per line."
+              value={Math.round(s.columnWidth * 100)}
+              min={20}
+              max={90}
+              format={(v) => `${v}% of screen`}
+              onChange={(v) => set("columnWidth")(v / 100)}
+            />
+            <Slider
+              label="Text brightness"
+              hint={
+                <>
+                  {s.reflectionCheck
+                    ? `Reflection check on ${new Date(s.reflectionCheck.at).toLocaleDateString()} chose ${Math.round(s.reflectionCheck.level * 100)}%.`
+                    : "The setup tour measures the brightest level that doesn't reflect in your eyes or glasses."}{" "}
+                  <Link to="/welcome">Run setup tour</Link>
+                </>
+              }
+              value={Math.round(s.textBrightness * 100)}
+              min={20}
+              max={100}
+              format={pct}
+              onChange={(v) => set("textBrightness")(v / 100)}
+            />
+            <Switch
+              label="Auto brightness"
+              hint="Adapts the text to room light and keeps checking it doesn't reflect in your eyes or glasses (a brief, subtle dim about every 30 s)."
+              checked={s.autoBrightness}
+              onChange={set("autoBrightness")}
+            />
+            <Row label="Text colour" htmlFor="tone">
+              <select id="tone" value={s.textTone} onChange={(e) => set("textTone")(e.target.value as Settings["textTone"])}>
+                <option value="warm">Warm (less glare)</option>
+                <option value="neutral">Neutral white</option>
+              </select>
+            </Row>
+          </Section>
 
-      </section>
-      <section className="card settings-section">
-        <h2 style={{ marginTop: 0 }}>Recording</h2>
-      <Toggle label="Corneal reflection shield: blur the reflection of the prompter in your eyes" value={s.cornealShield} onChange={set("cornealShield")} />
-      <Toggle
-        label="Eye-contact correction while reading (needs gaze calibration; glances and pauses stay natural)"
-        value={s.eyeContact}
-        onChange={set("eyeContact")}
-        disabled={!s.gazeModel}
-      />
-      <p className="muted">
-        Gaze calibration: {s.gazeModel ? "done" : "not done"} · <Link to="/calibrate">{s.gazeModel ? "recalibrate" : "calibrate now"}</Link>
-        {s.gazeModel && (
-          <>
-            {" · "}
-            <button className="btn small" onClick={() => updateSettings({ gazeModel: null })}>
-              Clear
-            </button>
-          </>
-        )}
-      </p>
+          <Section id="prompter">
+            <Slider label="Text size" value={s.fontSize} min={18} max={120} format={(v) => `${v}px`} onChange={set("fontSize")} />
+            <Slider label="Line width" hint="Shorter lines keep your eyes near the camera." value={s.lineWidth} min={16} max={70} format={(v) => `${v} characters`} onChange={set("lineWidth")} />
+            <Slider label="Reading line" value={Math.round(s.readingLine * 100)} min={5} max={60} format={(v) => `${v}% from top`} onChange={(v) => set("readingLine")(v / 100)} />
+            <Slider label="Fixed scroll speed" value={s.fixedSpeed} min={10} max={160} format={(v) => `${v} px/s`} onChange={set("fixedSpeed")} />
+            <Switch label="Mirror text" hint="For beam-splitter teleprompter glass." checked={s.mirror} onChange={set("mirror")} />
+            <Switch label="Pause when I look away" checked={s.pauseOnLookAway} onChange={set("pauseOnLookAway")} />
+            <Switch label="Stumble assist" hint="Slows down and highlights hard words before you reach them." checked={s.stumbleAssist} onChange={set("stumbleAssist")} />
+            <Switch label="Hand gestures" hint="Open palm = pause, ✌ = next section, ☝ = rewind sentence, 👍 = resume, 👎 = previous section." checked={s.gestureControl} onChange={set("gestureControl")} />
+            <Switch label="Show camera preview" hint="Full-screen layout only; a bright preview reflects in glasses." checked={s.showCamera} onChange={set("showCamera")} />
+          </Section>
 
-      </section>
-      <section className="card settings-section">
-        <h2 style={{ marginTop: 0 }}>Devices</h2>
-      <div className="field">
-        <label htmlFor="cam">Camera</label>
-        <select id="cam" value={s.cameraId} onChange={(e) => set("cameraId")(e.target.value)}>
-          <option value="">Default</option>
-          {devices.cameras.map((d) => (
-            <option key={d.deviceId} value={d.deviceId}>
-              {d.label || `Camera ${d.deviceId.slice(0, 6)}`}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="field">
-        <label htmlFor="mic">Microphone</label>
-        <select id="mic" value={s.micId} onChange={(e) => set("micId")(e.target.value)}>
-          <option value="">Default</option>
-          {devices.mics.map((d) => (
-            <option key={d.deviceId} value={d.deviceId}>
-              {d.label || `Microphone ${d.deviceId.slice(0, 6)}`}
-            </option>
-          ))}
-        </select>
-        <span className="hint">Device names appear after you grant camera/microphone permission once.</span>
-      </div>
+          <Section id="recording">
+            <Switch label="Corneal reflection shield" hint="Blurs the reflection of the prompter in your eyes." checked={s.cornealShield} onChange={set("cornealShield")} />
+            <Switch label="Eye-contact correction while reading" hint="Needs gaze calibration. Glances and pauses stay natural." checked={s.eyeContact} onChange={set("eyeContact")} disabled={!s.gazeModel} />
+            <Row label="Gaze calibration" hint={s.gazeModel ? "Done. It keeps improving while you read." : "Not done yet. Takes about 8 seconds."}>
+              <div className="row">
+                <Link className="btn small" to="/calibrate">
+                  {s.gazeModel ? "Recalibrate" : "Calibrate now"}
+                </Link>
+                {s.gazeModel && (
+                  <button className="btn small ghost" onClick={() => updateSettings({ gazeModel: null })}>
+                    Clear
+                  </button>
+                )}
+              </div>
+            </Row>
+          </Section>
 
-      </section>
-      <section className="card settings-section">
-        <h2 style={{ marginTop: 0 }}>Appearance</h2>
-      <div className="field">
-        <label htmlFor="theme">Theme</label>
-        <select id="theme" value={s.theme} onChange={(e) => set("theme")(e.target.value as Settings["theme"])}>
-          <option value="dark">Dark</option>
-          <option value="light">Light</option>
-        </select>
-      </div>
+          <Section id="devices">
+            <Row label="Camera" htmlFor="cam">
+              <select id="cam" value={s.cameraId} onChange={(e) => set("cameraId")(e.target.value)}>
+                <option value="">Default</option>
+                {devices.cameras.map((d) => (
+                  <option key={d.deviceId} value={d.deviceId}>
+                    {d.label || `Camera ${d.deviceId.slice(0, 6)}`}
+                  </option>
+                ))}
+              </select>
+            </Row>
+            <Row label="Microphone" htmlFor="mic" hint="Device names appear after you allow camera and microphone once.">
+              <select id="mic" value={s.micId} onChange={(e) => set("micId")(e.target.value)}>
+                <option value="">Default</option>
+                {devices.mics.map((d) => (
+                  <option key={d.deviceId} value={d.deviceId}>
+                    {d.label || `Microphone ${d.deviceId.slice(0, 6)}`}
+                  </option>
+                ))}
+              </select>
+            </Row>
+          </Section>
 
-      </section>
-      <section className="card settings-section">
-        <h2 style={{ marginTop: 0 }}>Account & data</h2>
-      <div className="field">
-        <label htmlFor="api">JOTR API URL</label>
-        <input id="api" type="url" placeholder="https://api.example.com or /api" value={s.apiUrl} onChange={(e) => set("apiUrl")(e.target.value.trim())} />
-        <span className="hint">Optional. Enables sign-in, script sync, cloud speech and signed liveness checks.</span>
+          <Section id="appearance">
+            <Row label="Theme">
+              <div className="segmented" role="radiogroup" aria-label="Theme">
+                {(["dark", "light"] as const).map((t) => (
+                  <button key={t} role="radio" aria-checked={s.theme === t} className={s.theme === t ? "on" : ""} onClick={() => set("theme")(t)}>
+                    {t === "dark" ? "Dark" : "Light"}
+                  </button>
+                ))}
+              </div>
+            </Row>
+          </Section>
+
+          <Section id="account">
+            <Row label="JOTR API URL" htmlFor="api" hint="Optional. Enables sign-in, script sync, cloud speech and signed liveness checks.">
+              <input id="api" type="url" placeholder="https://api.example.com or /api" value={s.apiUrl} onChange={(e) => set("apiUrl")(e.target.value.trim())} />
+            </Row>
+            <Switch
+              label="Contribute anonymised research sessions"
+              hint={
+                <>
+                  Helps train the stumble predictor. <Link to="/privacy">Privacy & data</Link>
+                </>
+              }
+              checked={s.researchConsent}
+              onChange={set("researchConsent")}
+            />
+            <Row label="Reset" hint="Back to the defaults. Your scripts and reports are kept.">
+              <button className="btn small danger" onClick={() => confirm("Reset all settings?") && updateSettings({ ...DEFAULT_SETTINGS })}>
+                Reset settings
+              </button>
+            </Row>
+          </Section>
+        </div>
       </div>
-      <Toggle label="I want to contribute anonymised research sessions (see the privacy page)" value={s.researchConsent} onChange={set("researchConsent")} />
-      <p className="muted">
-        <Link to="/privacy">Privacy & data</Link>
-      </p>
-      <button className="btn" onClick={() => confirm("Reset all settings?") && updateSettings({ ...DEFAULT_SETTINGS })}>
-        Reset settings
-      </button>
-      </section>
     </main>
   );
 }
 
-function Toggle({ label, value, onChange, disabled }: { label: string; value: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {
+function Section({ id, children }: { id: string; children: ReactNode }) {
+  const meta = SECTIONS.find((x) => x.id === id)!;
   return (
-    <label className="check" style={{ marginBottom: 10, opacity: disabled ? 0.55 : 1 }}>
-      <input type="checkbox" checked={value} disabled={disabled} onChange={(e) => onChange(e.target.checked)} />
-      <span>{label}</span>
-    </label>
+    <section id={id} className="settings-card" aria-labelledby={`${id}-title`}>
+      <h2 id={`${id}-title`}>
+        <ProIcon name={meta.icon} hue={meta.hue} size={26} />
+        {meta.title}
+      </h2>
+      <div className="settings-rows">{children}</div>
+    </section>
   );
 }

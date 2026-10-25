@@ -1,3 +1,4 @@
+import { PageHeader } from "../components/ui";
 import { generateChallenge, scoreLiveness, tintAt, type LivenessChallenge, type LivenessResult, type SkinSample } from "@promptsense/core";
 import { useEffect, useRef, useState } from "react";
 import { api, apiConfigured, type Attestation, type LivenessChallengeDto } from "../lib/api";
@@ -116,11 +117,28 @@ export function VerifyPage() {
           <div style={{ fontSize: "1.4rem", fontWeight: 600 }}>Look at the screen and hold still…</div>
         </div>
       )}
-      <h1>Verify you're live</h1>
-      <p className="muted" style={{ maxWidth: 680 }}>
-        The screen shows a short random sequence of soft colour tints. A real face reflects that light with the right timing; a replayed or
-        synthetic video can't predict it. The result can be attached to your recording as a “verified live” badge.
-      </p>
+      <PageHeader
+        eyebrow="Liveness"
+        title={
+          <>
+            Verify you're <span className="gradient-text">live</span>
+          </>
+        }
+      >
+        Prove a recording is really you, right now, and not a replay or a deepfake.
+      </PageHeader>
+      <div className="verify-card">
+      <ol className="verify-steps">
+        <li>
+          <b>1. Soft tints</b>The screen shows a short random sequence of gentle colour tints.
+        </li>
+        <li>
+          <b>2. Your face reflects them</b>A real face reflects that light with the right timing; a replayed or synthetic video can't predict it.
+        </li>
+        <li>
+          <b>3. A badge</b>The result can be attached to your recording as a “verified live” badge.
+        </li>
+      </ol>
       <div className="alert">
         Photosensitivity: the colours change at most about twice per second and are gentle tints, not flashes. Skip this check if you are sensitive to
         changing light.
@@ -144,6 +162,7 @@ export function VerifyPage() {
           {!result.passed && <div className="muted">Try facing the screen in a dimmer room, closer to the display.</div>}
         </div>
       )}
+      </div>
       {attestation && (
         <div className="card">
           <h3>Signed attestation</h3>

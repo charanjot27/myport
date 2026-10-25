@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>PromptSense</title>
+    <style>
+      :root { color-scheme: light dark; --accent: #2f81f7; }
+      body { font: 14px system-ui, sans-serif; margin: 0; padding: 14px 16px; width: 300px; }
+      h1 { font-size: 15px; margin: 0 0 10px; display: flex; gap: 8px; align-items: center; }
+      label { display: flex; gap: 8px; align-items: flex-start; margin: 10px 0; }
+      input[type="checkbox"] { margin-top: 3px; accent-color: var(--accent); }
+      small { color: GrayText; display: block; }
+      input[type="range"] { width: 100%; }
+      p { color: GrayText; font-size: 12px; margin: 12px 0 0; }
+    </style>
+  </head>
+  <body>
+    <h1><img src="icons/48.png" width="20" height="20" alt="" /> PromptSense</h1>
+    <form id="settings">
+      <label><input type="checkbox" name="enabled" /> <span>Process my camera in calls</span></label>
+      <label><input type="checkbox" name="shield" /> <span>Corneal shield<small>Blur the reflection of your screen in your eyes.</small></span></label>
+      <label><input type="checkbox" name="eyeContact" /> <span>Eye contact while reading<small>Only while you read; glances and pauses stay natural.</small></span></label>
+      <label style="display:block">Eye-contact strength <input type="range" name="strength" min="3" max="15" step="1" /></label>
+    </form>
+    <p>Changes apply to new calls. Video is processed on this computer and never uploaded by PromptSense.</p>
+    <script src="popup.js"></script>
+  </body>
+</html>

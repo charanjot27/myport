@@ -1,4 +1,4 @@
-import { FACE, type Point3 } from "@promptsense/core";
+import { FACE, type Point3 } from "../gaze/landmarks.js";
 
 /**
  * Real-time video effects on the GPU (WebGL2), applied before video leaves the

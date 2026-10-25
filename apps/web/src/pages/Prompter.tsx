@@ -14,7 +14,7 @@ import { ScriptText, WordHighlighter } from "../prompter/ScriptText";
 import { SessionRecorder } from "../recording/recorder";
 import { createSpeechProvider, type SpeechProvider } from "../speech";
 import { sharedVision } from "../vision/visionEngine";
-import { VideoProcessor } from "../vision/videoProcessor";
+import { VideoProcessor } from "@promptsense/core/browser";
 
 type Phase = "loading" | "ready" | "countdown" | "running" | "saving" | "missing";
 

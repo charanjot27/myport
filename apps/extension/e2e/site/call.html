@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+  <body>
+    <video id="v" autoplay muted playsinline width="320" height="240"></video>
+    <script>
+      // Minimal stand-in for a video-call page.
+      window.callResult = (async () => {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        const v = document.getElementById("v");
+        v.srcObject = stream;
+        await v.play();
+        await new Promise((r) => setTimeout(r, 1500));
+        const c = document.createElement("canvas");
+        c.width = 64;
+        c.height = 48;
+        const ctx = c.getContext("2d");
+        ctx.drawImage(v, 0, 0, 64, 48);
+        const px = ctx.getImageData(0, 0, 64, 48).data;
+        let lit = 0;
+        for (let i = 0; i < px.length; i += 4) if (px[i] + px[i + 1] + px[i + 2] > 30) lit++;
+        return {
+          tracks: stream.getTracks().map((t) => ({ kind: t.kind, label: t.label, state: t.readyState })),
+          litPixels: lit,
+          size: [v.videoWidth, v.videoHeight],
+        };
+      })();
+    </script>
+  </body>
+</html>

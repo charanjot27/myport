@@ -9,6 +9,8 @@
   NODE_VERSION = "22"
   # The counter lives at /api/stats on this site (see netlify/functions/stats.mjs).
   VITE_COUNTER_URL = "/api"
+  # The extension download on the site is built for this address.
+  JOTR_SITE_ORIGIN = "https://jotr1.netlify.app"
 
 [functions]
   directory = "netlify/functions"

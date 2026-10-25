@@ -15,4 +15,4 @@ ml/data/
 *.onnx.tmp
 apps/web/public/mediapipe/
 apps/web/public/onnx/
-e2e/site/harness.js
+apps/extension/e2e/site/harness.js

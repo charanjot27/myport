@@ -80,8 +80,12 @@ test("manual mode scrolls with the keyboard and the editor saves", async ({ page
   await expect(page.getByTestId("report")).toBeVisible();
 });
 
-test("vision models load from our own origin", async ({ page }) => {
+test("vision models load from our own origin under the production CSP", async ({ page }) => {
   const external: string[] = [];
+  const cspErrors: string[] = [];
+  page.on("console", (m) => {
+    if (/Content Security Policy|Refused to/i.test(m.text())) cspErrors.push(m.text());
+  });
   page.on("request", (r) => {
     const u = new URL(r.url());
     if (u.hostname !== "localhost") external.push(r.url());
@@ -93,6 +97,7 @@ test("vision models load from our own origin", async ({ page }) => {
   // The fake camera shows no face, so the vision chip settles on "no face" once models are loaded.
   await expect(page.locator(".chip", { hasText: /no face|face$/ })).toBeVisible({ timeout: 45_000 });
   expect(external).toEqual([]);
+  expect(cspErrors).toEqual([]);
 });
 
 test("a trained ONNX stumble model is picked up when deployed", async ({ page }) => {

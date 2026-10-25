@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  typescript:
+    name: Typecheck and unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { package_json_file: package.json }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm, cache-dependency-path: pnpm-lock.yaml }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm -r typecheck
+      - run: pnpm --filter @promptsense/core --filter @promptsense/api --filter @promptsense/web test
+
+  e2e:
+    name: Browser end-to-end
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { package_json_file: package.json }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm, cache-dependency-path: pnpm-lock.yaml }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @promptsense/web exec playwright install --with-deps chromium
+      - run: pnpm --filter @promptsense/web build
+      - run: pnpm --filter @promptsense/web e2e
+      - run: pnpm --filter @promptsense/extension test
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            apps/web/playwright-report
+            apps/web/test-results
+            apps/extension/test-results
+
+  ml:
+    name: ML pipeline
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12", cache: pip }
+      - run: pip install torch --index-url https://download.pytorch.org/whl/cpu
+      - run: pip install -e "ml[dev]"
+      - run: pytest ml/tests -p no:warnings
+
+  docker:
+    name: Production stack smoke test
+    runs-on: ubuntu-latest
+    needs: [typescript]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { package_json_file: package.json }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm, cache-dependency-path: pnpm-lock.yaml }
+      - run: pnpm install --frozen-lockfile
+      - name: Write CI environment
+        run: |
+          {
+            echo "POSTGRES_PASSWORD=ci-password"
+            echo "APP_URL=http://localhost:8080"
+            echo "ADMIN_TOKEN=ci-admin-token"
+            pnpm --silent --filter @promptsense/api keygen
+          } > deploy/.env.ci
+      - run: docker compose -f deploy/docker-compose.yml --env-file deploy/.env.ci up -d --build --wait
+      - run: curl -fsS http://localhost:8080/api/health
+      - run: pnpm --filter @promptsense/web exec playwright install --with-deps chromium
+      - run: pnpm --filter @promptsense/web e2e
+        env: { E2E_BASE_URL: "http://localhost:8080" }
+      - if: failure()
+        run: docker compose -f deploy/docker-compose.yml --env-file deploy/.env.ci logs

@@ -1,6 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const port = Number(process.env.E2E_PORT ?? 4173);
+// Point at an already-running deployment (e.g. the docker compose stack) instead of starting servers.
+const external = process.env.E2E_BASE_URL;
 
 export default defineConfig({
   testDir: "e2e",
@@ -9,7 +11,7 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [["github"], ["html", { open: "never" }]] : "list",
   use: {
-    baseURL: `http://localhost:${port}`,
+    baseURL: external ?? `http://localhost:${port}`,
     trace: "retain-on-failure",
     permissions: ["camera", "microphone"],
     launchOptions: {
@@ -17,7 +19,7 @@ export default defineConfig({
     },
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"], permissions: ["camera", "microphone"] } }],
-  webServer: [
+  webServer: external ? [] : [
     {
       command: `pnpm exec vite preview --port ${port} --strictPort`,
       url: `http://localhost:${port}`,

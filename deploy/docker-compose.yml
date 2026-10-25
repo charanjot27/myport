@@ -1,0 +1,44 @@
+# Production-like stack: nginx (web + /api proxy) → API → PostgreSQL.
+#   cp deploy/.env.example deploy/.env   # fill in secrets
+#   docker compose -f deploy/docker-compose.yml --env-file deploy/.env up --build
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: promptsense
+      POSTGRES_USER: promptsense
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U promptsense"]
+      interval: 5s
+      retries: 10
+    restart: unless-stopped
+
+  api:
+    build: { context: .., dockerfile: deploy/Dockerfile.api }
+    environment:
+      DATABASE_URL: postgres://promptsense:${POSTGRES_PASSWORD}@db:5432/promptsense
+      CORS_ORIGINS: ${APP_URL:-http://localhost:8080}
+      APP_URL: ${APP_URL:-http://localhost:8080}
+      TRUST_PROXY: "true"
+      LIVENESS_PRIVATE_KEY: ${LIVENESS_PRIVATE_KEY:?run pnpm --filter @promptsense/api keygen}
+      LIVENESS_KEY_ID: ${LIVENESS_KEY_ID:-prod-1}
+      DEEPGRAM_API_KEY: ${DEEPGRAM_API_KEY:-}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_PRICE_ID: ${STRIPE_PRICE_ID:-}
+      ADMIN_TOKEN: ${ADMIN_TOKEN:-}
+    depends_on:
+      db: { condition: service_healthy }
+    restart: unless-stopped
+
+  web:
+    build: { context: .., dockerfile: deploy/Dockerfile.web }
+    ports: ["${WEB_PORT:-8080}:8080"]
+    depends_on:
+      api: { condition: service_healthy }
+    restart: unless-stopped
+
+volumes:
+  pgdata:

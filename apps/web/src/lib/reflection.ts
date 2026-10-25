@@ -101,6 +101,7 @@ export async function runReflectionCheck(opts: ReflectionRunOptions): Promise<Re
     await sleep(phase * 0.35);
     const end = performance.now() + phase * 0.65;
     while (performance.now() < end) {
+      if (opts.signal?.aborted) throw new DOMException("aborted", "AbortError");
       const v = opts.sample();
       if (v !== null) into.push(v);
       await sleep(33);

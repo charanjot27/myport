@@ -1,5 +1,5 @@
 import { predictGaze, OneEuroFilter } from "@promptsense/core";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { describeAccuracy, runCalibration, targetsForFrame, type CalibrationResult, type Target } from "../lib/calibration";
 import { focusFrame } from "../lib/device";
 import { getSettings, updateSettings } from "../lib/settings";
@@ -19,21 +19,23 @@ export function CalibrationStage({ latest, onDone, onError }: Props) {
   const [dot, setDot] = useState<{ t: Target; phase: "approach" | "collect" | "done"; index: number; total: number } | null>(null);
   const [hint, setHint] = useState<string | null>(null);
   const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
-  const started = useRef(false);
-
   useEffect(() => {
-    if (started.current) return;
-    started.current = true;
+    // Every mount gets its own run; React's development mode mounts twice and
+    // cancels the first, so a cancelled run must never touch the screen again.
     const abort = new AbortController();
+    const live = <A extends unknown[]>(fn: (...a: A) => void) => (...a: A) => {
+      if (!abort.signal.aborted) fn(...a);
+    };
     const s = getSettings();
     const frame = focusFrame({ placement: s.cameraPlacement, fontSize: s.fontSize, lines: s.focusLines, columnWidth: s.columnWidth });
     runCalibration(targetsForFrame(frame), {
-      showDot: (t, phase, index, total) => setDot(t ? { t, phase, index, total } : null),
+      showDot: live((t: Target | null, phase: "approach" | "collect" | "done", index: number, total: number) => setDot(t ? { t, phase, index, total } : null)),
       latest,
-      hint: setHint,
+      hint: live(setHint),
       signal: abort.signal,
     })
       .then(async (r) => {
+        if (abort.signal.aborted) return;
         updateSettings({ gazeModel: r.model, calibrationSamples: r.samples });
         // Live check: a soft cursor follows your eyes for 2.5 s.
         const fx = new OneEuroFilter(0.8, 0.03);
@@ -48,6 +50,7 @@ export function CalibrationStage({ latest, onDone, onError }: Props) {
           await new Promise((res) => setTimeout(res, 33));
         }
         setCursor(null);
+        if (abort.signal.aborted) return;
         onDone({ ...r, quality: describeAccuracy(r.errorPx, frame.lineHeight) });
       })
       .catch((e: Error) => {

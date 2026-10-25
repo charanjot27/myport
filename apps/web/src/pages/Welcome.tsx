@@ -113,7 +113,10 @@ export function WelcomePage() {
     const abort = new AbortController();
     const video = videoRef.current!;
     runReflectionCheck({
-      show: setTestLevel,
+      // A cancelled run (React dev mode mounts effects twice) must not blink the text.
+      show: (l) => {
+        if (!abort.signal.aborted) setTestLevel(l);
+      },
       sample: () => {
         const f = latestFrame.current;
         return f?.face && !f.face.features.blink ? meter.measure(video, f.face.landmarks) : null;

@@ -62,8 +62,10 @@ function spread(v: number[][], dims: number[]): number {
 
 /** Collect steady samples for one target: stop early once 12 consecutive frames agree. */
 async function collect(t: Target, io: CalibrationIO, index: number, total: number, approachMs = 520, maxMs = 1300): Promise<number[][]> {
+  if (io.signal?.aborted) throw new DOMException("aborted", "AbortError");
   io.showDot(t, "approach", index, total);
   await sleep(approachMs);
+  if (io.signal?.aborted) throw new DOMException("aborted", "AbortError");
   io.showDot(t, "collect", index, total);
   const out: number[][] = [];
   const start = performance.now();

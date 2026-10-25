@@ -38,8 +38,8 @@ Website: https://jotr1.netlify.app
 
 **Images** (made in JOTR's style):
 - Store icon 128×128: `static/icons/128.png`
-- Screenshots 1280×800: hero, closer look, library, prompter, extension popup
-- Small promo tile 440×280, Marquee 1400×560
+- Screenshots 1280×800: `store-assets/1-hero.png` … `store-assets/5-extension-popup.png`
+- Small promo tile: `store-assets/promo-small-440x280.png`; Marquee: `store-assets/promo-marquee-1400x560.png`
 
 **Website / homepage:** https://jotr1.netlify.app
 

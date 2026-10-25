@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { api, apiConfigured } from "./api";
+import { getSettings } from "./settings";
 
 const ID_KEY = "jotr.anon.id";
 const COUNTED_KEY = "jotr.anon.counted";
@@ -11,6 +11,21 @@ export interface UserCount {
 }
 
 let pending: Promise<UserCount | null> | null = null;
+
+/** Where the counter lives: VITE_COUNTER_URL (e.g. a Netlify Function) or the full JOTR API. */
+function counterBase(): string {
+  return ((import.meta.env.VITE_COUNTER_URL as string | undefined) || getSettings().apiUrl || "").replace(/\/$/, "");
+}
+
+async function call<T>(path: string, body?: unknown): Promise<T> {
+  const res = await fetch(`${counterBase()}${path}`, {
+    method: body === undefined ? "GET" : "POST",
+    headers: body === undefined ? undefined : { "content-type": "application/json" },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`counter ${res.status}`);
+  return (await res.json()) as T;
+}
 
 function storage(): Storage | null {
   try {
@@ -25,7 +40,7 @@ function storage(): Storage | null {
  * and returns the total. Later calls only read the total. Null without an API.
  */
 export function userCount(): Promise<UserCount | null> {
-  if (!apiConfigured()) return Promise.resolve(null);
+  if (!counterBase()) return Promise.resolve(null);
   pending ??= (async () => {
     const store = storage();
     try {
@@ -35,11 +50,11 @@ export function userCount(): Promise<UserCount | null> {
           id = crypto.randomUUID();
           store.setItem(ID_KEY, id);
         }
-        const r = await api<{ users: number; new: boolean }>("/stats/hello", { method: "POST", json: { id } });
+        const r = await call<{ users: number; new: boolean }>("/stats/hello", { id });
         store.setItem(COUNTED_KEY, "1");
         return { users: r.users, isNew: r.new };
       }
-      const r = await api<{ users: number }>("/stats");
+      const r = await call<{ users: number }>("/stats");
       return { users: r.users, isNew: false };
     } catch {
       return null; // API down: the counter just doesn't show

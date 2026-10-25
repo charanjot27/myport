@@ -1,0 +1,34 @@
+# Netlify: the static web app plus the user counter (a function backed by Netlify Blobs).
+# The full API (accounts, sync, cloud speech) is a separate Node server and is not run on Netlify.
+
+[build]
+  command = "pnpm --filter @promptsense/web build"
+  publish = "apps/web/dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+  # The counter lives at /api/stats on this site (see netlify/functions/stats.mjs).
+  VITE_COUNTER_URL = "/api"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+# The counter: GET /api/stats and POST /api/stats/hello both go to the function.
+[[redirects]]
+  from = "/api/stats"
+  to = "/.netlify/functions/stats"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/stats/*"
+  to = "/.netlify/functions/stats"
+  status = 200
+  force = true
+
+# Single-page app: every other path is served by index.html.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

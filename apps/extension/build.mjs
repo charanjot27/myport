@@ -9,7 +9,8 @@ const root = dirname(fileURLToPath(import.meta.url));
 const dist = join(root, "dist");
 const test = process.argv.includes("--test");
 // Where the JOTR web app lives; the popup opens it and the site script marks it as "extension installed".
-const siteOrigin = (process.env.JOTR_SITE_ORIGIN || "http://localhost:5173").replace(/\/$/, "");
+// On Netlify, URL is the site's main address.
+const siteOrigin = (process.env.JOTR_SITE_ORIGIN || process.env.URL || "http://localhost:5173").replace(/\/$/, "");
 
 await rm(dist, { recursive: true, force: true });
 await mkdir(dist, { recursive: true });

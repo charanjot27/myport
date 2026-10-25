@@ -113,6 +113,8 @@ balancer, or Cloudflare). The API runs migrations on start. Configuration:
 
 **Shipping a trained stumble model:** `python -m promptsense_ml.train --data … --deploy ../apps/web/public/models`, then rebuild the web image. The browser loads it automatically and refuses models built for a different feature spec.
 
+**Deploy on Netlify:** `netlify.toml` builds the web app and runs the public user counter as a Netlify Function with Netlify Blobs (no server or database). In Netlify, leave the base directory empty and deploy. The counter is at `/api/stats`. Accounts, sync and cloud speech need the full API (a Node server), which Netlify does not run.
+
 **Add to Chrome:** the website's "Add to Chrome" button opens a short install guide with a download of the extension (`/downloads/jotr-chrome-extension.zip`, built by `pnpm --filter @promptsense/web pack-extension` and by every web build). Build it for your domain with `JOTR_SITE_ORIGIN=https://your-domain pnpm --filter @promptsense/web build`, so the extension's popup opens your site and the site can show "Added to Chrome".
 
 **Extension release (one-click install):** submit `apps/extension/dist` (zipped) to the Chrome Web Store ($5 one-time developer fee). Expect review questions about `world: MAIN` and camera processing; the privacy page explains it. Once it is listed, build the web app with `VITE_CHROME_STORE_URL=https://chromewebstore.google.com/detail/...` and "Add to Chrome" goes straight to the store.

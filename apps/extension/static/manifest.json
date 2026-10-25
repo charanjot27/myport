@@ -1,31 +1,70 @@
 {
   "manifest_version": 3,
-  "name": "JOTR for video calls",
+  "name": "JOTR – Teleprompter for Video Calls",
   "short_name": "JOTR",
-  "version": "0.1.0",
-  "description": "Hide your script's reflection in your eyes and keep natural eye contact while reading, in Meet, Zoom, Teams and other web calls.",
-  "icons": { "16": "icons/16.png", "48": "icons/48.png", "128": "icons/128.png" },
-  "action": { "default_popup": "popup.html", "default_title": "JOTR" },
-  "permissions": ["storage"],
+  "version": "0.1.1",
+  "description": "Keep natural eye contact while you read in web video calls, and hide your script's reflection in your eyes and glasses.",
+  "icons": {
+    "16": "icons/16.png",
+    "48": "icons/48.png",
+    "128": "icons/128.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "JOTR"
+  },
+  "permissions": [
+    "storage"
+  ],
   "content_scripts": [
     {
-      "matches": ["https://meet.google.com/*", "https://*.zoom.us/*", "https://teams.microsoft.com/*", "https://teams.live.com/*", "https://*.whereby.com/*", "https://app.riverside.fm/*", "https://streamyard.com/*"],
-      "js": ["inject.js"],
+      "matches": [
+        "https://meet.google.com/*",
+        "https://*.zoom.us/*",
+        "https://teams.microsoft.com/*",
+        "https://teams.live.com/*",
+        "https://*.whereby.com/*",
+        "https://app.riverside.fm/*",
+        "https://streamyard.com/*"
+      ],
+      "js": [
+        "inject.js"
+      ],
       "run_at": "document_start",
       "world": "MAIN",
       "all_frames": true
     },
     {
-      "matches": ["https://meet.google.com/*", "https://*.zoom.us/*", "https://teams.microsoft.com/*", "https://teams.live.com/*", "https://*.whereby.com/*", "https://app.riverside.fm/*", "https://streamyard.com/*"],
-      "js": ["bridge.js"],
+      "matches": [
+        "https://meet.google.com/*",
+        "https://*.zoom.us/*",
+        "https://teams.microsoft.com/*",
+        "https://teams.live.com/*",
+        "https://*.whereby.com/*",
+        "https://app.riverside.fm/*",
+        "https://streamyard.com/*"
+      ],
+      "js": [
+        "bridge.js"
+      ],
       "run_at": "document_start",
       "all_frames": true
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": ["mediapipe/*"],
-      "matches": ["https://meet.google.com/*", "https://*.zoom.us/*", "https://teams.microsoft.com/*", "https://teams.live.com/*", "https://*.whereby.com/*", "https://app.riverside.fm/*", "https://streamyard.com/*"]
+      "resources": [
+        "mediapipe/*"
+      ],
+      "matches": [
+        "https://meet.google.com/*",
+        "https://*.zoom.us/*",
+        "https://teams.microsoft.com/*",
+        "https://teams.live.com/*",
+        "https://*.whereby.com/*",
+        "https://app.riverside.fm/*",
+        "https://streamyard.com/*"
+      ]
     }
   ]
 }

@@ -14,16 +14,16 @@ Upload `apps/extension/jotr-chrome-web-store.zip`. For every later update, raise
 
 ## Store listing tab
 
-**Name** (from the manifest): JOTR for video calls
+**Name** (from the manifest): JOTR – Teleprompter for Video Calls
 
-**Summary** (max 132 characters):
-Hide your script's reflection in your eyes and keep natural eye contact while you read, in Meet, Zoom and Teams.
+**Summary** (comes from the manifest, max 132 characters):
+Keep natural eye contact while you read in web video calls, and hide your script's reflection in your eyes and glasses.
 
-**Description:**
+**Description** (no lists of brand or app names: the store rejects them as keyword spam):
 
-JOTR is a teleprompter that keeps your eyes on your audience. This extension brings it into your video calls.
+JOTR is a teleprompter that keeps your eyes on your audience. This extension brings it into your video calls in the browser.
 
-In Google Meet, Zoom, Microsoft Teams, Whereby, Riverside and StreamYard (web), JOTR improves your own camera, on your computer:
+During a web video call, JOTR improves your own camera, right on your computer:
 
 • Corneal shield: softly blurs the reflection of your screen and script in your eyes and glasses, so viewers can't see what you're reading.
 • Natural eye contact while reading: gently corrects your gaze only while you read. Glances and pauses stay natural.

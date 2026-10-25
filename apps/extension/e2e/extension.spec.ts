@@ -1,4 +1,5 @@
 import { chromium, expect, test } from "@playwright/test";
+import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -43,7 +44,7 @@ test("the JOTR site can tell the extension is installed", async () => {
   try {
     const page = await context.newPage();
     await page.goto("http://localhost:4300/call.html");
-    await expect.poll(() => page.evaluate(() => document.documentElement.dataset.jotrExtension)).toBe("0.1.0");
+    await expect.poll(() => page.evaluate(() => document.documentElement.dataset.jotrExtension)).toBe(JSON.parse(readFileSync(join(dist, "manifest.json"), "utf8")).version);
   } finally {
     await context.close();
   }

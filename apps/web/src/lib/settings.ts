@@ -17,6 +17,8 @@ export interface Settings {
   /** Fraction of the viewport height where the active line sits (near the top = near the camera). */
   readingLine: number;
   mirror: boolean;
+  /** Show the camera mirrored on screen, like a mirror (the saved video is never flipped). */
+  mirrorVideo: boolean;
   scrollMode: "voice" | "fixed" | "manual";
   fixedSpeed: number;
   pauseOnLookAway: boolean;
@@ -61,6 +63,7 @@ export const DEFAULT_SETTINGS: Settings = {
   lineWidth: 34,
   readingLine: 0.22,
   mirror: false,
+  mirrorVideo: true,
   scrollMode: "voice",
   fixedSpeed: 40,
   pauseOnLookAway: true,

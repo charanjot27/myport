@@ -609,7 +609,7 @@ export function PrompterPage() {
       )}
 
       {/* A bright camera preview reflects in eyes and glasses, so camera layout never shows it. */}
-      <div className={`cam${backdrop ? " backdrop" : ""}`} style={{ display: backdrop || (settings.showCamera && !cameraLayout && running) ? "block" : "none" }} aria-hidden={backdrop}>
+      <div className={`cam${backdrop ? " backdrop" : ""}${settings.mirrorVideo ? "" : " unmirrored"}`} style={{ display: backdrop || (settings.showCamera && !cameraLayout && running) ? "block" : "none" }} aria-hidden={backdrop}>
         <div ref={camSlotRef} />
         <video ref={videoRef} muted playsInline style={{ display: processorRef.current && (record || settings.eyeContact) ? "none" : "block" }} />
       </div>
@@ -657,8 +657,13 @@ export function PrompterPage() {
           A+
         </button>
         <button className="btn small" onClick={() => updateSettings({ mirror: !settings.mirror })} aria-pressed={settings.mirror}>
-          Mirror
+          Mirror text
         </button>
+        {(backdrop || (settings.showCamera && !cameraLayout)) && (
+          <button className="btn small" onClick={() => updateSettings({ mirrorVideo: !settings.mirrorVideo })} aria-pressed={settings.mirrorVideo}>
+            Mirror video
+          </button>
+        )}
         <button
           className="btn small"
           onClick={() => updateSettings({ layout: cameraLayout ? "full" : "camera" })}

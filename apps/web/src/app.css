@@ -1373,3 +1373,10 @@ input:focus {
   box-shadow: 0 40px 100px -30px rgba(0, 0, 0, 0.9);
   animation: rise 500ms var(--spring) both;
 }
+
+/* Toggle buttons in the prompter toolbar show when they are on. */
+.prompter .toolbar .btn[aria-pressed="true"] {
+  background: rgba(255, 138, 61, 0.16);
+  border-color: rgba(255, 138, 61, 0.45);
+  color: #ffd0b0;
+}

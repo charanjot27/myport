@@ -1435,3 +1435,7 @@ table.list th {
     opacity: 0;
   }
 }
+.prompter .cam.unmirrored video,
+.prompter .cam.unmirrored canvas {
+  transform: none;
+}

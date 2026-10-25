@@ -175,6 +175,14 @@ test("recording shows the camera behind the text, and downloading shows a thumbn
   await page.getByTestId("start").click();
   await expect(page.getByTestId("stop")).toBeVisible({ timeout: 15_000 });
   await expect(page.locator(".cam.backdrop")).toBeVisible();
+  // The camera shows like a mirror by default; "Mirror video" flips it back.
+  const mirrorVideo = page.getByRole("button", { name: "Mirror video" });
+  await expect(mirrorVideo).toHaveAttribute("aria-pressed", "true");
+  await page.mouse.move(400, 400);
+  await mirrorVideo.click();
+  await expect(page.locator(".cam.backdrop.unmirrored")).toBeVisible();
+  await mirrorVideo.click();
+  await expect(page.locator(".cam.backdrop.unmirrored")).toHaveCount(0);
   await speak(page, "hi I'm testing JOTR a teleprompter that listens as I speak");
   await page.waitForTimeout(1500);
   await page.getByTestId("stop").click();

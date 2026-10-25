@@ -146,6 +146,7 @@ export function SettingsPage() {
             <Slider label="Reading line" value={Math.round(s.readingLine * 100)} min={5} max={60} format={(v) => `${v}% from top`} onChange={(v) => set("readingLine")(v / 100)} />
             <Slider label="Fixed scroll speed" value={s.fixedSpeed} min={10} max={160} format={(v) => `${v} px/s`} onChange={set("fixedSpeed")} />
             <Switch label="Mirror text" hint="For beam-splitter teleprompter glass." checked={s.mirror} onChange={set("mirror")} />
+            <Switch label="Mirror video" hint="Show your camera like a mirror on screen. The saved video is never flipped." checked={s.mirrorVideo} onChange={set("mirrorVideo")} />
             <Switch label="Pause when I look away" checked={s.pauseOnLookAway} onChange={set("pauseOnLookAway")} />
             <Switch label="Stumble assist" hint="Slows down and highlights hard words before you reach them." checked={s.stumbleAssist} onChange={set("stumbleAssist")} />
             <Switch label="Hand gestures" hint="Open palm = pause, ✌ = next section, ☝ = rewind sentence, 👍 = resume, 👎 = previous section." checked={s.gestureControl} onChange={set("gestureControl")} />

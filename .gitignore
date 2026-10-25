@@ -1,0 +1,15 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+test-results/
+playwright-report/
+apps/web/e2e/fixtures/*.y4m
+apps/web/e2e/fixtures/*.wav
+services/api/data/
+ml/runs/
+ml/data/raw/
+*.onnx.tmp

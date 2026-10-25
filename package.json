@@ -1,0 +1,17 @@
+{
+  "name": "promptsense",
+  "private": true,
+  "version": "0.1.0",
+  "description": "PromptSense: an AI teleprompter that watches and listens to the speaker.",
+  "packageManager": "pnpm@10.28.0",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r lint",
+    "dev": "pnpm --filter @promptsense/web dev",
+    "dev:api": "pnpm --filter @promptsense/api dev",
+    "e2e": "pnpm --filter @promptsense/web e2e"
+  }
+}

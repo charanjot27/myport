@@ -117,3 +117,50 @@ test("a trained ONNX stumble model is picked up when deployed", async ({ page })
   await page.getByTestId("start").click();
   await expect(page.getByTestId("prompter")).toHaveAttribute("data-predictor", /^gru-/, { timeout: 20_000 });
 });
+
+test("multilingual: a Hinglish script follows Hindi speech in Devanagari, and scrolling glides", async ({ page }) => {
+  await page.goto("/app");
+  await page.getByRole("button", { name: "New script" }).click();
+  await page.getByLabel("Title").fill("Hinglish");
+  const lines = [
+    "Namaste doston, aap sab kaise ho?",
+    "Aaj hum apni nayi meeting ke baare mein baat karenge.",
+    "Pehle main project ka plan bataunga, phir team ke sawal lenge.",
+    "Yeh demo bilkul live hai aur JOTR meri awaaz ke saath chal raha hai.",
+  ];
+  await page.getByLabel("Script").fill(Array.from({ length: 4 }, () => lines.join(" ")).join("\n\n"));
+  await expect(page.getByText("Saved")).toBeVisible();
+  await page.getByRole("button", { name: "Start prompting" }).click();
+  await page.getByTestId("start").click();
+  await expect(page.getByTestId("stop")).toBeVisible({ timeout: 10_000 });
+
+  // Record every scroll offset while speaking: a smooth glide has many small moves, not a few line jumps.
+  await page.evaluate(() => {
+    const el = document.querySelector<HTMLElement>(".content")!;
+    const ys: Array<[number, number]> = [];
+    (window as unknown as { __ys: typeof ys }).__ys = ys;
+    const tick = (t: number) => {
+      const m = /translate3d\(0px, (-?[\d.]+)px/.exec(el.style.transform);
+      if (m) ys.push([t, Number(m[1])]);
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+
+  await speak(page, "नमस्ते दोस्तों आप सब कैसे हो");
+  await expect(page.locator(".w.current")).toHaveText("ho?");
+  await speak(page, "आज हम अपनी नई मीटिंग के बारे में बात करेंगे");
+  await expect(page.locator(".w.current")).toHaveText("karenge.");
+  await speak(page, "पहले मैं प्रोजेक्ट का प्लान बताऊंगा फिर टीम के सवाल लेंगे");
+  await expect(page.locator(".w.current")).toHaveText("lenge.");
+  await page.waitForTimeout(800);
+
+  const samples = await page.evaluate(() => (window as unknown as { __ys: Array<[number, number]> }).__ys);
+  const ys = samples.map(([, y]) => y);
+  const moved = ys.filter((y, i) => i > 0 && y !== ys[i - 1]!);
+  const steps = ys.slice(1).map((y, i) => Math.abs(y - ys[i]!));
+  const lineHeight = await page.locator(".content").evaluate((el) => parseFloat(getComputedStyle(el).fontSize) * 1.45);
+  expect(Math.min(...ys)).toBeLessThan(-20); // it scrolled
+  expect(moved.length).toBeGreaterThan(30); // in many small frames
+  expect(Math.max(...steps)).toBeLessThan(lineHeight * 0.6); // never jumps a line at a time
+});

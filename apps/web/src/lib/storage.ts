@@ -111,3 +111,49 @@ If I'm about to stumble on a hard word like *psycholinguistics*, it slows down a
 # Wrap up
 Thanks for watching. After this take, I'll check the coach report for my pace, filler words and eye contact.
 `;
+
+/** Samples for the other supported languages; each mixes in English words the way people really talk. */
+export const LANGUAGE_SAMPLES: Array<{ title: string; label: string; source: string }> = [
+  {
+    title: "Sample: हिन्दी",
+    label: "हिन्दी",
+    source: `# शुरुआत
+नमस्ते दोस्तों, मैं JOTR को test कर रहा हूं। यह teleprompter मेरी आवाज़ सुनकर आगे बढ़ता है।
+जब मैं रुकता हूं, यह भी रुक जाता है। जब मैं आगे की line पढ़ता हूं, यह मेरे साथ चलता है।
+
+# आज की बात
+आज की meeting में हम नए project के बारे में बात करेंगे। पहले मैं plan बताऊंगा, फिर आपके सवाल लेंगे। [smile]
+
+# धन्यवाद
+देखने के लिए धन्यवाद। अब मैं coach report देखूंगा।
+`,
+  },
+  {
+    title: "Sample: ਪੰਜਾਬੀ",
+    label: "ਪੰਜਾਬੀ",
+    source: `# ਸ਼ੁਰੂਆਤ
+ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ ਜੀ, ਮੈਂ JOTR ਨੂੰ test ਕਰ ਰਿਹਾ ਹਾਂ। ਇਹ teleprompter ਮੇਰੀ ਆਵਾਜ਼ ਸੁਣ ਕੇ ਅੱਗੇ ਵਧਦਾ ਹੈ।
+ਜਦੋਂ ਮੈਂ ਰੁਕਦਾ ਹਾਂ, ਇਹ ਵੀ ਰੁਕ ਜਾਂਦਾ ਹੈ।
+
+# ਅੱਜ ਦੀ ਗੱਲ
+ਅੱਜ ਦੀ meeting ਵਿੱਚ ਅਸੀਂ ਨਵੇਂ project ਬਾਰੇ ਗੱਲ ਕਰਾਂਗੇ। [smile]
+
+# ਧੰਨਵਾਦ
+ਦੇਖਣ ਲਈ ਬਹੁਤ ਧੰਨਵਾਦ।
+`,
+  },
+  {
+    title: "Sample: Hinglish",
+    label: "Hinglish",
+    source: `# Shuruaat
+Namaste doston, main JOTR ko test kar raha hoon. Yeh teleprompter meri awaaz sunkar aage badhta hai.
+Jab main rukta hoon, yeh bhi ruk jaata hai.
+
+# Aaj ki baat
+Aaj ki meeting mein hum naye project ke baare mein baat karenge. [smile]
+
+# Dhanyavaad
+Dekhne ke liye bahut dhanyavaad.
+`,
+  },
+];

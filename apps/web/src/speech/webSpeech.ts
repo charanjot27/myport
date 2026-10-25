@@ -1,3 +1,4 @@
+import { webSpeechLanguages } from "../lib/languages";
 import type { SpeechProvider, SpeechProviderOptions, SpeechResult, SpeechStatus } from "./types";
 
 type Ctor = new () => SpeechRecognition;
@@ -39,7 +40,10 @@ export class WebSpeechProvider implements SpeechProvider {
     const rec = new Rec();
     rec.continuous = true;
     rec.interimResults = true;
-    rec.lang = this.options.language;
+    // Some browsers know a language under another tag (Punjabi: pa-Guru-IN / pa-IN), so try each.
+    const langs = webSpeechLanguages(this.options.language);
+    let langIndex = 0;
+    rec.lang = langs[0]!;
     rec.maxAlternatives = 1;
     rec.onresult = (e: SpeechRecognitionEvent) => {
       const t = performance.now();
@@ -53,6 +57,15 @@ export class WebSpeechProvider implements SpeechProvider {
     rec.onstart = () => this.onStatus?.("listening");
     rec.onerror = (e: SpeechRecognitionErrorEvent) => {
       if (e.error === "no-speech" || e.error === "aborted") return;
+      if (e.error === "language-not-supported") {
+        if (langIndex + 1 < langs.length) {
+          rec.lang = langs[++langIndex]!; // onend restarts with the next tag
+          return;
+        }
+        this.running = false;
+        this.onStatus?.("error", `This browser's speech recognition does not support ${langs[0]}. Try Chrome, or another language in Settings.`);
+        return;
+      }
       if (e.error === "not-allowed" || e.error === "service-not-allowed") {
         this.running = false;
         this.onStatus?.("error", "Microphone or speech service permission denied.");

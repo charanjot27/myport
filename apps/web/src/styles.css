@@ -1382,3 +1382,11 @@ table.list th {
   text-overflow: ellipsis;
   padding: 0 6px;
 }
+.sample-langs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 14px;
+}

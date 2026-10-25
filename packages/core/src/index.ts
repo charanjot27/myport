@@ -1,5 +1,7 @@
 export * from "./text/normalize.js";
 export * from "./text/phonetic.js";
+export * from "./text/indic.js";
+export * from "./scroll/pace.js";
 export * from "./text/difficulty.js";
 export * from "./text/script.js";
 export * from "./align/aligner.js";

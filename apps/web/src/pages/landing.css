@@ -2152,3 +2152,111 @@ html.landing-root body {
     min-height: 520px;
   }
 }
+
+/* --------------------------------------------------------- star statement */
+
+.lg-statement {
+  position: relative;
+  height: min(100svh, 900px);
+  min-height: 560px;
+  margin-top: 40px;
+  background: #000;
+  overflow: hidden;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  touch-action: pan-y;
+}
+.lg-stars {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+}
+.lg-statement::after {
+  /* Fade the edges into the page */
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(to bottom, var(--ink), transparent 14%, transparent 86%, var(--ink));
+}
+.lg-corner {
+  position: absolute;
+  width: 42px;
+  height: 42px;
+  border: 0 solid rgba(255, 255, 255, 0.55);
+  pointer-events: none;
+}
+.lg-corner.tl {
+  top: 40px;
+  left: max(20px, 4vw);
+  border-top-width: 1.5px;
+  border-left-width: 1.5px;
+}
+.lg-corner.tr {
+  top: 40px;
+  right: max(20px, 4vw);
+  border-top-width: 1.5px;
+  border-right-width: 1.5px;
+}
+.lg-corner.bl {
+  bottom: 40px;
+  left: max(20px, 4vw);
+  border-bottom-width: 1.5px;
+  border-left-width: 1.5px;
+}
+.lg-corner.br {
+  bottom: 40px;
+  right: max(20px, 4vw);
+  border-bottom-width: 1.5px;
+  border-right-width: 1.5px;
+}
+.lg-statement-copy {
+  max-width: 980px;
+  padding: 0 24px;
+  text-align: center;
+  pointer-events: none;
+}
+.lg-statement h2 {
+  margin: 0;
+  font-size: clamp(2.4rem, 7vw, 5.4rem);
+  font-weight: 300;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+.lg-rule {
+  display: block;
+  width: 120px;
+  height: 1.5px;
+  margin: 36px auto 34px;
+  background: rgba(255, 255, 255, 0.8);
+}
+.lg-statement p {
+  margin: 0;
+  font-size: clamp(1.05rem, 2vw, 1.6rem);
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.92);
+  text-wrap: balance;
+}
+.lg-statement strong {
+  font-weight: 750;
+  letter-spacing: -0.01em;
+}
+@media (max-width: 620px) {
+  .lg-corner {
+    width: 28px;
+    height: 28px;
+  }
+  .lg-corner.tl,
+  .lg-corner.tr {
+    top: 24px;
+  }
+  .lg-corner.bl,
+  .lg-corner.br {
+    bottom: 24px;
+  }
+}

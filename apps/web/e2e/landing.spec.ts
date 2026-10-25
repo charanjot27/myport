@@ -41,3 +41,18 @@ test("closer look: the 3D laptop loads and the pills switch views", async ({ pag
   await expect(page.getByRole("heading", { name: /Here’s what you get with JOTR/ })).toBeAttached();
   expect(errors).toEqual([]);
 });
+
+test("star statement reacts to the pointer and the language FAQ answers", async ({ page }) => {
+  await page.goto("/");
+  const section = page.locator(".lg-statement");
+  await section.scrollIntoViewIfNeeded();
+  await expect(page.getByRole("heading", { name: "Why JOTR" })).toBeVisible();
+  const box = (await section.boundingBox())!;
+  // The canvas repaints as the cursor pulls stars toward it.
+  const snap = () => page.locator(".lg-stars").evaluate((c: HTMLCanvasElement) => c.toDataURL().length);
+  const before = await snap();
+  for (let i = 0; i < 10; i++) await page.mouse.move(box.x + box.width / 2 + i * 10, box.y + box.height / 2);
+  await expect.poll(snap).not.toBe(before);
+  await page.getByText("Which languages can I speak?").click();
+  await expect(page.getByText(/Devanagari, Gurmukhi or English letters/)).toBeVisible();
+});

@@ -1,3 +1,4 @@
+import { deepgramLanguage } from "../lib/languages";
 import type { SpeechProvider, SpeechProviderOptions, SpeechResult, SpeechStatus } from "./types";
 
 interface DeepgramMessage {
@@ -44,7 +45,7 @@ export class DeepgramProvider implements SpeechProvider {
       interim_results: "true",
       punctuate: "false",
       smart_format: "false",
-      language: this.options.language.split("-")[0] ?? "en",
+      language: deepgramLanguage(this.options.language) ?? "multi",
       endpointing: "300",
     });
     for (const k of this.options.keyterms.slice(0, 50)) params.append("keyterm", k);

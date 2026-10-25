@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { LANGUAGES } from "../lib/languages";
 import { listDevices } from "../lib/media";
 import { DEFAULT_SETTINGS, updateSettings, useSettings, type Settings } from "../lib/settings";
 import { webSpeechSupported } from "../speech/webSpeech";
@@ -36,10 +37,18 @@ export function SettingsPage() {
       <div className="field">
         <label htmlFor="lang">Language</label>
         <select id="lang" value={s.language} onChange={(e) => set("language")(e.target.value)}>
-          {["en-US", "en-GB", "en-IN", "en-AU", "hi-IN", "es-ES", "fr-FR", "de-DE", "pt-BR", "ja-JP"].map((l) => (
-            <option key={l}>{l}</option>
+          {LANGUAGES.map((l) => (
+            <option key={l.code} value={l.code}>
+              {l.label}
+            </option>
           ))}
+          {!LANGUAGES.some((l) => l.code === s.language) && <option value={s.language}>{s.language}</option>}
         </select>
+        <span className="hint">
+          Scripts can be written in English, Hindi (Devanagari), Punjabi (Gurmukhi) or Hinglish typed in English letters, and can mix them. JOTR matches words across
+          scripts, so “meeting” in your script follows “मीटिंग” or “ਮੀਟਿੰਗ” in your speech.
+          {s.speechProvider === "deepgram" && s.language === "pa-IN" ? " Deepgram has no Punjabi model, so Punjabi uses the browser recogniser." : ""}
+        </span>
       </div>
 
       </section>

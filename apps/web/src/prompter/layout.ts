@@ -53,6 +53,31 @@ export class ScriptLayout {
   }
 
   /**
+   * Scroll offset for a fractional reading position: moves through each line in
+   * proportion to the words read, so the text glides instead of jumping a line
+   * at a time. Equals the line's top at its first word and the next line's top
+   * after its last word.
+   *
+   * `headroomLines` is how much space sits above the reading line. With less
+   * than a line (the small window under the camera) the text holds still while
+   * a line is read and glides to the next one as its last word is spoken, so
+   * the current line never slides out of view.
+   */
+  continuousTop(position: number, headroomLines = 1): number {
+    if (!this.tops.length) return 0;
+    const w = Math.max(0, Math.min(this.tops.length - 1, Math.floor(position)));
+    const li = this.lineOf[w] ?? 0;
+    const line = this.lines[li];
+    if (!line) return this.wordTop(w);
+    const count = line.lastWord - line.firstWord + 1;
+    const next = this.lines[li + 1];
+    const span = (next ? next.top : line.bottom) - line.top;
+    if (headroomLines >= 1) return line.top + Math.max(0, Math.min(1, (position - line.firstWord) / count)) * span;
+    const t = Math.max(0, Math.min(1, (position - (line.lastWord + 0.45)) / 0.55));
+    return line.top + t * t * (3 - 2 * t) * span;
+  }
+
+  /**
    * Map a gaze point (viewport pixels) to the nearest script word. Webcam gaze
    * is only reliable to about a line, so we pick the line first, then
    * interpolate across it by x.

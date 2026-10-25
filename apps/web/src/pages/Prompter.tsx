@@ -1,4 +1,4 @@
-import { detectStumbles, parseScript, ReadingGate, readingFeatures, readingProbability, FusionTimeline, type ParsedScript } from "@promptsense/core";
+import { detectScriptLanguage, detectStumbles, parseScript, ReadingGate, readingFeatures, readingProbability, FusionTimeline, type ParsedScript } from "@promptsense/core";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -9,6 +9,7 @@ import { openMedia, stopMedia } from "../lib/media";
 import { closeFloatingWindow, floatingSupported, openFloatingWindow } from "../lib/pip";
 import { recordings } from "../lib/recordings";
 import { getSettings, updateSettings, useSettings } from "../lib/settings";
+import { htmlLang, resolveLanguage } from "../lib/languages";
 import { sessions, scripts, type StoredScript } from "../lib/storage";
 import { uploadSessionSummary } from "../lib/sync";
 import { formatDuration } from "../lib/format";
@@ -89,7 +90,10 @@ export function PrompterPage() {
   const frame: FocusFrame | null = cameraLayout
     ? focusFrame({ placement: settings.cameraPlacement, fontSize: settings.fontSize, lines: settings.focusLines, columnWidth: settings.columnWidth }, win.w, win.h)
     : null;
-  const lineHeight = settings.fontSize * 1.45;
+  const language = resolveLanguage(settings.language, script?.source ?? "");
+  // Devanagari and Gurmukhi vowel signs sit above and below the line, so they need more room.
+  const indicText = !!script && ["hi", "pa"].includes(detectScriptLanguage(script.source));
+  const lineHeight = settings.fontSize * (indicText ? 1.7 : 1.45);
   const readingOffset = frame || pip ? Math.round(lineHeight * 0.15) : Math.round(settings.readingLine * win.h);
   const readingOffsetRef = useRef(readingOffset);
   readingOffsetRef.current = readingOffset;
@@ -165,7 +169,7 @@ export function PrompterPage() {
     if (s.speechProvider === "none" || s.scrollMode !== "voice") return;
     speechRef.current?.stop();
     const keyterms = [...new Set(script.words.filter((w) => w.difficulty >= 0.5).map((w) => w.display.replace(/[^\p{L}\p{N}'-]/gu, "")))].filter(Boolean);
-    const provider = createSpeechProvider(s.speechProvider, { language: s.language, keyterms, apiUrl: s.apiUrl, host });
+    const provider = createSpeechProvider(s.speechProvider, { language: resolveLanguage(s.language, script.source), keyterms, apiUrl: s.apiUrl, host });
     if (!provider) return;
     provider.onResult = (r) => engine.handleSpeech(r);
     provider.onStatus = (st, detail) => engine.handleSpeechStatus(st, detail);
@@ -497,8 +501,10 @@ export function PrompterPage() {
       <div
         className="content"
         ref={contentRef}
+        lang={htmlLang(language)}
         style={{
           fontSize: settings.fontSize,
+          lineHeight: indicText ? 1.7 : undefined,
           maxWidth: compact ? "none" : `${settings.lineWidth}ch`,
           paddingTop: readingOffset,
           paddingLeft: compact ? lineHeight * 0.3 : undefined,

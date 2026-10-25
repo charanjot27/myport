@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import { useSettings } from "../lib/settings";
-import { newId, SAMPLE_SCRIPT, scripts, sessions, type StoredScript, type StoredSession } from "../lib/storage";
+import { LANGUAGE_SAMPLES, newId, SAMPLE_SCRIPT, scripts, sessions, type StoredScript, type StoredSession } from "../lib/storage";
 import { syncScripts } from "../lib/sync";
 import { formatDuration } from "../lib/format";
 
@@ -97,6 +97,14 @@ export function LibraryPage() {
           <button className="btn primary" onClick={() => void create("Sample: Welcome to JOTR", SAMPLE_SCRIPT)}>
             Try the sample script
           </button>
+          <div className="sample-langs">
+            <span className="muted">Or try it in</span>
+            {LANGUAGE_SAMPLES.map((l) => (
+              <button key={l.label} className="btn small" onClick={() => void create(l.title, l.source)}>
+                {l.label}
+              </button>
+            ))}
+          </div>
         </div>
       ) : (
         <div className="grid">

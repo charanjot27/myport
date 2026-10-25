@@ -1,3 +1,5 @@
+import { asciiDigits, INDIC_NUMBER_WORDS } from "./indic.js";
+
 /**
  * Text normalisation shared by the script tokenizer and the ASR side, so that
  * "10", "ten" and "Ten," all compare equal during alignment.
@@ -76,7 +78,7 @@ export function normalizeWord(raw: string): string {
  * ["ten","percent"]).
  */
 export function spokenUnits(raw: string): string[] {
-  const cleaned = raw.normalize("NFKC");
+  const cleaned = asciiDigits(raw.normalize("NFKC"));
   const out: string[] = [];
   // Split around digits and the symbols that are spoken aloud.
   const parts = cleaned.match(/\d+(?:[.,]\d+)?|[%&+@$€£₹]|[^\d%&+@$€£₹]+/gu) ?? [];
@@ -100,12 +102,19 @@ export function spokenUnits(raw: string): string[] {
     } else {
       for (const piece of part.split(/[-‐–—/]+/u)) {
         const w = normalizeWord(piece);
-        if (w) out.push(w);
+        if (w) out.push(...(indicNumbers().get(w) ?? [w]));
       }
     }
   }
   out.push(...currency);
   return out;
+}
+
+let indicNumberMap: Map<string, string[]> | null = null;
+/** Hindi/Punjabi number words keyed by their normalised form (built lazily). */
+function indicNumbers(): Map<string, string[]> {
+  indicNumberMap ??= new Map(Object.entries(INDIC_NUMBER_WORDS).map(([k, v]) => [normalizeWord(k), v]));
+  return indicNumberMap;
 }
 
 /** Normalise an ASR transcript string into comparable spoken units. */

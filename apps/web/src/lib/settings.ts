@@ -54,7 +54,7 @@ export interface Settings {
 
 export const DEFAULT_SETTINGS: Settings = {
   speechProvider: "webspeech",
-  language: "en-US",
+  language: "auto",
   fontSize: 40,
   lineWidth: 34,
   readingLine: 0.22,

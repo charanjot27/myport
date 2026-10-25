@@ -49,7 +49,7 @@ export function wordDifficulty({ display, norm, sentenceStart }: DifficultyInput
   if (/\d/.test(display)) d += 0.25; // numbers are read with more effort
   if (!sentenceStart && /^\p{Lu}/u.test(display)) d += 0.15; // proper nouns
   if (/^\p{Lu}{2,}$/u.test(display.replace(/[^\p{L}]/gu, ""))) d += 0.2; // acronyms
-  if (/[^\p{Script=Latin}\p{N}\p{P}]/u.test(display)) d += 0.1; // mixed scripts
+  if (/\p{Script=Latin}/u.test(display) && /[^\p{Script=Latin}\p{N}\p{P}\p{M}]/u.test(display)) d += 0.1; // mixed scripts in one word
   // Consonant clusters ("strengths") are tongue twisters.
   if (/[bcdfghjklmnpqrstvwxz]{4,}/.test(norm)) d += 0.15;
   return Math.max(0, Math.min(1, d + 0.1));

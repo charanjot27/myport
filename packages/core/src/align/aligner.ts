@@ -1,4 +1,5 @@
 import { editDistance, normalizeTranscript } from "../text/normalize.js";
+import { crossKey, hasIndic } from "../text/indic.js";
 import { phoneticKey } from "../text/phonetic.js";
 import type { ParsedScript, ScriptToken } from "../text/script.js";
 
@@ -64,11 +65,16 @@ const GAP_HYP = -0.45; // a spoken word not in the script (ad-lib, filler)
 const GAP_SCRIPT = -0.35; // a script word the recogniser missed
 const GAP_SCRIPT_SHORT = -0.12; // short words are frequently dropped by ASR
 
-const FILLERS = new Set(["um", "uh", "erm", "er", "ah", "hmm", "mm", "uhm", "umm"]);
+const FILLERS = new Set([
+  "um", "uh", "erm", "er", "ah", "hmm", "mm", "uhm", "umm",
+  // Hindi / Punjabi hesitations as recognisers write them
+  "अ", "आ", "उम", "उम्म", "हम्म", "अम्म", "ਅ", "ਹਮ", "ਉਮ",
+]);
 
 interface HypUnit {
   norm: string;
   phon: string;
+  cross: string;
   /** The final unit of an interim hypothesis may be a truncated word. */
   partial: boolean;
 }
@@ -76,12 +82,23 @@ interface HypUnit {
 export function wordSimilarity(h: HypUnit, s: ScriptToken): number {
   if (h.norm === s.norm) return MATCH_EXACT;
   if (h.phon && h.phon === s.phon && h.phon.length > 1) return MATCH_PHONETIC;
+  // Same word heard in another script ("मीटिंग" for "meeting", "aap" for "आप").
+  if (h.cross && h.cross === s.cross && h.cross.length > 1) return MATCH_PHONETIC;
   if (h.partial && h.norm.length >= 2 && s.norm.startsWith(h.norm)) return 0.6;
+  if (h.partial && h.cross.length >= 2 && s.cross.startsWith(h.cross)) return 0.5;
   const maxLen = Math.max(h.norm.length, s.norm.length);
   if (maxLen >= 4) {
     const allowed = Math.floor(maxLen / 3);
     const d = editDistance(h.norm, s.norm, allowed);
     if (d <= allowed) return 0.7 * (1 - d / maxLen);
+  }
+  if (hasIndic(h.norm) || hasIndic(s.norm)) {
+    const crossLen = Math.max(h.cross.length, s.cross.length);
+    if (crossLen >= 3) {
+      const allowed = Math.floor(crossLen / 3);
+      const d = editDistance(h.cross, s.cross, allowed);
+      if (d <= allowed) return 0.6 * (1 - d / crossLen);
+    }
   }
   return MISMATCH;
 }
@@ -260,6 +277,7 @@ function toUnits(text: string, interim: boolean): HypUnit[] {
   return norms.map((norm, i) => ({
     norm,
     phon: phoneticKey(norm),
+    cross: crossKey(norm),
     partial: interim && i === norms.length - 1,
   }));
 }

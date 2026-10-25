@@ -1,4 +1,5 @@
 import {
+  ReadingPace,
   classifyHand,
   downsample,
   FusionTimeline,
@@ -81,6 +82,8 @@ export class PrompterEngine {
   readonly stumble = new StumbleMonitor(new HeuristicStumblePredictor());
   private readonly gestures = new GestureDebouncer();
   private readonly vad = new VoiceActivity();
+  /** Continuous reading position, so the text glides between recogniser updates. */
+  private readonly pace = new ReadingPace();
   private readonly fx = new OneEuroFilter(0.8, 0.03);
   private readonly fy = new OneEuroFilter(0.8, 0.03);
   private hud: HudState;
@@ -251,7 +254,7 @@ export class PrompterEngine {
       finished: u.finished,
       lastTranscript: r.text,
     });
-    this.retarget();
+    if (!u.offScript) this.pace.confirm(currentWord, t);
   }
 
   handleSpeechStatus(s: SpeechStatus, detail?: string): void {
@@ -386,6 +389,7 @@ export class PrompterEngine {
     this.aligner.seek(w.tokenStart);
     this.timeline.emit("seek", this.now(), { word: wordIndex });
     this.patch({ currentWord: wordIndex, offScript: false }, true);
+    this.pace.reset(wordIndex);
     this.retarget();
   }
 
@@ -456,7 +460,10 @@ export class PrompterEngine {
 
   private retarget(): void {
     if (!this.viewport || this.scroll.mode !== "voice") return;
-    const top = this.opts.layout.wordTop(this.hud.currentWord);
+    const layout = this.opts.layout;
+    const line = layout.lines[0];
+    const lineHeight = line ? line.bottom - line.top : 0;
+    const top = layout.continuousTop(this.pace.position, lineHeight ? this.offset / lineHeight : 1);
     this.scroll.setTarget(Math.max(0, top - this.offset));
   }
 
@@ -468,6 +475,11 @@ export class PrompterEngine {
     const speaking = this.vad.sample(now);
     const lookPause = this.opts.settings.pauseOnLookAway && this.hud.lookingAway && !speaking;
     const slowFactor = this.opts.settings.stumbleAssist ? this.stumble.slowFactor : 1;
+    if (this.scroll.mode === "voice" && !this.hud.paused && !lookPause) {
+      // Glide at the speaker's pace (slower ahead of a predicted stumble), then aim the scroll there.
+      this.pace.step(dt * slowFactor, speaking && !this.hud.offScript);
+      this.retarget();
+    }
     const px = this.scroll.step(dt, { paused: this.hud.paused || lookPause, slowFactor });
     this.scrollListeners.forEach((l) => l(px));
     // In fixed mode, the "current word" follows the reading line.

@@ -1,5 +1,6 @@
 import { wordDifficulty } from "./difficulty.js";
 import { spokenUnits } from "./normalize.js";
+import { crossKey } from "./indic.js";
 import { phoneticKey } from "./phonetic.js";
 
 /**
@@ -35,6 +36,8 @@ export interface ScriptToken {
   index: number;
   norm: string;
   phon: string;
+  /** Cross-script sound key (Devanagari, Gurmukhi and Latin spellings agree). */
+  cross: string;
   wordIndex: number;
 }
 
@@ -118,7 +121,7 @@ export function parseScript(source: string): ParsedScript {
       const units = spokenUnits(display);
       if (!units.length && !/[\p{L}\p{N}]/u.test(display)) {
         // Pure punctuation such as "—"; attach sentence end to previous word.
-        if (/[.!?…]/u.test(display) && words.length) {
+        if (/[.!?…।॥]/u.test(display) && words.length) {
           words[words.length - 1]!.sentenceEnd = true;
           sentenceStart = true;
           sentence++;
@@ -129,9 +132,9 @@ export function parseScript(source: string): ParsedScript {
       const index = words.length;
       const tokenStart = tokens.length;
       for (const norm of units) {
-        tokens.push({ index: tokens.length, norm, phon: phoneticKey(norm), wordIndex: index });
+        tokens.push({ index: tokens.length, norm, phon: phoneticKey(norm), cross: crossKey(norm), wordIndex: index });
       }
-      const sentenceEnd = /[.!?…]["'”’)\]]*$/u.test(display);
+      const sentenceEnd = /[.!?…।॥]["'”’)\]]*$/u.test(display);
       words.push({
         index,
         display,

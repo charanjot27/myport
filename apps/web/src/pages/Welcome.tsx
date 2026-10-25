@@ -6,6 +6,7 @@ import { detectDevice, focusFrame, textColor, type DeviceInfo } from "../lib/dev
 import { openMedia, stopMedia } from "../lib/media";
 import { EyeGlareMeter, runReflectionCheck, type ReflectionResult } from "../lib/reflection";
 import { getSettings, updateSettings, useSettings, type CameraPlacement } from "../lib/settings";
+import { resolveLanguage } from "../lib/languages";
 import { createSpeechProvider, type SpeechProvider } from "../speech";
 import { VoiceActivity } from "../speech/vad";
 import { sharedVision, type VisionFrame } from "../vision/visionEngine";
@@ -142,7 +143,7 @@ export function WelcomePage() {
     if (step !== 5 || !streamRef.current) return;
     const aligner = new ScriptAligner(tryScript);
     const s = getSettings();
-    const provider = createSpeechProvider(s.speechProvider === "none" ? "webspeech" : s.speechProvider, { language: s.language, keyterms: [], apiUrl: s.apiUrl });
+    const provider = createSpeechProvider(s.speechProvider === "none" ? "webspeech" : s.speechProvider, { language: resolveLanguage(s.language), keyterms: [], apiUrl: s.apiUrl });
     if (!provider) return;
     provider.onResult = (r) => {
       const u = aligner.update(r.text, r.isFinal, r.t);

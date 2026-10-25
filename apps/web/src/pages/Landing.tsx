@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Icon, ProIcon, Silhouette, type Hue, type ProIconName } from "./landing-icons";
 import type { Laptop3D, ScreenMode } from "./laptop3d";
+import type { StarField } from "./starfield";
 import "./landing.css";
 
 /**
@@ -20,6 +21,7 @@ const FAQ: Array<{ q: string; a: ReactNode }> = [
   { q: "Does it work with Google Meet, Zoom and other apps?", a: "Yes. Press “Start floating” and JOTR opens a small always-on-top window that stays above every tab and app. Drag it under your camera once and Chrome remembers the spot." },
   { q: "Will people see it if I share my screen?", a: "Not if you share a single tab or window. If you share your entire screen, the floating window is part of it, so it will be visible." },
   { q: "I wear glasses. Will the text reflect in them?", a: "JOTR is designed against it: dim warm text, a small window, no bright backgrounds, and a reflection check that measures your glasses through the camera and dims the text until the reflection disappears. It keeps checking while you talk." },
+  { q: "Which languages can I speak?", a: "English, Hindi, Punjabi and Hinglish, and you can mix them in one script. Write in Devanagari, Gurmukhi or English letters: JOTR matches what you say to what you wrote even when the recogniser spells it in another script, so “meeting” in your script follows “मीटिंग” or “ਮੀਟਿੰਗ”. Spanish, French, German, Portuguese and Japanese work too." },
   { q: "What if I lose my place?", a: "Just keep talking. JOTR listens and finds you again, even if you skip a paragraph, repeat a sentence or ad-lib. You can also press Space or raise an open palm to pause." },
   { q: "Does my video leave my computer?", a: "No. Face and eye tracking run in your browser. Speech goes only to the recogniser you choose, and recordings are saved only when you download them." },
   { q: "Which browsers and devices?", a: "Chrome and Edge on Mac, Windows and ChromeOS give the full experience, including the floating window. iPhone and Android apps are on the way." },
@@ -115,6 +117,7 @@ export function LandingPage() {
     <div className="landing" ref={root}>
       <Nav />
       <Hero onWatch={() => setDemoOpen(true)} />
+      <Statement />
       <CloserLook />
       <Screens />
       <Features />
@@ -252,6 +255,71 @@ function Hero({ onWatch }: { onWatch: () => void }) {
           <li>{Icon.check} Works over Meet, Zoom &amp; any tab</li>
           <li>{Icon.check} Video never leaves your device</li>
         </ul>
+      </div>
+    </section>
+  );
+}
+
+/** A turning cloud of stars that bends toward the cursor (or finger) like a magnet. */
+function Statement() {
+  const section = useRef<HTMLElement>(null);
+  const canvas = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const el = canvas.current;
+    const sec = section.current;
+    if (!el || !sec) return;
+    const ac = new AbortController();
+    let field: StarField | null = null;
+    void import("./starfield").then(({ StarField }) => {
+      if (ac.signal.aborted) return;
+      const f = new StarField(el, { count: innerWidth < 700 ? 2200 : 4600 });
+      field = f;
+      const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const io = new IntersectionObserver(([e]) => (e?.isIntersecting && !reduced ? f.start() : f.stop()));
+      io.observe(el);
+      const ro = new ResizeObserver(() => f.resize());
+      ro.observe(el);
+      const at = (x: number, y: number) => {
+        const r = el.getBoundingClientRect();
+        f.setPointer(x - r.left, y - r.top);
+      };
+      const o = { signal: ac.signal, passive: true };
+      sec.addEventListener("pointermove", (e) => at(e.clientX, e.clientY), o);
+      sec.addEventListener("pointerleave", () => f.setPointer(null), o);
+      // Touch: follow the finger while the page scrolls.
+      sec.addEventListener("touchmove", (e) => e.touches[0] && at(e.touches[0].clientX, e.touches[0].clientY), o);
+      sec.addEventListener("touchend", () => f.setPointer(null), o);
+      ac.signal.addEventListener("abort", () => {
+        io.disconnect();
+        ro.disconnect();
+      });
+    });
+    return () => {
+      ac.abort();
+      field?.stop();
+    };
+  }, []);
+
+  return (
+    <section className="lg-statement" ref={section} aria-labelledby="why-jotr">
+      <canvas ref={canvas} className="lg-stars" aria-hidden />
+      <span className="lg-corner tl" aria-hidden />
+      <span className="lg-corner tr" aria-hidden />
+      <span className="lg-corner bl" aria-hidden />
+      <span className="lg-corner br" aria-hidden />
+      <div className="lg-statement-copy">
+        <h2 id="why-jotr" data-reveal>
+          Why JOTR
+        </h2>
+        <span className="lg-rule" data-reveal aria-hidden />
+        <p data-reveal style={{ ["--d" as string]: "80ms" }}>
+          Teleprompters make you look away.
+          <br />
+          <strong className="lg-ember-text">JOTR puts your words under the lens, in the language you speak.</strong>
+          <br />
+          Your audience only sees you.
+        </p>
       </div>
     </section>
   );
@@ -575,6 +643,7 @@ const CARDS: Array<{ icon: ProIconName; hue: Hue; lead: string; rest: string; si
   { icon: "shield", hue: "sky", lead: "Verified live,", rest: " not a recording or a deepfake." },
   { icon: "gauge", hue: "sun", lead: "A coach report", rest: " after every take: pace, fillers and eye contact." },
   { icon: "hand", hue: "violet", lead: "Hands-free.", rest: " Open palm to pause, peace sign to skip ahead." },
+  { icon: "globe", hue: "rose", lead: "Speaks your language.", rest: " English, हिन्दी, ਪੰਜਾਬੀ or Hinglish, even mixed in one sentence.", size: "wide" },
   { icon: "lock", hue: "mint", lead: "Private by design.", rest: " Video is processed on your device. Nothing uploaded, nothing stored.", size: "wide" },
 ];
 

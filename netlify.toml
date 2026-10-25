@@ -2,7 +2,8 @@
 # The full API (accounts, sync, cloud speech) is a separate Node server and is not run on Netlify.
 
 [build]
-  command = "pnpm --filter @promptsense/web build"
+  # Also publishes the Chrome Web Store upload zip at /downloads/jotr-chrome-web-store.zip.
+  command = "pnpm --filter @promptsense/web build && pnpm --filter @promptsense/extension package && cp apps/extension/jotr-chrome-web-store.zip apps/web/dist/downloads/"
   publish = "apps/web/dist"
 
 [build.environment]

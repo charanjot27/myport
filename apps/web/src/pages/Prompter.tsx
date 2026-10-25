@@ -470,6 +470,8 @@ export function PrompterPage() {
   }
 
   const running = phase === "running";
+  // Recording in this tab: show yourself behind the text, like a mirror (dimmed so it doesn't glare).
+  const backdrop = running && !pip && record && settings.cameraBehindText;
   const banner = !hud || !running
     ? null
     : hud.paused
@@ -558,7 +560,7 @@ export function PrompterPage() {
   return (
     <div
       ref={rootRef}
-      className={`prompter${settings.mirror ? " mirrored" : ""}${cameraLayout ? " camera-layout" : ""}`}
+      className={`prompter${settings.mirror ? " mirrored" : ""}${cameraLayout ? " camera-layout" : ""}${backdrop ? " with-backdrop" : ""}`}
       onMouseMove={poke}
       data-testid="prompter"
       data-predictor={hud?.predictor}
@@ -607,7 +609,7 @@ export function PrompterPage() {
       )}
 
       {/* A bright camera preview reflects in eyes and glasses, so camera layout never shows it. */}
-      <div className="cam" style={{ display: settings.showCamera && !cameraLayout && running ? "block" : "none" }}>
+      <div className={`cam${backdrop ? " backdrop" : ""}`} style={{ display: backdrop || (settings.showCamera && !cameraLayout && running) ? "block" : "none" }} aria-hidden={backdrop}>
         <div ref={camSlotRef} />
         <video ref={videoRef} muted playsInline style={{ display: processorRef.current && (record || settings.eyeContact) ? "none" : "block" }} />
       </div>
@@ -712,6 +714,12 @@ export function PrompterPage() {
                 {settings.eyeContact ? " and eye-contact correction" : ""}
               </span>
             </label>
+            {record && (
+              <label className="check" style={{ marginTop: 8 }}>
+                <input type="checkbox" checked={settings.cameraBehindText} onChange={(e) => updateSettings({ cameraBehindText: e.target.checked })} />
+                <span>Show me behind the text while recording (dimmed, so it doesn't reflect in glasses)</span>
+              </label>
+            )}
             {settings.researchConsent && (
               <label className="check" style={{ marginTop: 8 }}>
                 <input type="checkbox" checked={research} onChange={(e) => setResearch(e.target.checked)} />

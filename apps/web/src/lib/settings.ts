@@ -23,6 +23,8 @@ export interface Settings {
   stumbleAssist: boolean;
   gestureControl: boolean;
   showCamera: boolean;
+  /** While recording in the tab, show the camera full-screen behind the text (dimmed). */
+  cameraBehindText: boolean;
   cameraId: string;
   micId: string;
   theme: "dark" | "light";
@@ -65,6 +67,7 @@ export const DEFAULT_SETTINGS: Settings = {
   stumbleAssist: true,
   gestureControl: false,
   showCamera: false,
+  cameraBehindText: true,
   cameraId: "",
   micId: "",
   theme: "dark",

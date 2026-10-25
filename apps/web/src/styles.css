@@ -1395,3 +1395,43 @@ table.list th {
   gap: 8px;
   margin-top: 14px;
 }
+
+/* Camera behind the text while recording: full-bleed, mirrored and dimmed so it never glares. */
+.prompter .cam.backdrop {
+  inset: 0;
+  width: auto;
+  border: 0;
+  border-radius: 0;
+  z-index: 0;
+  background: #000;
+  animation: backdrop-in 900ms var(--ease) both;
+}
+.prompter .cam.backdrop video,
+.prompter .cam.backdrop canvas {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.55) saturate(0.92);
+}
+.prompter .cam.backdrop::after {
+  /* Darker where the text sits (top, under the camera), lighter over the face. */
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.72) 0%, rgba(0, 0, 0, 0.25) 45%, rgba(0, 0, 0, 0.35) 100%);
+}
+.prompter .cam.backdrop > div,
+.prompter .cam.backdrop > div > canvas {
+  height: 100%;
+}
+.prompter.with-backdrop .viewport {
+  z-index: 2;
+}
+.prompter.with-backdrop .content {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 0 18px rgba(0, 0, 0, 0.6);
+}
+@keyframes backdrop-in {
+  from {
+    opacity: 0;
+  }
+}

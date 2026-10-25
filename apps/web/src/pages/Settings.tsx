@@ -153,6 +153,12 @@ export function SettingsPage() {
           </Section>
 
           <Section id="recording">
+            <Switch
+              label="Camera behind the text"
+              hint="While recording in the tab, see yourself full-screen behind the script, dimmed so it doesn't reflect in glasses."
+              checked={s.cameraBehindText}
+              onChange={set("cameraBehindText")}
+            />
             <Switch label="Corneal reflection shield" hint="Blurs the reflection of the prompter in your eyes." checked={s.cornealShield} onChange={set("cornealShield")} />
             <Switch label="Eye-contact correction while reading" hint="Needs gaze calibration. Glances and pauses stay natural." checked={s.eyeContact} onChange={set("eyeContact")} disabled={!s.gazeModel} />
             <Row label="Gaze calibration" hint={s.gazeModel ? "Done. It keeps improving while you read." : "Not done yet. Takes about 8 seconds."}>

@@ -165,3 +165,28 @@ test("multilingual: a Hinglish script follows Hindi speech in Devanagari, and sc
   expect(moved.length).toBeGreaterThan(30); // in many small frames
   expect(Math.max(...steps)).toBeLessThan(lineHeight * 0.6); // never jumps a line at a time
 });
+
+test("recording shows the camera behind the text, and downloading shows a thumbnail of the saved video", async ({ page }) => {
+  await page.goto("/app");
+  await page.getByRole("button", { name: "Try the sample script" }).click();
+  await page.getByRole("button", { name: "Start prompting" }).click();
+  await page.getByLabel(/Record this take/).check();
+  await expect(page.getByLabel(/Show me behind the text/)).toBeChecked();
+  await page.getByTestId("start").click();
+  await expect(page.getByTestId("stop")).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator(".cam.backdrop")).toBeVisible();
+  await speak(page, "hi I'm testing JOTR a teleprompter that listens as I speak");
+  await page.waitForTimeout(1500);
+  await page.getByTestId("stop").click();
+  await expect(page.getByTestId("report")).toBeVisible();
+
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Download video" }).click();
+  expect((await download).suggestedFilename()).toMatch(/^JOTR Sample.*\.(webm|mp4)$/);
+  const toast = page.getByTestId("saved-toast");
+  await expect(toast).toBeVisible();
+  await expect(toast).toContainText("Video saved");
+  await expect(toast.locator("img")).toBeVisible({ timeout: 6000 });
+  await toast.getByRole("button", { name: "Play the saved video" }).click();
+  await expect(page.getByRole("dialog", { name: "Saved video" }).locator("video")).toBeVisible();
+});

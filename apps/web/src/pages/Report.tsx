@@ -1,5 +1,6 @@
+import { SavedToast } from "../components/SavedToast";
 import { buildReport, parseScript, type CoachReport } from "@promptsense/core";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { AnimatedNumber, ScoreRing } from "../components/Animated";
 import { formatDuration, pct } from "../lib/format";
@@ -10,6 +11,8 @@ import { downloadBlob, extensionFor } from "../recording/recorder";
 export function ReportPage() {
   const { id = "" } = useParams();
   const [session, setSession] = useState<StoredSession | null | undefined>(undefined);
+  const [saved, setSaved] = useState<{ blob: Blob; name: string } | null>(null);
+  const closeSaved = useCallback(() => setSaved(null), []);
 
   useEffect(() => {
     void sessions.get(id).then((s) => setSession(s ?? null));
@@ -38,6 +41,7 @@ export function ReportPage() {
 
   return (
     <main className="page" data-testid="report">
+      {saved && <SavedToast key={saved.name} blob={saved.blob} filename={saved.name} onClose={closeSaved} />}
       <div className="row">
         <div className="grow">
           <div className="muted" style={{ fontSize: "0.8rem", letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 650 }}>Coach report</div>
@@ -54,7 +58,14 @@ export function ReportPage() {
           Try again
         </Link>
         {blob && (
-          <button className="btn" onClick={() => downloadBlob(blob, `promptsense-${session.id}.${extensionFor(blob.type)}`)}>
+          <button
+            className="btn"
+            onClick={() => {
+              const name = `JOTR ${session.scriptTitle.replace(/[\\/:*?"<>|]+/g, "").trim() || "take"} ${new Date(session.startedAt).toISOString().slice(0, 16).replace("T", " ").replace(":", ".")}.${extensionFor(blob.type)}`;
+              downloadBlob(blob, name);
+              setSaved({ blob, name });
+            }}
+          >
             Download video
           </button>
         )}

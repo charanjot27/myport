@@ -8,6 +8,8 @@ test.beforeEach(async ({ page }) => {
 
 // Regression: in development mode React mounts components twice; the dot used to freeze on the first point.
 test("calibration dot moves through the points", async ({ page }) => {
+  // Loads the face model and waits out two "no face" checks; that is slow on CI machines without a GPU.
+  test.slow();
   await page.goto("/welcome");
   await page.getByRole("button", { name: "Next" }).click();
   await page.getByRole("button", { name: "Allow camera & mic" }).click();

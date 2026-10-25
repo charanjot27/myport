@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { Icon, ProIcon, Silhouette, type Hue, type ProIconName } from "./landing-icons";
 import type { Laptop3D, ScreenMode } from "./laptop3d";
 import type { StarField } from "./starfield";
+import "@fontsource-variable/bricolage-grotesque";
+import "@fontsource-variable/space-grotesk";
 import "./landing.css";
 
 /**
@@ -16,6 +18,13 @@ const HERO_SCRIPT =
 /** Real quotes only: add { quote, name, role } entries once you have them and the section appears. */
 const TESTIMONIALS: Array<{ quote: string; name: string; role: string }> = [];
 
+const REPO_URL = "https://github.com/charanjot27/myport";
+const SOCIALS = [
+  { label: "Instagram", href: "https://www.instagram.com/charanjott27/", icon: Icon.instagram },
+  { label: "GitHub", href: "https://github.com/charanjot27", icon: Icon.github },
+  { label: "LinkedIn", href: "https://www.linkedin.com/in/charanjot-singh-402412310/", icon: Icon.linkedin },
+];
+
 const FAQ: Array<{ q: string; a: ReactNode }> = [
   { q: "Who is JOTR for?", a: "Anyone who talks to a camera from notes: creators recording videos, teachers and coaches teaching online, founders pitching, and anyone practising presentations or interviews." },
   { q: "Does it work with Google Meet, Zoom and other apps?", a: "Yes. Press “Start floating” and JOTR opens a small always-on-top window that stays above every tab and app. Drag it under your camera once and Chrome remembers the spot." },
@@ -26,6 +35,28 @@ const FAQ: Array<{ q: string; a: ReactNode }> = [
   { q: "Does my video leave my computer?", a: "No. Face and eye tracking run in your browser. Speech goes only to the recogniser you choose, and recordings are saved only when you download them." },
   { q: "Which browsers and devices?", a: "Chrome and Edge on Mac, Windows and ChromeOS give the full experience, including the floating window. iPhone and Android apps are on the way." },
   { q: "How much does it cost?", a: "The web app is free while JOTR is in early access." },
+  {
+    q: "Who made JOTR? Let's connect.",
+    a: (
+      <>
+        <span className="lg-equation">
+          <b>JOTR</b> = <span>Charanjot</span> + <span>Teleprompter</span>
+        </span>
+        Built by Charanjot Singh. Say hi, share feedback, or follow along as the iPhone and Android apps come together.
+        <span className="lg-socials">
+          {SOCIALS.map((s) => (
+            <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" className="lg-social">
+              {s.icon}
+              {s.label}
+            </a>
+          ))}
+          <a href={REPO_URL} target="_blank" rel="noopener noreferrer" className="lg-social star">
+            {Icon.star} Star on GitHub
+          </a>
+        </span>
+      </>
+    ),
+  },
 ];
 
 /* ----------------------------------------------------------------- motion */
@@ -169,6 +200,11 @@ function Nav() {
         <Logo />
       </Link>
       <nav className="lg-links">{links}</nav>
+      <a href={REPO_URL} target="_blank" rel="noopener noreferrer" className="lg-star" aria-label="Star JOTR on GitHub">
+        {Icon.github}
+        <span>Star</span>
+        {Icon.star}
+      </a>
       <Link to="/app" className="lg-btn lg-btn-white sm">
         Open JOTR
       </Link>
@@ -177,6 +213,9 @@ function Nav() {
       </button>
       <div className="lg-sheet" aria-hidden={!menu}>
         {links}
+        <a href={REPO_URL} target="_blank" rel="noopener noreferrer">
+          Star on GitHub
+        </a>
         <Link to="/app" className="lg-btn lg-btn-ember">
           Start free {Icon.arrow}
         </Link>
@@ -797,6 +836,14 @@ function Footer() {
       <nav>
         <Link to="/privacy">Privacy</Link>
         <Link to="/app">Open app</Link>
+        {SOCIALS.map((s) => (
+          <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.label} className="lg-footer-icon">
+            {s.icon}
+          </a>
+        ))}
+        <a href={REPO_URL} target="_blank" rel="noopener noreferrer" aria-label="JOTR on GitHub" className="lg-footer-icon">
+          {Icon.star}
+        </a>
       </nav>
     </footer>
   );

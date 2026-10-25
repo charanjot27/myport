@@ -13,6 +13,11 @@
     "e2e": "playwright test"
   },
   "dependencies": {
+    "@fontsource-variable/atkinson-hyperlegible-next": "^5.3.0",
+    "@fontsource-variable/bricolage-grotesque": "^5.3.0",
+    "@fontsource-variable/noto-sans-devanagari": "^5.3.0",
+    "@fontsource-variable/noto-sans-gurmukhi": "^5.3.0",
+    "@fontsource-variable/space-grotesk": "^5.3.0",
     "@mediapipe/tasks-vision": "0.10.21",
     "@promptsense/core": "workspace:*",
     "onnxruntime-web": "1.22.0",

@@ -27,7 +27,10 @@
   --shadow: 0 10px 40px -12px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.25);
   --glow: 0 0 0 1px rgba(255, 90, 110, 0.35), 0 8px 30px -6px rgba(255, 110, 70, 0.6);
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
-  --font: "SF Pro Display", "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI", Roboto, "Noto Sans", "Noto Sans Devanagari", sans-serif;
+  --font: "SF Pro Display", "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI", Roboto, "Noto Sans", "Noto Sans Devanagari Variable", "Noto Sans Gurmukhi Variable", sans-serif;
+  /* Prompter text: Atkinson Hyperlegible was designed for legibility (distinct I/l/1, O/0, open shapes);
+     Noto Sans covers Hindi and Punjabi with the same clean, open style. */
+  --read-font: "Atkinson Hyperlegible Next Variable", "Noto Sans Devanagari Variable", "Noto Sans Gurmukhi Variable", -apple-system, "Segoe UI", sans-serif;
   color-scheme: dark;
 }
 
@@ -647,7 +650,9 @@ table.list th {
   padding: 0 24px 80vh;
   will-change: transform;
   line-height: 1.45;
+  font-family: var(--read-font);
   font-weight: 560;
+  letter-spacing: 0.01em;
 }
 .prompter.mirrored .viewport {
   transform: scaleX(-1);

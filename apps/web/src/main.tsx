@@ -1,3 +1,6 @@
+import "@fontsource-variable/atkinson-hyperlegible-next";
+import "@fontsource-variable/noto-sans-devanagari";
+import "@fontsource-variable/noto-sans-gurmukhi";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";

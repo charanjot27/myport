@@ -24,7 +24,8 @@
   background: var(--ink);
   color: #fff;
   overflow-x: clip;
-  font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI Variable", "Segoe UI", Roboto, sans-serif;
+  --display: "Bricolage Grotesque Variable", "Space Grotesk Variable", -apple-system, sans-serif;
+  font-family: "Space Grotesk Variable", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Devanagari Variable", "Noto Sans Gurmukhi Variable", sans-serif;
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
   text-rendering: optimizeLegibility;
@@ -2259,4 +2260,131 @@ html.landing-root body {
   .lg-corner.br {
     bottom: 24px;
   }
+}
+
+/* ------------------------------------------------------------- typography */
+
+.landing h1,
+.landing h2,
+.landing h3,
+.lg-apple-h,
+.lg-logo span {
+  font-family: var(--display);
+  font-optical-sizing: auto;
+}
+.landing h1 {
+  letter-spacing: -0.045em;
+}
+.lg-apple-h,
+.lg-card h3 {
+  letter-spacing: -0.03em;
+}
+/* The statement keeps a light, airy grotesque like a title card. */
+.lg-statement h2 {
+  font-family: "Space Grotesk Variable", sans-serif;
+  font-weight: 300;
+}
+
+/* ------------------------------------------------------- GitHub + connect */
+
+.lg-star {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: background 250ms var(--soft), transform 450ms var(--spring);
+}
+.lg-star svg {
+  width: 17px;
+  height: 17px;
+}
+.lg-star svg:last-child {
+  width: 14px;
+  height: 14px;
+  color: var(--sun);
+  transition: transform 600ms var(--spring);
+}
+.lg-star:hover {
+  background: rgba(255, 255, 255, 0.13);
+  transform: translateY(-1px);
+}
+.lg-star:hover svg:last-child {
+  transform: rotate(72deg) scale(1.2);
+}
+@media (max-width: 860px) {
+  .lg-star span {
+    display: none;
+  }
+  .lg-star {
+    padding: 0 11px;
+  }
+}
+
+.lg-equation {
+  display: block;
+  margin-bottom: 12px;
+  font-family: var(--display);
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
+  color: var(--text-dark);
+}
+.lg-equation b {
+  background: var(--ember);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-weight: 800;
+}
+.lg-socials {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+.lg-social {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: #1b1016;
+  color: #fff !important;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: transform 450ms var(--spring), box-shadow 300ms var(--soft);
+}
+.lg-social svg {
+  width: 18px;
+  height: 18px;
+}
+.lg-social:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px -12px rgba(255, 110, 70, 0.8);
+}
+.lg-social.star {
+  background: var(--ember);
+  color: var(--text-dark) !important;
+}
+.lg-footer-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+}
+.lg-footer-icon svg {
+  width: 16px;
+  height: 16px;
+}
+.lg-footer nav {
+  align-items: center;
+  flex-wrap: wrap;
 }

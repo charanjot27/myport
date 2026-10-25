@@ -2,8 +2,8 @@ import type { SpeechProvider, SpeechProviderOptions, SpeechResult, SpeechStatus 
 
 type Ctor = new () => SpeechRecognition;
 
-function recognitionCtor(): Ctor | null {
-  const w = window as unknown as { SpeechRecognition?: Ctor; webkitSpeechRecognition?: Ctor };
+function recognitionCtor(host: Window = window): Ctor | null {
+  const w = host as unknown as { SpeechRecognition?: Ctor; webkitSpeechRecognition?: Ctor };
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 }
 
@@ -28,7 +28,8 @@ export class WebSpeechProvider implements SpeechProvider {
   constructor(private readonly options: SpeechProviderOptions) {}
 
   async start(): Promise<void> {
-    const Rec = recognitionCtor();
+    const host = this.options.host ?? window;
+    const Rec = recognitionCtor(host) ?? recognitionCtor();
     if (!Rec) {
       this.onStatus?.("unsupported", "This browser has no built-in speech recognition. Use Chrome or Edge, or choose a cloud provider in Settings.");
       return;
@@ -66,7 +67,7 @@ export class WebSpeechProvider implements SpeechProvider {
       }
       // Chrome stops after ~60 s or a silence; restart with backoff if it keeps failing.
       const delay = Math.min(2000, 100 * 2 ** this.restarts++);
-      window.setTimeout(() => {
+      host.setTimeout(() => {
         if (this.running) {
           try {
             rec.start();

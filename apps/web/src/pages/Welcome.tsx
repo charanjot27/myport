@@ -350,6 +350,9 @@ export function WelcomePage() {
           <>
             <h2>Try it</h2>
             <p>Read the line under your camera out loud. Words dim as you say them. That's it, you're ready.</p>
+            <p className="muted" style={{ fontSize: "0.85rem" }}>
+              Tip: press <strong>⧉ Start floating</strong> on any script to keep the text on top of Meet, an interview site or any other tab or app.
+            </p>
           </>
         )}
 

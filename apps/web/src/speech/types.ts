@@ -22,4 +22,6 @@ export interface SpeechProviderOptions {
   /** Words worth boosting in the recogniser (names, jargon from the script). */
   keyterms: string[];
   apiUrl: string;
+  /** Window to run recognition in (a floating Picture-in-Picture window stays active when our tab is hidden). */
+  host?: Window;
 }

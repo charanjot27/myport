@@ -1,8 +1,10 @@
 import { detectStumbles, parseScript, ReadingGate, readingFeatures, readingProbability, FusionTimeline, type ParsedScript } from "@promptsense/core";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { focusFrame, textColor, type FocusFrame } from "../lib/device";
 import { openMedia, stopMedia } from "../lib/media";
+import { closeFloatingWindow, floatingSupported, openFloatingWindow } from "../lib/pip";
 import { recordings } from "../lib/recordings";
 import { getSettings, updateSettings, useSettings } from "../lib/settings";
 import { sessions, scripts, type StoredScript } from "../lib/storage";
@@ -34,6 +36,10 @@ export function PrompterPage() {
   const [research, setResearch] = useState(false);
   const [toolbarVisible, setToolbarVisible] = useState(true);
   const [win, setWin] = useState({ w: window.innerWidth, h: window.innerHeight });
+  /** The floating always-on-top window, when the prompter has been popped out. */
+  const [pip, setPip] = useState<Window | null>(null);
+  const visionVideoRef = useRef<HTMLVideoElement | null>(null);
+  const keyHandlerRef = useRef<(e: KeyboardEvent) => void>(() => undefined);
 
   const viewportRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -78,7 +84,7 @@ export function PrompterPage() {
     ? focusFrame({ placement: settings.cameraPlacement, fontSize: settings.fontSize, lines: settings.focusLines, columnWidth: settings.columnWidth }, win.w, win.h)
     : null;
   const lineHeight = settings.fontSize * 1.45;
-  const readingOffset = frame ? Math.round(lineHeight * 0.15) : Math.round(settings.readingLine * win.h);
+  const readingOffset = frame || pip ? Math.round(lineHeight * 0.15) : Math.round(settings.readingLine * win.h);
   const readingOffsetRef = useRef(readingOffset);
   readingOffsetRef.current = readingOffset;
 
@@ -89,6 +95,9 @@ export function PrompterPage() {
     if (!content || !viewport) return;
     layoutRef.current.measure(content);
     highlighterRef.current.attach(content);
+    // The text may have just moved between the tab and the floating window: re-apply the live highlight.
+    const h = engineRef.current?.state;
+    if (h) highlighterRef.current.update(h.currentWord, getSettings().stumbleAssist ? h.hardWord : null);
     engineRef.current?.setViewport(viewport.getBoundingClientRect());
     engineRef.current?.setReadingOffset(readingOffsetRef.current);
   }, []);
@@ -99,7 +108,21 @@ export function PrompterPage() {
     const ro = new ResizeObserver(() => remeasure());
     if (viewportRef.current) ro.observe(viewportRef.current);
     return () => ro.disconnect();
-  }, [script, settings.fontSize, settings.lineWidth, settings.layout, settings.focusLines, settings.columnWidth, settings.cameraPlacement, win, remeasure]);
+  }, [script, settings.fontSize, settings.lineWidth, settings.layout, settings.focusLines, settings.columnWidth, settings.cameraPlacement, win, pip, remeasure]);
+
+  // The floating window has its own size and resize events.
+  useEffect(() => {
+    if (!pip) return;
+    const t = window.setTimeout(remeasure, 30);
+    pip.addEventListener("resize", remeasure);
+    const onKey = (e: KeyboardEvent) => keyHandlerRef.current(e);
+    pip.addEventListener("keydown", onKey);
+    return () => {
+      window.clearTimeout(t);
+      pip.removeEventListener("resize", remeasure);
+      pip.removeEventListener("keydown", onKey);
+    };
+  }, [pip, remeasure]);
 
   // Apply highlights from the HUD.
   useEffect(() => {
@@ -109,6 +132,8 @@ export function PrompterPage() {
   const teardown = useCallback(() => {
     speechRef.current?.stop();
     speechRef.current = null;
+    visionVideoRef.current?.remove();
+    visionVideoRef.current = null;
     const vision = sharedVision();
     vision.stop();
     vision.onFrame = null;
@@ -121,12 +146,78 @@ export function PrompterPage() {
     teardown();
   }, [teardown]);
 
-  const start = async () => {
+  /** (Re)start speech recognition hosted in `host`, so it keeps running when our tab is in the background. */
+  const startSpeech = async (engine: PrompterEngine, stream: MediaStream, host: Window) => {
+    if (!script) return;
+    const s = getSettings();
+    if (s.speechProvider === "none" || s.scrollMode !== "voice") return;
+    speechRef.current?.stop();
+    const keyterms = [...new Set(script.words.filter((w) => w.difficulty >= 0.5).map((w) => w.display.replace(/[^\p{L}\p{N}'-]/gu, "")))].filter(Boolean);
+    const provider = createSpeechProvider(s.speechProvider, { language: s.language, keyterms, apiUrl: s.apiUrl, host });
+    if (!provider) return;
+    provider.onResult = (r) => engine.handleSpeech(r);
+    provider.onStatus = (st, detail) => engine.handleSpeechStatus(st, detail);
+    speechRef.current = provider;
+    await provider.start(stream);
+  };
+
+  /** Move the running session into a floating always-on-top window (or back). */
+  const attachFloating = (w: Window) => {
+    setPip(w);
+    const engine = engineRef.current;
+    engine?.setHost(w);
+    const v = visionVideoRef.current;
+    if (v) {
+      w.document.body.append(v);
+      void v.play().catch(() => undefined);
+    }
+    if (engine && streamRef.current && speechRef.current) void startSpeech(engine, streamRef.current, w);
+    w.addEventListener(
+      "pagehide",
+      () => {
+        setPip(null);
+        const e = engineRef.current;
+        if (!e) return;
+        e.setHost(window);
+        if (visionVideoRef.current) {
+          document.body.append(visionVideoRef.current);
+          void visionVideoRef.current.play().catch(() => undefined);
+        }
+        if (streamRef.current && speechRef.current) void startSpeech(e, streamRef.current, window);
+      },
+      { once: true },
+    );
+  };
+
+  const float = async () => {
+    try {
+      const s = getSettings();
+      const f = focusFrame({ placement: s.cameraPlacement, fontSize: s.fontSize, lines: s.focusLines, columnWidth: s.columnWidth });
+      if (document.fullscreenElement) await document.exitFullscreen().catch(() => undefined);
+      attachFloating(await openFloatingWindow({ width: f.width, height: f.height + 34 }));
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  };
+
+  const start = async (floating = false) => {
     if (!script || !stored) return;
     setError("");
     const s = getSettings();
-    // Fullscreen makes the camera position map exactly onto the window (this click is the required user gesture).
-    if (s.layout === "camera") await document.documentElement.requestFullscreen?.().catch(() => undefined);
+    // Both need the click's user activation, so they come first.
+    let floatWin: Window | null = null;
+    if (floating) {
+      try {
+        const f = focusFrame({ placement: s.cameraPlacement, fontSize: s.fontSize, lines: s.focusLines, columnWidth: s.columnWidth });
+        floatWin = await openFloatingWindow({ width: f.width, height: f.height + 34 });
+      } catch (e) {
+        setError((e as Error).message);
+        return;
+      }
+    } else if (s.layout === "camera") {
+      // Fullscreen makes the camera position map exactly onto the window.
+      await document.documentElement.requestFullscreen?.().catch(() => undefined);
+    }
     const needVideo = s.showCamera || s.pauseOnLookAway || s.gestureControl || !!s.gazeModel || record;
     let stream: MediaStream | null = null;
     try {
@@ -148,32 +239,36 @@ export function PrompterPage() {
     // Background: trained stumble model if one is deployed.
     void OnnxStumblePredictor.load().then((p) => p && engine.setPredictor(p, p.thresholds));
 
-    // Countdown gives the speaker a beat to look at the text.
-    setPhase("countdown");
-    for (let i = 3; i > 0; i--) {
-      setCount(i);
-      await new Promise((r) => setTimeout(r, 700));
+    // Countdown gives the speaker a beat to look at the text (skipped when floating: you're switching tabs anyway).
+    if (!floatWin) {
+      setPhase("countdown");
+      for (let i = 3; i > 0; i--) {
+        setCount(i);
+        await new Promise((r) => setTimeout(r, 700));
+      }
     }
     setPhase("running");
     engine.start(stream);
 
-    if (stream && stream.getVideoTracks().length && videoRef.current) {
-      const video = videoRef.current;
-      video.srcObject = stream;
-      await video.play().catch(() => undefined);
-      void startVision(engine, video);
+    if (stream && stream.getVideoTracks().length) {
+      // Vision runs on its own hidden video element so it can move into the floating window with the text.
+      const v = document.createElement("video");
+      v.muted = true;
+      v.playsInline = true;
+      v.style.cssText = "position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;left:0;top:0";
+      v.srcObject = stream;
+      document.body.append(v);
+      visionVideoRef.current = v;
+      await v.play().catch(() => undefined);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        void videoRef.current.play().catch(() => undefined);
+      }
+      void startVision(engine, v);
     }
 
-    if (stream && s.speechProvider !== "none" && s.scrollMode === "voice") {
-      const keyterms = [...new Set(script.words.filter((w) => w.difficulty >= 0.5).map((w) => w.display.replace(/[^\p{L}\p{N}'-]/gu, "")))].filter(Boolean);
-      const provider = createSpeechProvider(s.speechProvider, { language: s.language, keyterms, apiUrl: s.apiUrl });
-      if (provider) {
-        provider.onResult = (r) => engine.handleSpeech(r);
-        provider.onStatus = (st, detail) => engine.handleSpeechStatus(st, detail);
-        speechRef.current = provider;
-        await provider.start(stream);
-      }
-    }
+    if (stream) await startSpeech(engine, stream, floatWin ?? window);
+    if (floatWin) attachFloating(floatWin);
   };
 
   const startVision = async (engine: PrompterEngine, video: HTMLVideoElement) => {
@@ -218,10 +313,10 @@ export function PrompterPage() {
       console.error(e);
       setVisionStatus("failed");
       setError("Vision models could not load. Voice following still works; look-away pause, gaze and gestures are off.");
-      if (record && videoRef.current?.srcObject) {
+      if (record && visionVideoRef.current?.srcObject) {
         // Record the raw camera when processing is unavailable.
         const c = document.createElement("canvas");
-        const v = videoRef.current;
+        const v = visionVideoRef.current;
         c.width = v.videoWidth || 1280;
         c.height = v.videoHeight || 720;
         const ctx = c.getContext("2d")!;
@@ -243,6 +338,8 @@ export function PrompterPage() {
     setPhase("saving");
     const blob = (await recorderRef.current?.stop()) ?? null;
     recorderRef.current = null;
+    closeFloatingWindow();
+    setPip(null);
     teardown();
     const refined = engine.refinedGazeModel;
     if (refined) updateSettings({ gazeModel: refined.model });
@@ -302,6 +399,7 @@ export function PrompterPage() {
           break;
       }
     };
+    keyHandlerRef.current = onKey;
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }); // re-bind each render so `stop` sees fresh state
@@ -316,7 +414,7 @@ export function PrompterPage() {
     };
     vp.addEventListener("wheel", onWheel, { passive: false });
     return () => vp.removeEventListener("wheel", onWheel);
-  }, [script]);
+  }, [script, pip]);
 
   // Auto-hide the toolbar while running.
   const poke = () => {
@@ -354,35 +452,105 @@ export function PrompterPage() {
     "--ps-hard": `rgb(${[255, 150, 60].map((c) => Math.round(c * Math.max(0.3, settings.textBrightness))).join(", ")})`,
   } as React.CSSProperties;
 
+  // In the floating window the text fills the window (you size and place it under the camera yourself).
+  const textWindowStyle: React.CSSProperties | undefined = pip
+    ? { left: 0, top: 0, right: 0, bottom: 30 }
+    : frame
+      ? { left: frame.left, top: frame.top, width: frame.width, height: frame.height, right: "auto", bottom: "auto" }
+      : undefined;
+  const compact = !!(frame || pip);
+  const textWindow = (
+    <div className="viewport" ref={viewportRef} data-testid="text-window" style={textWindowStyle}>
+      <div
+        className="content"
+        ref={contentRef}
+        style={{
+          fontSize: settings.fontSize,
+          maxWidth: compact ? "none" : `${settings.lineWidth}ch`,
+          paddingTop: readingOffset,
+          paddingLeft: compact ? lineHeight * 0.3 : undefined,
+          paddingRight: compact ? lineHeight * 0.3 : undefined,
+        }}
+      >
+        {script && <ScriptText script={script} onWordClick={(i) => engineRef.current?.seekWord(i)} />}
+      </div>
+      {!compact && <div className="reading-line" style={{ top: readingOffset + settings.fontSize * 0.72 }} />}
+    </div>
+  );
+
+  const floatingWindow =
+    pip &&
+    createPortal(
+      <div className={`prompter camera-layout pip-root${settings.mirror ? " mirrored" : ""}`} style={colors} data-testid="floating-prompter">
+        {textWindow}
+        <div className="pip-bar">
+          <button onClick={() => engineRef.current?.command("toggle_pause")} title="Pause / resume (Space)">
+            {hud?.paused ? "▶" : "❚❚"}
+          </button>
+          <button onClick={() => engineRef.current?.command("rewind_sentence")} title="Rewind sentence (R)">
+            ↺
+          </button>
+          <button onClick={() => updateSettings({ textBrightness: Math.max(0.2, +(getSettings().textBrightness - 0.1).toFixed(2)) })} title="Dimmer">
+            ☾
+          </button>
+          <button onClick={() => updateSettings({ textBrightness: Math.min(1, +(getSettings().textBrightness + 0.1).toFixed(2)) })} title="Brighter">
+            ☀
+          </button>
+          <button onClick={() => updateSettings({ fontSize: Math.max(18, getSettings().fontSize - 4) })} title="Smaller text">
+            A−
+          </button>
+          <button onClick={() => updateSettings({ fontSize: Math.min(120, getSettings().fontSize + 4) })} title="Larger text">
+            A+
+          </button>
+          <span className="pip-status" role="status">
+            {banner ?? (hud?.speaking ? "listening…" : "")}
+          </span>
+          <button onClick={() => pip.close()} title="Bring the text back into the PromptSense tab">
+            ⤺
+          </button>
+          <button onClick={() => void stop()} title="Finish (Esc)" data-testid="pip-stop">
+            ■
+          </button>
+        </div>
+      </div>,
+      pip.document.body,
+    );
+
   return (
     <div
       className={`prompter${settings.mirror ? " mirrored" : ""}${cameraLayout ? " camera-layout" : ""}`}
       onMouseMove={poke}
       data-testid="prompter"
       data-predictor={hud?.predictor}
+      data-floating={pip ? "true" : undefined}
       style={colors}
     >
-      <div
-        className="viewport"
-        ref={viewportRef}
-        data-testid="text-window"
-        style={frame ? { left: frame.left, top: frame.top, width: frame.width, height: frame.height, right: "auto", bottom: "auto" } : undefined}
-      >
-        <div
-          className="content"
-          ref={contentRef}
-          style={{
-            fontSize: settings.fontSize,
-            maxWidth: frame ? "none" : `${settings.lineWidth}ch`,
-            paddingTop: readingOffset,
-            paddingLeft: frame ? lineHeight * 0.3 : undefined,
-            paddingRight: frame ? lineHeight * 0.3 : undefined,
-          }}
-        >
-          {script && <ScriptText script={script} onWordClick={(i) => engineRef.current?.seekWord(i)} />}
+      {pip ? floatingWindow : textWindow}
+      {pip && running && (
+        <div className="overlay">
+          <div className="panel">
+            <h2 style={{ marginTop: 0 }}>Floating over your other tabs</h2>
+            <p>
+              Switch to Meet, your interview or any other tab or app. The text stays on top. <strong>Drag the floating window right under your camera</strong>{" "}
+              once; Chrome remembers where you put it.
+            </p>
+            <p className="muted" style={{ fontSize: "0.85rem" }}>
+              If you share your <em>entire screen</em>, the floating window is visible in the share. Share a tab or window instead.
+            </p>
+            <div className="row">
+              <button className="btn" onClick={() => engineRef.current?.command("toggle_pause")}>
+                {hud?.paused ? "▶ Resume" : "❚❚ Pause"}
+              </button>
+              <button className="btn" onClick={() => pip.close()}>
+                Bring text back here
+              </button>
+              <button className="btn primary" onClick={() => void stop()}>
+                ■ Finish
+              </button>
+            </div>
+          </div>
         </div>
-        {!frame && <div className="reading-line" style={{ top: readingOffset + settings.fontSize * 0.72 }} />}
-      </div>
+      )}
 
       {settings.stumbleAssist && running && hud && (
         <div className="risk" title={`Stumble risk (${hud.predictor})`}>
@@ -419,6 +587,11 @@ export function PrompterPage() {
             <button className="btn small" onClick={() => engineRef.current?.command("rewind_sentence")} title="Rewind sentence (R)">
               ↺ Sentence
             </button>
+            {floatingSupported() && !pip && (
+              <button className="btn small" onClick={() => void float()} title="Keep the text on top of every tab and app">
+                ⧉ Float over other tabs
+              </button>
+            )}
           </>
         ) : null}
         <select
@@ -509,6 +682,11 @@ export function PrompterPage() {
               <button className="btn primary" disabled={!script} onClick={() => void start()} data-testid="start">
                 Start
               </button>
+              {floatingSupported() && (
+                <button className="btn primary" disabled={!script} onClick={() => void start(true)} data-testid="start-floating" title="An always-on-top window that works over Meet, interview sites and any other tab or app">
+                  ⧉ Start floating (any tab)
+                </button>
+              )}
               <Link className="btn" to={`/edit/${id}`}>
                 Edit script
               </Link>

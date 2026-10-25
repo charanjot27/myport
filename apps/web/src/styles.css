@@ -791,3 +791,50 @@ table.list th {
   padding: 2px 10px;
   white-space: nowrap;
 }
+
+/* ------------------------------------------------------ floating prompter */
+
+.pip-body {
+  margin: 0;
+  background: #000;
+  overflow: hidden;
+}
+.pip-root .viewport {
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 60%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 60%, transparent 100%);
+}
+/* Controls stay nearly invisible (no glare) until you hover the window. */
+.pip-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 6px;
+  opacity: 0.22;
+  transition: opacity 200ms;
+  font: 12px system-ui, sans-serif;
+  color: #8b8b8b;
+}
+.pip-bar:hover {
+  opacity: 1;
+}
+.pip-bar button {
+  background: #161616;
+  color: #bbb;
+  border: 1px solid #2a2a2a;
+  border-radius: 6px;
+  padding: 2px 7px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.pip-status {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  padding: 0 6px;
+}

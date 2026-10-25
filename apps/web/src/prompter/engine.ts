@@ -172,25 +172,56 @@ export class PrompterEngine {
     this.patch({ predictor: p.name }, true);
   }
 
+  /**
+   * The window that drives the loops. When the prompter floats in a
+   * Picture-in-Picture window, our own tab is in the background where the
+   * browser throttles animation frames and timers, so the visible PiP window
+   * schedules the work instead.
+   */
+  private host: Window = window;
+
+  setHost(win: Window): void {
+    if (win === this.host) return;
+    const running = this.hud.running && !this.stopped;
+    if (running) this.stopLoops();
+    this.host = win;
+    if (running) this.startLoops();
+  }
+
+  /** Gaze calibration maps to our own tab's coordinates, so gaze-to-word only works when the text is shown there. */
+  private get gazeOnText(): boolean {
+    return this.host === window;
+  }
+
   start(stream: MediaStream | null): void {
     this.startedAt = performance.now();
     this.lastTick = this.startedAt;
     if (stream?.getAudioTracks().length) this.vad.start(stream);
     this.patch({ running: true }, true);
     this.timeline.emit("start", 0);
-    const tick = (now: number) => {
-      if (this.stopped) return;
-      this.tick(now);
-      this.raf = requestAnimationFrame(tick);
+    this.startLoops();
+  }
+
+  private startLoops(): void {
+    const host = this.host;
+    const tick = () => {
+      if (this.stopped || host !== this.host) return;
+      // performance.now() of our own window: every timestamp shares one clock, whichever window schedules.
+      this.tick(performance.now());
+      this.raf = host.requestAnimationFrame(tick);
     };
-    this.raf = requestAnimationFrame(tick);
-    this.featureTimer = window.setInterval(() => void this.featureFrame(), 1000 / STUMBLE_SPEC.frameHz);
+    this.raf = host.requestAnimationFrame(tick);
+    this.featureTimer = host.setInterval(() => void this.featureFrame(), 1000 / STUMBLE_SPEC.frameHz);
+  }
+
+  private stopLoops(): void {
+    this.host.cancelAnimationFrame(this.raf);
+    this.host.clearInterval(this.featureTimer);
   }
 
   stop(): SessionRecord {
     this.stopped = true;
-    cancelAnimationFrame(this.raf);
-    window.clearInterval(this.featureTimer);
+    this.stopLoops();
     this.vad.stop();
     this.patch({ running: false }, true);
     return this.buildRecord();
@@ -251,10 +282,10 @@ export class PrompterEngine {
         gx = this.fx.filter(p.x, f.t);
         gy = this.fy.filter(p.y, f.t);
         gazePoint = { x: gx, y: gy };
-        if (this.viewport) {
+        if (this.viewport && this.gazeOnText) {
           gazeWord = this.opts.layout.wordAtPoint(gx * window.innerWidth, gy * window.innerHeight, this.viewport.rect, this.scroll.position, this.opts.settings.mirror);
         }
-        this.refineCalibration(t, face.features.vector, p);
+        if (this.gazeOnText) this.refineCalibration(t, face.features.vector, p);
       }
       const g: GazeSample = { t, x: gx, y: gy, valid: !face.features.blink, blink: face.features.blink, yaw: face.features.pose.yaw, pitch: face.features.pose.pitch };
       this.timeline.gaze.push(g);

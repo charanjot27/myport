@@ -108,7 +108,7 @@ export class VisionEngine {
   stop(): void {
     this.running = false;
     if (this.video && "cancelVideoFrameCallback" in this.video) this.video.cancelVideoFrameCallback(this.rafHandle);
-    cancelAnimationFrame(this.rafHandle);
+    (this.video?.ownerDocument.defaultView ?? window).cancelAnimationFrame(this.rafHandle);
   }
 
   dispose(): void {
@@ -123,10 +123,12 @@ export class VisionEngine {
   private schedule(): void {
     const v = this.video;
     if (!this.running || !v) return;
-    if ("requestVideoFrameCallback" in v) {
-      this.rafHandle = v.requestVideoFrameCallback(() => this.process());
+    const el = v as HTMLVideoElement;
+    if ("requestVideoFrameCallback" in el) {
+      this.rafHandle = el.requestVideoFrameCallback(() => this.process());
     } else {
-      this.rafHandle = requestAnimationFrame(() => this.process());
+      // The video may live in a floating Picture-in-Picture document; use that window's frames.
+      this.rafHandle = ((el as HTMLVideoElement).ownerDocument.defaultView ?? window).requestAnimationFrame(() => this.process());
     }
   }
 

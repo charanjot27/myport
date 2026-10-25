@@ -11,7 +11,7 @@ Video never leaves the device: face, eye and hand tracking run in the browser.
 | Path | What it is |
 |---|---|
 | `packages/core` | Platform-independent engine: script parsing, streaming speech-to-script alignment, scroll physics, gaze calibration, reading detection, stumble features and predictor, coach report, gestures, liveness scoring. `@promptsense/core/browser` holds the WebGL effects. |
-| `apps/web` | The product: Vite + React app (script library, editor, prompter, calibration, coach report, liveness check, research labelling, account). |
+| `apps/web` | The product: Vite + React app (setup tour, script library, editor, prompter with camera-focus and always-on-top floating modes, calibration, coach report, liveness check, research labelling, account). |
 | `services/api` | Fastify API on PostgreSQL (or SQLite for development): accounts, script sync, session summaries, cloud-speech tokens, signed liveness attestations, Stripe billing, research uploads, data export and deletion. |
 | `apps/extension` | Chrome extension that applies the corneal shield and reading-aware eye contact to your camera inside Meet, Zoom, Teams, Whereby, Riverside and StreamYard. |
 | `ml` | Training pipeline for the stumble predictor (PyTorch → ONNX). |
@@ -58,15 +58,16 @@ pixel-level checks of the effects, the extension, and the full Docker stack.
 They can't judge real-world feel. Please check these with real hardware:
 
 1. **Setup tour** (opens on first visit, or **Setup tour** in the header): it should take under a minute. Check that it detects your Mac and camera, and that the text in step 6 sits right under your camera.
-2. **Look at the lens:** record a take and watch it back. While reading, you should appear to be looking at the viewer.
-3. **Reflections:** wear your glasses if you have them. The reflection check should report whether text showed up and pick a brightness. Then zoom into a recording: no readable text in your eyes or lenses. Use ☾/☀ in the prompter toolbar to adjust.
-4. **Voice following** (Chrome): read the sample script, skip a paragraph, re-read a sentence, say "um". The underline should track you within about 2 words.
-5. **Calibration** (about 8 s, in the tour or at `/calibrate`): the result should be "good" or "usable". It keeps fine-tuning while you read.
-6. **Stumble assist**: read a script with hard words. Watch for hard words turning orange just before you reach them.
-7. **Look-away pause**: turn your head away; the scroll should pause and resume when you look back.
-8. **Gestures** (enable in Settings): an open palm toggles pause; ✌ jumps a section.
-9. **Liveness** (`/verify`): try it in a normally lit room, then hold a phone video of yourself up to the camera; that should fail.
-10. **Extension**: `pnpm --filter @promptsense/extension build`, then load `apps/extension/dist` via `chrome://extensions` (Developer mode → Load unpacked). Join a Meet test call and check the self-view.
+2. **Floating over other tabs:** open a script and click **⧉ Start floating (any tab)**. Drag the small window right under your camera, then switch to Google Meet or another site. The text should stay on top and keep following your voice. ⤺ brings it back; ■ finishes.
+3. **Look at the lens:** record a take and watch it back. While reading, you should appear to be looking at the viewer.
+4. **Reflections:** wear your glasses if you have them. The reflection check should report whether text showed up and pick a brightness. Then zoom into a recording: no readable text in your eyes or lenses. Use ☾/☀ in the prompter toolbar to adjust.
+5. **Voice following** (Chrome): read the sample script, skip a paragraph, re-read a sentence, say "um". The underline should track you within about 2 words.
+6. **Calibration** (about 8 s, in the tour or at `/calibrate`): the result should be "good" or "usable". It keeps fine-tuning while you read.
+7. **Stumble assist**: read a script with hard words. Watch for hard words turning orange just before you reach them.
+8. **Look-away pause**: turn your head away; the scroll should pause and resume when you look back.
+9. **Gestures** (enable in Settings): an open palm toggles pause; ✌ jumps a section.
+10. **Liveness** (`/verify`): try it in a normally lit room, then hold a phone video of yourself up to the camera; that should fail.
+11. **Extension**: `pnpm --filter @promptsense/extension build`, then load `apps/extension/dist` via `chrome://extensions` (Developer mode → Load unpacked). Join a Meet test call and check the self-view.
 
 Tell me what breaks and what feels off; that is the feedback loop.
 

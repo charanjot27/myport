@@ -19,6 +19,13 @@ export function floatingSupported(): boolean {
   return api() !== null;
 }
 
+/** Why the floating window is unavailable here, in words the user can act on (null when it works). */
+export function floatingUnavailableReason(): string | null {
+  if (floatingSupported()) return null;
+  if (!window.isSecureContext) return "The floating window needs a secure address. Open JOTR at https://… or http://localhost:5173 (not an IP address like 192.168…).";
+  return "Your browser can't open always-on-top windows. Use Chrome or Edge (version 116 or newer) on a computer.";
+}
+
 /** Copy our stylesheets so React content portalled into the window looks the same. */
 function copyStyles(target: Document): void {
   for (const sheet of Array.from(document.styleSheets)) {

@@ -51,3 +51,20 @@ test("floating prompter stays on top and keeps following speech while another ta
   await pip2.getByTestId("pip-stop").click();
   await expect(page.getByTestId("report")).toBeVisible();
 });
+
+test("both reading modes are offered, and floating explains itself where the browser can't do it", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.__promptsenseFakeSpeech = true;
+    localStorage.setItem("promptsense.settings.v1", JSON.stringify({ onboarded: true }));
+    // Simulate a browser without Document Picture-in-Picture (Safari, Firefox).
+    delete (window as unknown as { documentPictureInPicture?: unknown }).documentPictureInPicture;
+  });
+  await page.goto("/app");
+  await page.getByRole("button", { name: "Try the sample script" }).click();
+  await page.getByRole("button", { name: "Start prompting" }).click();
+  await expect(page.getByTestId("start")).toContainText("Start here");
+  const float = page.getByTestId("start-floating");
+  await expect(float).toContainText("Float over any tab");
+  await float.click();
+  await expect(page.getByText(/Use Chrome or Edge|secure address/)).toBeVisible();
+});

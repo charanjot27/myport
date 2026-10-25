@@ -6,7 +6,7 @@ import { AdaptiveBrightness, AmbientMeter } from "../lib/adaptive";
 import { focusFrame, textColor, type FocusFrame } from "../lib/device";
 import { EyeGlareMeter } from "../lib/reflection";
 import { openMedia, stopMedia } from "../lib/media";
-import { closeFloatingWindow, floatingSupported, openFloatingWindow } from "../lib/pip";
+import { closeFloatingWindow, floatingSupported, floatingUnavailableReason, openFloatingWindow } from "../lib/pip";
 import { recordings } from "../lib/recordings";
 import { getSettings, updateSettings, useSettings } from "../lib/settings";
 import { htmlLang, resolveLanguage } from "../lib/languages";
@@ -34,6 +34,12 @@ export function PrompterPage() {
   const [count, setCount] = useState(3);
   const [hud, setHud] = useState<HudState | null>(null);
   const [error, setError] = useState("");
+  // Messages shown during a take (like "floating isn't available here") fade after a few seconds.
+  useEffect(() => {
+    if (!error || phase !== "running") return;
+    const t = setTimeout(() => setError(""), 7000);
+    return () => clearTimeout(t);
+  }, [error, phase]);
   const [visionStatus, setVisionStatus] = useState<"off" | "loading" | "on" | "failed">("off");
   const [record, setRecord] = useState(false);
   const [research, setResearch] = useState(false);
@@ -474,7 +480,9 @@ export function PrompterPage() {
   const backdrop = running && !pip && record && settings.cameraBehindText;
   const banner = !hud || !running
     ? null
-    : hud.paused
+    : error
+      ? error
+      : hud.paused
       ? "Paused · press Space or show an open palm to resume"
       : hud.pauseReason === "look-away"
         ? "Paused while you look away"
@@ -629,8 +637,16 @@ export function PrompterPage() {
             <button className="btn small" onClick={() => engineRef.current?.command("rewind_sentence")} title="Rewind sentence (R)">
               ↺ Sentence
             </button>
-            {floatingSupported() && !pip && (
-              <button className="btn small" onClick={() => void float()} title="Keep the text on top of every tab and app">
+            {!pip && (
+              <button
+                className="btn small"
+                onClick={() => {
+                  const why = floatingUnavailableReason();
+                  if (why) setError(why);
+                  else void float();
+                }}
+                title="Keep the text on top of every tab and app"
+              >
                 ⧉ Float over other tabs
               </button>
             )}
@@ -732,16 +748,34 @@ export function PrompterPage() {
               </label>
             )}
             {error && <div className="alert error">{error}</div>}
-            <div className="row" style={{ marginTop: 16 }}>
-              <button className="btn primary" disabled={!script} onClick={() => void start()} data-testid="start">
-                Start
+            <div className="start-modes" role="group" aria-label="How to read">
+              <button className="start-mode" disabled={!script} onClick={() => void start()} data-testid="start">
+                <span className="start-mode-icon" aria-hidden>
+                  ▶
+                </span>
+                <b>Start here</b>
+                <span>Full screen in this tab.{record && settings.cameraBehindText ? " Your camera shows behind the text." : " Best for recording a video."}</span>
               </button>
-              {floatingSupported() && (
-                <button className="btn primary" disabled={!script} onClick={() => void start(true)} data-testid="start-floating" title="An always-on-top window that works over Meet, interview sites and any other tab or app">
-                  ⧉ Start floating (any tab)
-                </button>
-              )}
-              <Link className="btn" to={`/edit/${id}`}>
+              <button
+                className={`start-mode${floatingSupported() ? "" : " unavailable"}`}
+                disabled={!script}
+                onClick={() => {
+                  const why = floatingUnavailableReason();
+                  if (why) setError(why);
+                  else void start(true);
+                }}
+                data-testid="start-floating"
+                title="An always-on-top window that works over Meet, interview sites and any other tab or app"
+              >
+                <span className="start-mode-icon" aria-hidden>
+                  ⧉
+                </span>
+                <b>Float over any tab</b>
+                <span>{floatingSupported() ? "An always-on-top window for Meet, interviews and other apps." : "Not available in this browser. Click to see why."}</span>
+              </button>
+            </div>
+            <div className="row" style={{ marginTop: 12 }}>
+              <Link className="btn small ghost" to={`/edit/${id}`}>
                 Edit script
               </Link>
             </div>

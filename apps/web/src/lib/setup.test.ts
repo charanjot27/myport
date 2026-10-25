@@ -32,16 +32,16 @@ describe("text window", () => {
     expect(textColor(1, "neutral")).toBe("rgb(236, 236, 236)");
     expect(textColor(0.5, "warm")).toBe("rgb(128, 104, 75)");
   });
-  it("puts calibration points inside the text window", () => {
+  it("starts calibration in the text window and validates inside it", () => {
     const f = focusFrame(opts, 1000, 800, 500);
     const t = targetsForFrame(f, 1000, 800);
-    expect(t.calibrate).toHaveLength(5);
-    for (const p of [...t.calibrate, ...t.validate]) {
-      expect(p.x * 1000).toBeGreaterThanOrEqual(f.left);
-      expect(p.x * 1000).toBeLessThanOrEqual(f.left + f.width);
-      expect(p.y * 800).toBeGreaterThanOrEqual(f.top);
-      expect(p.y * 800).toBeLessThanOrEqual(f.top + f.height);
-    }
+    expect(t.calibrate).toHaveLength(10);
+    const inside = (p: { x: number; y: number }) => p.x * 1000 >= f.left && p.x * 1000 <= f.left + f.width && p.y * 800 >= f.top && p.y * 800 <= f.top + f.height;
+    expect(inside(t.calibrate[0]!)).toBe(true);
+    for (const p of t.validate) expect(inside(p)).toBe(true);
+    // The grid spans most of the screen width so the mapping is well determined.
+    const xs = t.calibrate.map((p) => p.x);
+    expect(Math.max(...xs) - Math.min(...xs)).toBeGreaterThan(0.7);
   });
 });
 

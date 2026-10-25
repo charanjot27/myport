@@ -1,6 +1,7 @@
 import { buildReport, parseScript, type CoachReport } from "@promptsense/core";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { AnimatedNumber, ScoreRing } from "../components/Animated";
 import { formatDuration, pct } from "../lib/format";
 import { recordings } from "../lib/recordings";
 import { sessions, type StoredSession } from "../lib/storage";
@@ -39,17 +40,13 @@ export function ReportPage() {
     <main className="page" data-testid="report">
       <div className="row">
         <div className="grow">
+          <div className="muted" style={{ fontSize: "0.8rem", letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 650 }}>Coach report</div>
           <h1 style={{ marginBottom: 4 }}>{session.scriptTitle}</h1>
           <p className="muted" style={{ marginTop: 0 }}>
             {new Date(session.startedAt).toLocaleString()} · {formatDuration(report.durationSec)}
           </p>
         </div>
-        <div className="score-ring" aria-label={`Score ${report.score} out of 100`}>
-          {report.score}
-          <span className="muted" style={{ fontSize: "1rem" }}>
-            /100
-          </span>
-        </div>
+        <ScoreRing score={report.score} />
       </div>
 
       <div className="row" style={{ margin: "8px 0 20px" }}>
@@ -118,10 +115,12 @@ export function ReportPage() {
 }
 
 function Tile({ label, value, sub }: { label: string; value: string; sub?: string }) {
+  // Numbers count up; text values ("—") are shown as they are.
+  const m = /^(\d+(?:\.\d+)?)(%?)$/.exec(value);
   return (
     <div className="tile">
       <div className="label">{label}</div>
-      <div className="value">{value}</div>
+      <div className="value">{m ? <AnimatedNumber value={Number(m[1])} format={(n) => `${Math.round(n)}${m[2]}`} /> : value}</div>
       {sub && <div className="sub">{sub}</div>}
     </div>
   );

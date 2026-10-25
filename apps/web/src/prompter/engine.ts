@@ -279,13 +279,15 @@ export class PrompterEngine {
       let gy = Number.NaN;
       if (model && !face.features.blink) {
         const p = predictGaze(model, face.features.vector);
-        gx = this.fx.filter(p.x, f.t);
-        gy = this.fy.filter(p.y, f.t);
-        gazePoint = { x: gx, y: gy };
-        if (this.viewport && this.gazeOnText) {
-          gazeWord = this.opts.layout.wordAtPoint(gx * window.innerWidth, gy * window.innerHeight, this.viewport.rect, this.scroll.position, this.opts.settings.mirror);
+        if (Number.isFinite(p.x)) {
+          gx = this.fx.filter(p.x, f.t);
+          gy = this.fy.filter(p.y, f.t);
+          gazePoint = { x: gx, y: gy };
+          if (this.viewport && this.gazeOnText) {
+            gazeWord = this.opts.layout.wordAtPoint(gx * window.innerWidth, gy * window.innerHeight, this.viewport.rect, this.scroll.position, this.opts.settings.mirror);
+          }
+          if (this.gazeOnText) this.refineCalibration(t, face.features.vector, p);
         }
-        if (this.gazeOnText) this.refineCalibration(t, face.features.vector, p);
       }
       const g: GazeSample = { t, x: gx, y: gy, valid: !face.features.blink, blink: face.features.blink, yaw: face.features.pose.yaw, pitch: face.features.pose.pitch };
       this.timeline.gaze.push(g);
@@ -442,7 +444,8 @@ export class PrompterEngine {
       this.lastRefitT = t;
       const explicit = this.opts.settings.calibrationSamples;
       try {
-        this.gazeModel = fitGazeModel([...explicit, ...this.implicit.slice(-150)], 0.3);
+        const m = this.gazeModel;
+        this.gazeModel = fitGazeModel([...explicit, ...this.implicit.slice(-150)], m.lambda, m.degree);
         this.refined = true;
         this.timeline.emit("gaze-refit", t, { implicit: this.implicit.length, error: this.gazeModel.trainError });
       } catch {

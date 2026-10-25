@@ -114,7 +114,7 @@ export function poseFromMatrix(m: ArrayLike<number>): HeadPose {
 }
 
 export interface FaceFeatures {
-  /** Feature vector for gaze regression. */
+  /** Feature vector for gaze regression (see GAZE_FEATURES). */
   vector: number[];
   blink: boolean;
   pose: HeadPose;
@@ -127,7 +127,25 @@ export interface FaceFeatures {
 const BLINK_OPENNESS = 0.16;
 
 /** Everything downstream modules need from one frame of landmarks. */
-export function faceFeatures(lm: Point3[], pose?: HeadPose): FaceFeatures | null {
+/** MediaPipe face blendshape scores by name (eyeLookUpLeft, eyeBlinkRight, …), 0..1. */
+export type Blendshapes = Record<string, number>;
+
+/**
+ * Gaze direction from MediaPipe's eye blendshapes. These come from a model
+ * trained on many faces and are much more robust for up/down gaze than the
+ * raw iris position, which barely moves when reading a few lines lower.
+ * Returns [horizontal (+ = towards image right), vertical (+ = up)].
+ */
+export function blendshapeGaze(b: Blendshapes | undefined): [number, number] {
+  if (!b) return [0, 0];
+  const g = (k: string) => b[k] ?? 0;
+  // "In"/"Out" are relative to each eye; convert both eyes to one image direction.
+  const h = (g("eyeLookOutLeft") - g("eyeLookInLeft") + g("eyeLookInRight") - g("eyeLookOutRight")) / 2;
+  const v = (g("eyeLookUpLeft") + g("eyeLookUpRight") - g("eyeLookDownLeft") - g("eyeLookDownRight")) / 2;
+  return [h, v];
+}
+
+export function faceFeatures(lm: Point3[], pose?: HeadPose, blendshapes?: Blendshapes): FaceFeatures | null {
   const a = eyeGeometry(lm, FACE.eyeA);
   const b = eyeGeometry(lm, FACE.eyeB);
   const p = pose ?? headPoseFromLandmarks(lm);
@@ -147,7 +165,8 @@ export function faceFeatures(lm: Point3[], pose?: HeadPose): FaceFeatures | null
   const openness = (a.openness + b.openness) / 2;
   const mouthOpen = Math.hypot(mb.x - mt.x, mb.y - mt.y) / (Math.hypot(mr.x - ml.x, mr.y - ml.y) || 1e-6);
   return {
-    vector: [gx, gy, p.yaw / 45, p.pitch / 45, cx, cy, scale],
+    // Order matters: GAZE_FEATURES in calibration.ts names each entry.
+    vector: [gx, gy, ...blendshapeGaze(blendshapes), p.yaw / 45, p.pitch / 45, cx, cy, scale],
     blink: openness < BLINK_OPENNESS,
     pose: p,
     cx,

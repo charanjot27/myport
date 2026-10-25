@@ -4,7 +4,9 @@ import {
   calibrationGrid,
   classifyHand,
   FEATURE_COUNT,
+  fitBestGazeModel,
   fitGazeModel,
+  isGazeModelCompatible,
   generateChallenge,
   GestureDebouncer,
   HeuristicStumblePredictor,
@@ -57,24 +59,49 @@ describe("ScrollController", () => {
 });
 
 describe("gaze calibration", () => {
-  it("recovers a smooth mapping from features to screen", () => {
+  /** Synthetic face: weak noisy iris signal, stronger blendshape signal, small head jitter. */
+  const face = (x: number, y: number, rand: () => number, headJitter = 0.002) => [
+    0.5 + (x - 0.5) * 0.08 + (rand() - 0.5) * 0.01,
+    (y - 0.3) * 0.05 + (rand() - 0.5) * 0.01,
+    (x - 0.5) * 0.9 + (rand() - 0.5) * 0.05,
+    -(y - 0.3) * 1.2 + (rand() - 0.5) * 0.05,
+    (rand() - 0.5) * 0.02,
+    (rand() - 0.5) * 0.02,
+    0.5 + (rand() - 0.5) * headJitter,
+    0.45 + (rand() - 0.5) * headJitter,
+    0.3 + (rand() - 0.5) * headJitter,
+  ];
+
+  it("predicts unseen points accurately and picks a model by cross-validation", () => {
     const rand = seededRandom("calib");
-    const truth = (gx: number, gy: number) => ({ x: 0.5 + (gx - 0.5) * 3, y: 0.5 + gy * 4 + 0.3 * (gx - 0.5) ** 2 });
     const samples = [];
-    for (const p of calibrationGrid()) {
-      for (let k = 0; k < 10; k++) {
-        // Invert the truth approximately to synthesise features for this target, plus noise.
-        const gx = 0.5 + (p.x - 0.5) / 3 + (rand() - 0.5) * 0.004;
-        const gy = (p.y - 0.5) / 4 + (rand() - 0.5) * 0.004;
-        const t = truth(gx, gy);
-        samples.push({ features: [gx, gy, 0, 0, 0.5, 0.5, 0.3], x: t.x, y: t.y });
-      }
+    for (const p of calibrationGrid(0.1)) for (let k = 0; k < 12; k++) samples.push({ features: face(p.x, p.y, rand), x: p.x, y: p.y });
+    const model = fitBestGazeModel(samples);
+    expect(isGazeModelCompatible(model)).toBe(true);
+    expect(model.cvError).toBeLessThan(0.06);
+    let err = 0;
+    const test = [{ x: 0.3, y: 0.2 }, { x: 0.7, y: 0.65 }, { x: 0.5, y: 0.35 }];
+    for (const t of test) {
+      const p = predictGaze(model, face(t.x, t.y, rand));
+      err += Math.hypot(p.x - t.x, p.y - t.y);
     }
-    const model = fitGazeModel(samples, 0.01);
-    expect(model.trainError).toBeLessThan(0.02);
-    const p = predictGaze(model, [0.55, 0.05, 0, 0, 0.5, 0.5, 0.3]);
-    const t = truth(0.55, 0.05);
-    expect(Math.hypot(p.x - t.x, p.y - t.y)).toBeLessThan(0.03);
+    expect(err / test.length).toBeLessThan(0.06);
+  });
+
+  it("does not amplify head jitter that was absent during calibration", () => {
+    const rand = seededRandom("jitter");
+    const samples = [];
+    for (const p of calibrationGrid(0.1)) for (let k = 0; k < 12; k++) samples.push({ features: face(p.x, p.y, rand, 0.0001), x: p.x, y: p.y });
+    const model = fitBestGazeModel(samples);
+    const p = predictGaze(model, face(0.5, 0.5, rand, 0.02));
+    expect(Math.hypot(p.x - 0.5, p.y - 0.5)).toBeLessThan(0.15);
+  });
+
+  it("rejects models fitted on an older feature layout", () => {
+    expect(isGazeModelCompatible({ version: 1, mean: [0, 0, 0, 0, 0, 0, 0] })).toBe(false);
+    const rand = seededRandom("x");
+    const model = fitGazeModel(calibrationGrid().flatMap((p) => [0, 1].map(() => ({ features: face(p.x, p.y, rand), x: p.x, y: p.y }))));
+    expect(Number.isNaN(predictGaze(model, [0.5, 0.1]).x)).toBe(true);
   });
 
   it("OneEuroFilter reduces jitter", () => {

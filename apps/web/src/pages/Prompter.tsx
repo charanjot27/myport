@@ -2,7 +2,9 @@ import { detectStumbles, parseScript, ReadingGate, readingFeatures, readingProba
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { AdaptiveBrightness, AmbientMeter } from "../lib/adaptive";
 import { focusFrame, textColor, type FocusFrame } from "../lib/device";
+import { EyeGlareMeter } from "../lib/reflection";
 import { openMedia, stopMedia } from "../lib/media";
 import { closeFloatingWindow, floatingSupported, openFloatingWindow } from "../lib/pip";
 import { recordings } from "../lib/recordings";
@@ -40,6 +42,10 @@ export function PrompterPage() {
   const [pip, setPip] = useState<Window | null>(null);
   const visionVideoRef = useRef<HTMLVideoElement | null>(null);
   const keyHandlerRef = useRef<(e: KeyboardEvent) => void>(() => undefined);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const pipRootRef = useRef<HTMLDivElement>(null);
+  const adaptiveRef = useRef<AdaptiveBrightness | null>(null);
+  const [autoInfo, setAutoInfo] = useState<string>("");
 
   const viewportRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -146,6 +152,12 @@ export function PrompterPage() {
     teardown();
   }, [teardown]);
 
+  const setBrightness = (v: number) => {
+    const b = Math.max(0.2, Math.min(1, +v.toFixed(2)));
+    updateSettings({ textBrightness: b });
+    adaptiveRef.current?.setBase(b);
+  };
+
   /** (Re)start speech recognition hosted in `host`, so it keeps running when our tab is in the background. */
   const startSpeech = async (engine: PrompterEngine, stream: MediaStream, host: Window) => {
     if (!script) return;
@@ -228,6 +240,7 @@ export function PrompterPage() {
     }
     streamRef.current = stream;
 
+    adaptiveRef.current = s.autoBrightness ? new AdaptiveBrightness({ base: s.textBrightness, ceiling: s.reflectionCheck?.level ?? 1 }) : null;
     const engine = new PrompterEngine({ script, scriptId: stored.id, scriptTitle: stored.title, settings: s, layout: layoutRef.current, research });
     engineRef.current = engine;
     engine.subscribe(setHud);
@@ -288,8 +301,28 @@ export function PrompterPage() {
       }
       const region = { x0: 0, y0: 0, x1: 1, y1: 0.75 };
       let lastT = performance.now();
+      const ambientMeter = new AmbientMeter();
+      const glareMeter = new EyeGlareMeter();
+      let frameNo = 0;
+      let lastInfo = 0;
       vision.onFrame = (f) => {
         engine.handleVision(f);
+        const adaptive = adaptiveRef.current;
+        if (adaptive) {
+          // Room light every few frames; eye glare only while a probe is running.
+          const now = performance.now();
+          const lm = f.face?.landmarks ?? null;
+          const ambient = frameNo++ % 3 === 0 ? ambientMeter.measure(video, lm) : null;
+          const glare = lm && !f.face!.features.blink && adaptive.wantsGlare(now) ? glareMeter.measure(video, lm) : null;
+          adaptive.update(now, ambient, glare);
+          const snap = adaptive.snapshot();
+          const tone = snap.warm ? "warm" : getSettings().textTone;
+          for (const el of [rootRef.current, pipRootRef.current]) if (el) applyTextColors(el, adaptive.displayLevel(now), tone, snap.weight);
+          if (now - lastInfo > 1000) {
+            lastInfo = now;
+            setAutoInfo(`auto ${Math.round(snap.level * 100)}%${snap.lastProbe?.visible ? " · glare reduced" : ""}`);
+          }
+        }
         const p = processorRef.current;
         if (p && (record || wantsEffects)) {
           const now = performance.now();
@@ -481,7 +514,7 @@ export function PrompterPage() {
   const floatingWindow =
     pip &&
     createPortal(
-      <div className={`prompter camera-layout pip-root${settings.mirror ? " mirrored" : ""}`} style={colors} data-testid="floating-prompter">
+      <div ref={pipRootRef} className={`prompter camera-layout pip-root${settings.mirror ? " mirrored" : ""}`} style={colors} data-testid="floating-prompter">
         {textWindow}
         <div className="pip-bar">
           <button onClick={() => engineRef.current?.command("toggle_pause")} title="Pause / resume (Space)">
@@ -490,10 +523,10 @@ export function PrompterPage() {
           <button onClick={() => engineRef.current?.command("rewind_sentence")} title="Rewind sentence (R)">
             ↺
           </button>
-          <button onClick={() => updateSettings({ textBrightness: Math.max(0.2, +(getSettings().textBrightness - 0.1).toFixed(2)) })} title="Dimmer">
+          <button onClick={() => setBrightness(getSettings().textBrightness - 0.1)} title="Dimmer">
             ☾
           </button>
-          <button onClick={() => updateSettings({ textBrightness: Math.min(1, +(getSettings().textBrightness + 0.1).toFixed(2)) })} title="Brighter">
+          <button onClick={() => setBrightness(getSettings().textBrightness + 0.1)} title="Brighter">
             ☀
           </button>
           <button onClick={() => updateSettings({ fontSize: Math.max(18, getSettings().fontSize - 4) })} title="Smaller text">
@@ -503,7 +536,7 @@ export function PrompterPage() {
             A+
           </button>
           <span className="pip-status" role="status">
-            {banner ?? (hud?.speaking ? "listening…" : "")}
+            {banner ?? (hud?.speaking ? "listening…" : autoInfo)}
           </span>
           <button onClick={() => pip.close()} title="Bring the text back into the PromptSense tab">
             ⤺
@@ -518,6 +551,7 @@ export function PrompterPage() {
 
   return (
     <div
+      ref={rootRef}
       className={`prompter${settings.mirror ? " mirrored" : ""}${cameraLayout ? " camera-layout" : ""}`}
       onMouseMove={poke}
       data-testid="prompter"
@@ -632,10 +666,10 @@ export function PrompterPage() {
             <button className="btn small" onClick={() => updateSettings({ focusLines: Math.min(8, settings.focusLines + 1) })} aria-label="More lines">
               + line
             </button>
-            <button className="btn small" onClick={() => updateSettings({ textBrightness: Math.max(0.2, +(settings.textBrightness - 0.1).toFixed(2)) })} aria-label="Dimmer text">
+            <button className="btn small" onClick={() => setBrightness(settings.textBrightness - 0.1)} aria-label="Dimmer text">
               ☾
             </button>
-            <button className="btn small" onClick={() => updateSettings({ textBrightness: Math.min(1, +(settings.textBrightness + 0.1).toFixed(2)) })} aria-label="Brighter text">
+            <button className="btn small" onClick={() => setBrightness(settings.textBrightness + 0.1)} aria-label="Brighter text">
               ☀
             </button>
           </>
@@ -647,6 +681,7 @@ export function PrompterPage() {
             <StatusChip ok={visionStatus === "on" && hud.faceFound} warn={visionStatus === "loading"} label={visionStatus === "on" ? (hud.faceFound ? "face" : "no face") : `vision: ${visionStatus}`} />
             {settings.gestureControl && hud.gestureProgress > 0 && <GestureRing progress={hud.gestureProgress} label={hud.gesture} />}
             {recorderRef.current?.recording && <StatusChip ok={false} warn={false} bad label="REC" />}
+            {autoInfo && <span className="chip" title="Text brightness adapts to room light and reflections">☀ {autoInfo}</span>}
             <span className="chip">{formatDuration(hud.elapsedMs / 1000)}</span>
           </>
         )}
@@ -735,4 +770,12 @@ function GestureRing({ progress, label }: { progress: number; label: string }) {
       {label.replace("_", " ")}
     </span>
   );
+}
+
+/** Set the live text colour variables (used by adaptive brightness, which updates every camera frame). */
+function applyTextColors(el: HTMLElement, level: number, tone: "warm" | "neutral", weight: number): void {
+  el.style.setProperty("--ps-text", textColor(level, tone));
+  el.style.setProperty("--ps-spoken", textColor(level, tone, 0.42));
+  el.style.setProperty("--ps-hard", `rgb(${[255, 150, 60].map((c) => Math.round(c * Math.max(0.3, level))).join(", ")})`);
+  el.style.setProperty("--ps-weight", String(weight));
 }

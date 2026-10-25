@@ -15,10 +15,13 @@ export function SettingsPage() {
   const set = <K extends keyof Settings>(k: K) => (v: Settings[K]) => updateSettings({ [k]: v } as Partial<Settings>);
 
   return (
-    <main className="page" style={{ maxWidth: 760 }}>
-      <h1>Settings</h1>
+    <main className="page" style={{ maxWidth: 780 }}>
+      <h1>
+        <span className="gradient-text">Settings</span>
+      </h1>
 
-      <h2>Speech</h2>
+      <section className="card settings-section">
+        <h2 style={{ marginTop: 0 }}>Speech</h2>
       <div className="field">
         <label htmlFor="speech">Speech recognition</label>
         <select id="speech" value={s.speechProvider} onChange={(e) => set("speechProvider")(e.target.value as Settings["speechProvider"])}>
@@ -39,7 +42,9 @@ export function SettingsPage() {
         </select>
       </div>
 
-      <h2>Text under the camera</h2>
+      </section>
+      <section className="card settings-section">
+        <h2 style={{ marginTop: 0 }}>Text under the camera</h2>
       <div className="field">
         <label htmlFor="layout">Layout</label>
         <select id="layout" value={s.layout} onChange={(e) => set("layout")(e.target.value as Settings["layout"])}>
@@ -75,6 +80,11 @@ export function SettingsPage() {
           <Link to="/welcome">Run setup tour</Link>
         </span>
       </div>
+      <Toggle
+        label="Auto brightness: adapt the text to room light and keep checking that it doesn't reflect in your eyes or glasses (a brief, subtle dimming pulse about every 30 s)"
+        value={s.autoBrightness}
+        onChange={set("autoBrightness")}
+      />
       <div className="field">
         <label htmlFor="tone">Text colour</label>
         <select id="tone" value={s.textTone} onChange={(e) => set("textTone")(e.target.value as Settings["textTone"])}>
@@ -83,7 +93,9 @@ export function SettingsPage() {
         </select>
       </div>
 
-      <h2>Prompter</h2>
+      </section>
+      <section className="card settings-section">
+        <h2 style={{ marginTop: 0 }}>Prompter</h2>
       <div className="field">
         <label htmlFor="font">Text size: {s.fontSize}px</label>
         <input id="font" type="range" min={18} max={120} value={s.fontSize} onChange={(e) => set("fontSize")(Number(e.target.value))} />
@@ -107,7 +119,9 @@ export function SettingsPage() {
       <Toggle label="Hand gestures: open palm = pause, ✌ = next section, ☝ = rewind sentence, 👍 = resume, 👎 = previous section" value={s.gestureControl} onChange={set("gestureControl")} />
       <Toggle label="Show camera preview (full-screen layout only; a bright preview reflects in glasses)" value={s.showCamera} onChange={set("showCamera")} />
 
-      <h2>Recording</h2>
+      </section>
+      <section className="card settings-section">
+        <h2 style={{ marginTop: 0 }}>Recording</h2>
       <Toggle label="Corneal reflection shield: blur the reflection of the prompter in your eyes" value={s.cornealShield} onChange={set("cornealShield")} />
       <Toggle
         label="Eye-contact correction while reading (needs gaze calibration; glances and pauses stay natural)"
@@ -127,7 +141,9 @@ export function SettingsPage() {
         )}
       </p>
 
-      <h2>Devices</h2>
+      </section>
+      <section className="card settings-section">
+        <h2 style={{ marginTop: 0 }}>Devices</h2>
       <div className="field">
         <label htmlFor="cam">Camera</label>
         <select id="cam" value={s.cameraId} onChange={(e) => set("cameraId")(e.target.value)}>
@@ -152,7 +168,9 @@ export function SettingsPage() {
         <span className="hint">Device names appear after you grant camera/microphone permission once.</span>
       </div>
 
-      <h2>Appearance</h2>
+      </section>
+      <section className="card settings-section">
+        <h2 style={{ marginTop: 0 }}>Appearance</h2>
       <div className="field">
         <label htmlFor="theme">Theme</label>
         <select id="theme" value={s.theme} onChange={(e) => set("theme")(e.target.value as Settings["theme"])}>
@@ -161,7 +179,9 @@ export function SettingsPage() {
         </select>
       </div>
 
-      <h2>Account & data</h2>
+      </section>
+      <section className="card settings-section">
+        <h2 style={{ marginTop: 0 }}>Account & data</h2>
       <div className="field">
         <label htmlFor="api">PromptSense API URL</label>
         <input id="api" type="url" placeholder="https://api.example.com or /api" value={s.apiUrl} onChange={(e) => set("apiUrl")(e.target.value.trim())} />
@@ -174,6 +194,7 @@ export function SettingsPage() {
       <button className="btn" onClick={() => confirm("Reset all settings?") && updateSettings({ ...DEFAULT_SETTINGS })}>
         Reset settings
       </button>
+      </section>
     </main>
   );
 }

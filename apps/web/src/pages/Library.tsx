@@ -55,15 +55,19 @@ export function LibraryPage() {
 
   return (
     <main className="page">
-      <div className="row" style={{ marginBottom: 16 }}>
-        <h1 className="grow" style={{ margin: 0 }}>
-          Your scripts
-        </h1>
+      <div className="hero">
+        <div className="grow">
+          <div className="eyebrow">PromptSense</div>
+          <h1 style={{ margin: 0 }}>
+            Your <span className="gradient-text">scripts</span>
+          </h1>
+          <p>Speak naturally. Your words stay right under the camera, follow your voice and never glare in your glasses.</p>
+        </div>
         <button className="btn" onClick={() => fileRef.current?.click()}>
           Import .txt / .md
         </button>
         <button className="btn primary" onClick={() => void create("Untitled script", "")}>
-          New script
+          ＋ New script
         </button>
         <input
           ref={fileRef}
@@ -86,7 +90,8 @@ export function LibraryPage() {
       {items === null ? (
         <p className="muted">Loading…</p>
       ) : items.length === 0 ? (
-        <div className="card">
+        <div className="card empty-state">
+          <div className="orb" aria-hidden />
           <h3>No scripts yet</h3>
           <p className="muted">Start with a sample to see how voice-following works.</p>
           <button className="btn primary" onClick={() => void create("Sample: Welcome to PromptSense", SAMPLE_SCRIPT)}>
@@ -98,11 +103,14 @@ export function LibraryPage() {
           {items.map((s) => {
             const parsed = parseScript(s.source);
             return (
-              <div className="card" key={s.id} data-testid="script-card">
+              <div className="card interactive" key={s.id} data-testid="script-card">
                 <h3>{s.title || "Untitled"}</h3>
-                <p className="muted" style={{ margin: "0 0 12px" }}>
-                  {parsed.words.length} words · ~{formatDuration(estimateDuration(parsed))} · edited {new Date(s.updatedAt).toLocaleDateString()}
-                </p>
+                <p className="script-preview">{parsed.words.slice(0, 40).map((w) => w.display).join(" ") || "Empty script"}</p>
+                <div className="meta">
+                  <span className="chip">{parsed.words.length} words</span>
+                  <span className="chip">~{formatDuration(estimateDuration(parsed))}</span>
+                  <span className="chip">{new Date(s.updatedAt).toLocaleDateString()}</span>
+                </div>
                 <div className="row">
                   <Link className="btn primary small" to={`/prompt/${s.id}`}>
                     Start

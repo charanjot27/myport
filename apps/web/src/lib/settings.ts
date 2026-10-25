@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import type { CalibrationSample, GazeModel } from "@promptsense/core";
+import { isGazeModelCompatible, type CalibrationSample, type GazeModel } from "@promptsense/core";
 
 export type SpeechProviderId = "webspeech" | "deepgram" | "none";
 
@@ -43,6 +43,8 @@ export interface Settings {
   /** 0.2..1 text luminance; lowered by the reflection check so text does not show in eyes or glasses. */
   textBrightness: number;
   textTone: "warm" | "neutral";
+  /** Adjust text brightness live to room light and measured reflections in eyes/glasses. */
+  autoBrightness: boolean;
   /** Result of the last reflection check, for display. */
   reflectionCheck: { at: string; level: number; visibleAtFull: boolean; stillVisible: boolean } | null;
   /** Explicit calibration samples, kept so the model can be refined while reading. */
@@ -77,6 +79,7 @@ export const DEFAULT_SETTINGS: Settings = {
   columnWidth: 0.42,
   textBrightness: 0.8,
   textTone: "warm",
+  autoBrightness: true,
   reflectionCheck: null,
   calibrationSamples: [],
   onboarded: false,
@@ -88,7 +91,15 @@ const listeners = new Set<() => void>();
 function load(): Settings {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) return { ...DEFAULT_SETTINGS, ...(JSON.parse(raw) as Partial<Settings>) };
+    if (raw) {
+      const loaded = { ...DEFAULT_SETTINGS, ...(JSON.parse(raw) as Partial<Settings>) };
+      // Calibrations from an older feature layout cannot be used: ask for a fresh one.
+      if (loaded.gazeModel && !isGazeModelCompatible(loaded.gazeModel)) {
+        loaded.gazeModel = null;
+        loaded.calibrationSamples = [];
+      }
+      return loaded;
+    }
   } catch {
     // Storage blocked (private mode) or corrupt; fall back to defaults.
   }

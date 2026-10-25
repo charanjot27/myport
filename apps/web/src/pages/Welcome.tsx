@@ -246,7 +246,13 @@ export function WelcomePage() {
         </div>
       )}
 
-      <div className={`tour-panel${dark ? " bottom" : ""}`} role="dialog" aria-label={`Setup step ${step + 1} of ${STEPS.length}`}>
+      <div
+        className={`tour-panel${dark ? " bottom" : ""}`}
+        role="dialog"
+        aria-label={`Setup step ${step + 1} of ${STEPS.length}`}
+        // Nothing but the dot on screen while calibrating: less distraction, no extra light.
+        style={step === 4 && calib === "running" ? { display: "none" } : undefined}
+      >
         <div className="tour-progress" aria-hidden>
           {STEPS.map((s, i) => (
             <span key={s} className={i <= step ? "on" : ""} />
@@ -255,6 +261,8 @@ export function WelcomePage() {
         <div className="muted" style={{ fontSize: "0.8rem" }}>
           Step {step + 1} of {STEPS.length} · {STEPS[step]}
         </div>
+        <div className="tour-step" key={step}>
+        {!dark && <div className="tour-icon" aria-hidden>{["👋", "🎥", "📍", "✨", "🎯", "🗣️"][step]}</div>}
 
         {step === 0 && (
           <>
@@ -356,6 +364,7 @@ export function WelcomePage() {
           </>
         )}
 
+        </div>
         {error && <div className="alert error">{error}</div>}
 
         <div className="row" style={{ marginTop: 12 }}>

@@ -163,8 +163,9 @@ export class VisionEngine {
     if (!lm) return { t, face: null, hand: this.options.hands ? this.lastHand : null, skin: null, inferenceMs: 0 };
     const matrix = res?.facialTransformationMatrixes?.[0]?.data;
     const pose = matrix ? poseFromMatrix(matrix) : undefined;
-    const features = faceFeatures(lm, pose);
     const shapes = res?.faceBlendshapes?.[0]?.categories ?? [];
+    const blend = Object.fromEntries(shapes.map((c) => [c.categoryName, c.score]));
+    const features = faceFeatures(lm, pose, blend);
     const blinkL = shapes.find((c) => c.categoryName === "eyeBlinkLeft")?.score ?? 0;
     const blinkR = shapes.find((c) => c.categoryName === "eyeBlinkRight")?.score ?? 0;
     const blinkScore = Math.max(blinkL, blinkR);

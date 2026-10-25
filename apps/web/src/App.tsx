@@ -26,6 +26,7 @@ export function App() {
 
   return (
     <>
+      {!fullscreen && <div className="aurora" aria-hidden />}
       {!fullscreen && (
         <header className="app-header">
           <Link to="/" className="brand">

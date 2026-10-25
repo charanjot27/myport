@@ -101,7 +101,7 @@ export function newId(): string {
 }
 
 export const SAMPLE_SCRIPT = `# Welcome
-Hi, I'm testing PromptSense, a teleprompter that listens as I speak.
+Hi, I'm testing JOTR, a teleprompter that listens as I speak.
 When I pause, it waits for me. When I skip ahead, it follows.
 
 # How it works

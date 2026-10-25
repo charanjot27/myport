@@ -1,23 +1,23 @@
-/* PromptSense design system: deep "night" surfaces, aurora gradient accents,
+/* JOTR design system: deep "night" surfaces, aurora gradient accents,
    glass panels and calm motion. The prompter text itself stays deliberately
    plain (see the prompter section) because anything bright there reflects. */
 
 :root {
-  --bg: #07080e;
+  --bg: #0a0810;
   --bg-raised: rgba(255, 255, 255, 0.045);
-  --bg-raised-solid: #11131d;
+  --bg-raised-solid: #15111b;
   --bg-sunken: rgba(0, 0, 0, 0.35);
   --border: rgba(255, 255, 255, 0.09);
   --border-strong: rgba(255, 255, 255, 0.18);
-  --text: #eef0fb;
-  --text-muted: #98a0bd;
-  --accent: #7c6bff;
-  --accent-2: #22d3ee;
-  --accent-3: #f472b6;
+  --text: #fbf3ee;
+  --text-muted: #b3a3a8;
+  --accent: #ff5a6e;
+  --accent-2: #ffb547;
+  --accent-3: #b26bff;
   --accent-text: #ffffff;
-  --gradient: linear-gradient(135deg, #7c6bff 0%, #4f8cff 45%, #22d3ee 100%);
-  --gradient-warm: linear-gradient(135deg, #f472b6, #fb923c);
-  --good: #34d399;
+  --gradient: linear-gradient(135deg, #ff4d6d 0%, #ff8a3d 55%, #ffc93c 100%);
+  --gradient-cool: linear-gradient(135deg, #b26bff, #ff4d6d);
+  --good: #2ee6a6;
   --warn: #fbbf24;
   --bad: #f87171;
   --hard: #ffd33d;
@@ -25,7 +25,7 @@
   --radius: 16px;
   --radius-sm: 10px;
   --shadow: 0 10px 40px -12px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.25);
-  --glow: 0 0 0 1px rgba(124, 107, 255, 0.35), 0 8px 30px -6px rgba(124, 107, 255, 0.55);
+  --glow: 0 0 0 1px rgba(255, 90, 110, 0.35), 0 8px 30px -6px rgba(255, 110, 70, 0.6);
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --font: "SF Pro Display", "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI", Roboto, "Noto Sans", "Noto Sans Devanagari", sans-serif;
   color-scheme: dark;
@@ -69,9 +69,9 @@ body,
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(40vmax 30vmax at 15% 10%, rgba(124, 107, 255, 0.3), transparent 60%),
-    radial-gradient(35vmax 28vmax at 85% 15%, rgba(34, 211, 238, 0.22), transparent 60%),
-    radial-gradient(45vmax 30vmax at 60% 95%, rgba(244, 114, 182, 0.18), transparent 60%);
+    radial-gradient(40vmax 30vmax at 15% 10%, rgba(255, 77, 109, 0.26), transparent 60%),
+    radial-gradient(35vmax 28vmax at 85% 15%, rgba(255, 170, 60, 0.18), transparent 60%),
+    radial-gradient(45vmax 30vmax at 60% 95%, rgba(178, 107, 255, 0.18), transparent 60%);
   filter: blur(10px);
   animation: aurora 26s ease-in-out infinite alternate;
 }
@@ -91,7 +91,7 @@ body,
 }
 
 a {
-  color: #a99dff;
+  color: #ffb08a;
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;
 }
@@ -148,7 +148,7 @@ button {
   background: var(--gradient);
   border-color: transparent;
   color: var(--accent-text);
-  box-shadow: 0 6px 20px -8px rgba(79, 140, 255, 0.8);
+  box-shadow: 0 6px 20px -8px rgba(255, 110, 70, 0.85);
   overflow: hidden;
 }
 .btn.primary::after {
@@ -201,7 +201,7 @@ button {
   letter-spacing: -0.02em;
 }
 .app-header .brand img {
-  filter: drop-shadow(0 4px 12px rgba(79, 140, 255, 0.55));
+  filter: drop-shadow(0 4px 12px rgba(255, 110, 70, 0.55));
 }
 .app-header nav {
   display: flex;
@@ -369,7 +369,7 @@ h2 {
 }
 .card.interactive:hover {
   transform: translateY(-4px);
-  box-shadow: 0 18px 50px -18px rgba(79, 140, 255, 0.45), var(--shadow);
+  box-shadow: 0 18px 50px -18px rgba(255, 110, 70, 0.45), var(--shadow);
 }
 .card.interactive:hover::before {
   opacity: 1;
@@ -406,8 +406,8 @@ h2 {
   height: 120px;
   margin: 0 auto 18px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #fff 0%, #a99dff 18%, #4f8cff 48%, #22d3ee 75%, transparent 76%);
-  box-shadow: 0 0 60px rgba(79, 140, 255, 0.55);
+  background: radial-gradient(circle at 35% 30%, #fff 0%, #ffd9a8 16%, #ff8a3d 46%, #ff4d6d 74%, transparent 76%);
+  box-shadow: 0 0 60px rgba(255, 110, 70, 0.55);
   animation: float 6s ease-in-out infinite;
 }
 @keyframes float {
@@ -483,8 +483,8 @@ input:focus,
 select:focus,
 textarea:focus {
   outline: none;
-  border-color: rgba(124, 107, 255, 0.7);
-  box-shadow: 0 0 0 4px rgba(124, 107, 255, 0.18);
+  border-color: rgba(255, 110, 90, 0.75);
+  box-shadow: 0 0 0 4px rgba(255, 110, 90, 0.18);
 }
 textarea {
   resize: vertical;
@@ -687,7 +687,7 @@ table.list th {
 .prompter .w.current {
   color: var(--ps-text, #ffffff);
   text-decoration: underline;
-  text-decoration-color: rgba(47, 129, 247, 0.7);
+  text-decoration-color: rgba(255, 120, 90, 0.75);
   text-decoration-thickness: 3px;
   text-underline-offset: 8px;
 }
@@ -733,7 +733,7 @@ table.list th {
   left: 0;
   right: 0;
   height: 0;
-  border-top: 2px dashed rgba(47, 129, 247, 0.35);
+  border-top: 2px dashed rgba(255, 120, 90, 0.35);
   pointer-events: none;
 }
 .prompter .reading-line::before {
@@ -742,7 +742,7 @@ table.list th {
   left: 6px;
   top: -9px;
   border: 8px solid transparent;
-  border-left: 12px solid rgba(47, 129, 247, 0.8);
+  border-left: 12px solid rgba(255, 120, 90, 0.8);
 }
 
 .prompter .toolbar {
@@ -847,13 +847,13 @@ table.list th {
 .prompter .overlay .panel {
   max-width: 540px;
   width: 100%;
-  background: rgba(17, 19, 29, 0.85);
+  background: rgba(21, 17, 27, 0.88);
   border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 20px;
   padding: 24px;
   color: #eef0fb;
   backdrop-filter: blur(20px);
-  box-shadow: 0 30px 80px -30px rgba(79, 140, 255, 0.35);
+  box-shadow: 0 30px 80px -30px rgba(255, 110, 70, 0.35);
   animation: rise 420ms var(--ease) both;
 }
 .prompter .countdown {
@@ -928,8 +928,8 @@ table.list th {
 .calib-target .ring {
   width: 64px;
   height: 64px;
-  border: 2px solid rgba(124, 107, 255, 0.9);
-  box-shadow: 0 0 24px rgba(124, 107, 255, 0.6);
+  border: 2px solid rgba(255, 90, 110, 0.95);
+  box-shadow: 0 0 24px rgba(255, 90, 110, 0.6);
 }
 .calib-target.approach .ring {
   animation: ring-close 520ms var(--ease) both;
@@ -937,7 +937,7 @@ table.list th {
 .calib-target.collect .ring {
   width: 22px;
   height: 22px;
-  border-color: rgba(34, 211, 238, 0.9);
+  border-color: rgba(255, 181, 71, 0.95);
   animation: ring-breathe 900ms ease-in-out infinite;
 }
 .calib-target.done .ring {
@@ -947,7 +947,7 @@ table.list th {
   width: 10px;
   height: 10px;
   background: #fff;
-  box-shadow: 0 0 12px #fff, 0 0 30px rgba(34, 211, 238, 0.9);
+  box-shadow: 0 0 12px #fff, 0 0 30px rgba(255, 181, 71, 0.9);
 }
 .calib-target.collect .core {
   animation: core-glow 900ms ease-in-out infinite;
@@ -980,7 +980,7 @@ table.list th {
 }
 @keyframes core-glow {
   50% {
-    box-shadow: 0 0 18px #fff, 0 0 46px rgba(34, 211, 238, 1);
+    box-shadow: 0 0 18px #fff, 0 0 46px rgba(255, 181, 71, 1);
   }
 }
 .calib-progress {
@@ -1013,7 +1013,7 @@ table.list th {
   height: 70px;
   margin: -35px 0 0 -35px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(34, 211, 238, 0.55), rgba(124, 107, 255, 0.15) 55%, transparent 70%);
+  background: radial-gradient(circle, rgba(255, 181, 71, 0.55), rgba(255, 77, 109, 0.15) 55%, transparent 70%);
   pointer-events: none;
   z-index: 26;
   transition: left 80ms linear, top 80ms linear;
@@ -1133,7 +1133,7 @@ table.list th {
   border-radius: 22px;
   padding: 24px 26px;
   backdrop-filter: blur(22px) saturate(1.3);
-  box-shadow: var(--shadow), 0 30px 80px -30px rgba(79, 140, 255, 0.35);
+  box-shadow: var(--shadow), 0 30px 80px -30px rgba(255, 110, 70, 0.35);
   animation: rise 520ms var(--ease) both;
 }
 .tour-step {
@@ -1157,7 +1157,7 @@ table.list th {
   place-items: center;
   font-size: 1.4rem;
   background: var(--gradient);
-  box-shadow: 0 10px 26px -10px rgba(79, 140, 255, 0.9);
+  box-shadow: 0 10px 26px -10px rgba(255, 110, 70, 0.9);
   margin: 10px 0 12px;
 }
 .tour-panel h1 {
@@ -1322,7 +1322,7 @@ table.list th {
 .cam-spot.selected {
   background: var(--accent-2);
   border-color: #fff;
-  box-shadow: 0 0 0 5px rgba(34, 211, 238, 0.25), 0 0 18px rgba(34, 211, 238, 0.8);
+  box-shadow: 0 0 0 5px rgba(255, 181, 71, 0.25), 0 0 18px rgba(255, 181, 71, 0.8);
 }
 .picker-text {
   position: absolute;

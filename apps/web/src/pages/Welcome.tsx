@@ -69,7 +69,7 @@ export function WelcomePage() {
     updateSettings({ onboarded: true });
     cleanup();
     if (document.fullscreenElement) await document.exitFullscreen().catch(() => undefined);
-    navigate("/");
+    navigate("/app");
   };
 
   // Step 1: camera + mic, face tracking, mic level.
@@ -271,7 +271,7 @@ export function WelcomePage() {
           <>
             <h1>Set up in under a minute</h1>
             <p>
-              PromptSense puts your script <strong>right under your camera</strong>, so viewers see you looking at them. It follows your voice and keeps the text
+              JOTR puts your script <strong>right under your camera</strong>, so viewers see you looking at them. It follows your voice and keeps the text
               too dim to reflect in your eyes or glasses.
             </p>
           </>

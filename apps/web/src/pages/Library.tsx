@@ -57,7 +57,7 @@ export function LibraryPage() {
     <main className="page">
       <div className="hero">
         <div className="grow">
-          <div className="eyebrow">PromptSense</div>
+          <div className="eyebrow">JOTR</div>
           <h1 style={{ margin: 0 }}>
             Your <span className="gradient-text">scripts</span>
           </h1>
@@ -94,7 +94,7 @@ export function LibraryPage() {
           <div className="orb" aria-hidden />
           <h3>No scripts yet</h3>
           <p className="muted">Start with a sample to see how voice-following works.</p>
-          <button className="btn primary" onClick={() => void create("Sample: Welcome to PromptSense", SAMPLE_SCRIPT)}>
+          <button className="btn primary" onClick={() => void create("Sample: Welcome to JOTR", SAMPLE_SCRIPT)}>
             Try the sample script
           </button>
         </div>

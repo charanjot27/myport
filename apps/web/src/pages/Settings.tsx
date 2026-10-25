@@ -183,7 +183,7 @@ export function SettingsPage() {
       <section className="card settings-section">
         <h2 style={{ marginTop: 0 }}>Account & data</h2>
       <div className="field">
-        <label htmlFor="api">PromptSense API URL</label>
+        <label htmlFor="api">JOTR API URL</label>
         <input id="api" type="url" placeholder="https://api.example.com or /api" value={s.apiUrl} onChange={(e) => set("apiUrl")(e.target.value.trim())} />
         <span className="hint">Optional. Enables sign-in, script sync, cloud speech and signed liveness checks.</span>
       </div>

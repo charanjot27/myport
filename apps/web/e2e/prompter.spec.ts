@@ -23,7 +23,7 @@ async function speak(page: Page, text: string) {
 }
 
 test("sample script: voice-following, pause, finish and report", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/app");
   await page.getByRole("button", { name: "Try the sample script" }).click();
   await expect(page.getByLabel("Title")).toHaveValue(/Sample/);
   await page.getByRole("button", { name: "Start prompting" }).click();
@@ -35,7 +35,7 @@ test("sample script: voice-following, pause, finish and report", async ({ page }
   const content = page.locator(".content");
   const before = await content.evaluate((el) => el.style.transform);
 
-  await speak(page, "hi I'm testing PromptSense a teleprompter that listens as I speak");
+  await speak(page, "hi I'm testing JOTR a teleprompter that listens as I speak");
   await expect(page.locator(".w.current")).toHaveText("speak.");
   await speak(page, "when I pause it waits for me when I skip ahead it follows");
   await speak(page, "the script scrolls to keep my current line near the camera");
@@ -61,12 +61,12 @@ test("sample script: voice-following, pause, finish and report", async ({ page }
   await expect(page.getByRole("heading", { name: "Script review" })).toBeVisible();
 
   // The session appears in the library.
-  await page.goto("/");
+  await page.goto("/app");
   await expect(page.getByRole("link", { name: "Report" })).toBeVisible();
 });
 
 test("manual mode scrolls with the keyboard and the editor saves", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/app");
   await page.getByRole("button", { name: "New script" }).click();
   await page.getByLabel("Title").fill("Keyboard test");
   await page.getByLabel("Script").fill(Array.from({ length: 40 }, (_, i) => `Line number ${i + 1} of the script.`).join("\n\n"));
@@ -92,7 +92,7 @@ test("vision models load from our own origin under the production CSP", async ({
     const u = new URL(r.url());
     if (u.hostname !== "localhost") external.push(r.url());
   });
-  await page.goto("/");
+  await page.goto("/app");
   await page.getByRole("button", { name: "Try the sample script" }).click();
   await page.getByRole("button", { name: "Start prompting" }).click();
   await page.getByTestId("start").click();
@@ -111,7 +111,7 @@ test("a trained ONNX stumble model is picked up when deployed", async ({ page })
   await page.route("**/models/stumble.onnx", async (route) =>
     route.fulfill({ contentType: "application/octet-stream", body: await fs.readFile(new URL("stumble.onnx", fixtures)) }),
   );
-  await page.goto("/");
+  await page.goto("/app");
   await page.getByRole("button", { name: "Try the sample script" }).click();
   await page.getByRole("button", { name: "Start prompting" }).click();
   await page.getByTestId("start").click();

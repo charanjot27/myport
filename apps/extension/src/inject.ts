@@ -3,7 +3,7 @@ import { CameraPipeline, DEFAULT_EFFECTS, type EffectSettings } from "./pipeline
 /**
  * Runs in the page's MAIN world at document_start on supported call sites.
  * It wraps navigator.mediaDevices.getUserMedia so camera tracks the page asks
- * for are replaced by PromptSense-processed tracks. Audio is never touched.
+ * for are replaced by JOTR-processed tracks. Audio is never touched.
  * Settings and the extension's asset URL arrive from the isolated-world
  * bridge (bridge.ts) via window.postMessage.
  */
@@ -50,7 +50,7 @@ if (md?.getUserMedia) {
       }
       return new MediaStream(tracks);
     } catch (e) {
-      console.warn("[PromptSense] could not process the camera; using it unmodified", e);
+      console.warn("[JOTR] could not process the camera; using it unmodified", e);
       return stream;
     }
   };

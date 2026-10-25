@@ -84,7 +84,7 @@ export class CameraPipeline {
     let face: FaceLandmarker | null = null;
     landmarker(this.assetBase)
       .then((f) => (face = f))
-      .catch((e) => console.warn("[PromptSense] face tracking unavailable, passing video through", e));
+      .catch((e) => console.warn("[JOTR] face tracking unavailable, passing video through", e));
 
     const loop = () => {
       if (!this.running) return;

@@ -460,7 +460,7 @@ export function PrompterPage() {
     return (
       <main className="page">
         <h1>Script not found</h1>
-        <Link to="/">Back to scripts</Link>
+        <Link to="/app">Back to scripts</Link>
       </main>
     );
   }
@@ -538,7 +538,7 @@ export function PrompterPage() {
           <span className="pip-status" role="status">
             {banner ?? (hud?.speaking ? "listening…" : autoInfo)}
           </span>
-          <button onClick={() => pip.close()} title="Bring the text back into the PromptSense tab">
+          <button onClick={() => pip.close()} title="Bring the text back into the JOTR tab">
             ⤺
           </button>
           <button onClick={() => void stop()} title="Finish (Esc)" data-testid="pip-stop">
@@ -607,7 +607,7 @@ export function PrompterPage() {
       </div>
 
       <div className={`toolbar${running && !toolbarVisible ? " hidden" : ""}`}>
-        <Link to="/" className="btn small" onClick={() => teardown()}>
+        <Link to="/app" className="btn small" onClick={() => teardown()}>
           ← Scripts
         </Link>
         {running ? (
@@ -765,7 +765,7 @@ function GestureRing({ progress, label }: { progress: number; label: string }) {
     <span className="chip" title={label}>
       <svg className="gesture-ring" viewBox="0 0 36 36" aria-hidden>
         <circle cx="18" cy="18" r="14" fill="none" stroke="#444" strokeWidth="4" />
-        <circle cx="18" cy="18" r="14" fill="none" stroke="#2f81f7" strokeWidth="4" strokeDasharray={c} strokeDashoffset={c * (1 - progress)} transform="rotate(-90 18 18)" />
+        <circle cx="18" cy="18" r="14" fill="none" stroke="#ff8a3d" strokeWidth="4" strokeDasharray={c} strokeDashoffset={c * (1 - progress)} transform="rotate(-90 18 18)" />
       </svg>
       {label.replace("_", " ")}
     </span>

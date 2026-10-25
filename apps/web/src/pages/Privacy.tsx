@@ -2,7 +2,7 @@ export function PrivacyPage() {
   return (
     <main className="page" style={{ maxWidth: 760 }}>
       <h1>Privacy & data</h1>
-      <p>PromptSense is built so your camera never needs to leave your device.</p>
+      <p>JOTR is built so your camera never needs to leave your device.</p>
       <h2>What stays on your device</h2>
       <ul>
         <li>Camera video. Face, eye and hand tracking run in your browser. Recordings are saved only when you download them.</li>
@@ -34,7 +34,7 @@ export function PrivacyPage() {
       </ul>
       <h2>Your rights</h2>
       <p>
-        You can export or delete your account data from the Account page at any time. For questions, contact the operator of this PromptSense deployment.
+        You can export or delete your account data from the Account page at any time. For questions, contact the operator of this JOTR deployment.
       </p>
     </main>
   );

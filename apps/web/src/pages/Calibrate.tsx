@@ -89,7 +89,7 @@ export function CalibratePage() {
                 {step === "intro" ? "Start" : "Calibrate again"}
               </button>
             )}
-            <button className="btn" onClick={() => navigate("/")}>
+            <button className="btn" onClick={() => navigate("/app")}>
               {step === "done" ? "Done" : "Back"}
             </button>
           </div>

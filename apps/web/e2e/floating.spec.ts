@@ -8,7 +8,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test("floating prompter stays on top and keeps following speech while another tab is in front", async ({ page, context }) => {
-  await page.goto("/");
+  await page.goto("/app");
   await page.getByRole("button", { name: "Try the sample script" }).click();
   await page.getByRole("button", { name: "Start prompting" }).click();
 
@@ -25,7 +25,7 @@ test("floating prompter stays on top and keeps following speech while another ta
   await other.bringToFront();
 
   // Speech is recognised from the floating window and the text there follows it.
-  await page.evaluate(() => window.__promptsenseSpeak?.("hi I'm testing PromptSense a teleprompter that listens as I speak when I pause it waits for me", true));
+  await page.evaluate(() => window.__promptsenseSpeak?.("hi I'm testing JOTR a teleprompter that listens as I speak when I pause it waits for me", true));
   await expect(pip.locator(".w.current")).toHaveText("me.");
   await page.evaluate(() => window.__promptsenseSpeak?.("when I skip ahead it follows the script scrolls to keep my current line near the camera", true));
   await expect(pip.locator(".w.current")).toHaveText("camera,");
@@ -38,7 +38,7 @@ test("floating prompter stays on top and keeps following speech while another ta
   await pip.getByTitle("Pause / resume (Space)").click();
 
   // Bring it back into the tab, then float again from the toolbar.
-  await pip.getByTitle("Bring the text back into the PromptSense tab").click();
+  await pip.getByTitle("Bring the text back into the JOTR tab").click();
   await expect(page.getByTestId("text-window")).toBeVisible();
   await expect(page.locator(".w.current")).toHaveText("camera,");
 

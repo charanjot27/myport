@@ -13,12 +13,14 @@ import { ReportPage } from "./pages/Report";
 import { SettingsPage } from "./pages/Settings";
 import { VerifyPage } from "./pages/Verify";
 import { WelcomePage } from "./pages/Welcome";
+import { LandingPage } from "./pages/Landing";
 
 export function App() {
   const settings = useSettings();
   const location = useLocation();
   const user = useAuth();
-  const fullscreen = location.pathname.startsWith("/prompt/") || location.pathname === "/calibrate" || location.pathname === "/welcome";
+  // The landing page and full-screen tools bring their own chrome.
+  const fullscreen = location.pathname === "/" || location.pathname.startsWith("/prompt/") || location.pathname === "/calibrate" || location.pathname === "/welcome";
 
   useEffect(() => {
     document.documentElement.dataset.theme = settings.theme;
@@ -30,10 +32,10 @@ export function App() {
       {!fullscreen && (
         <header className="app-header">
           <Link to="/" className="brand">
-            <img src="/favicon.svg" width={24} height={24} alt="" /> PromptSense
+            <img src="/favicon.svg" width={26} height={26} alt="" /> JOTR
           </Link>
           <nav aria-label="Main">
-            <NavLink to="/" end>
+            <NavLink to="/app" end>
               Scripts
             </NavLink>
             <NavLink to="/welcome">Setup tour</NavLink>
@@ -51,7 +53,8 @@ export function App() {
         </header>
       )}
       <Routes>
-        <Route path="/" element={settings.onboarded ? <LibraryPage /> : <Navigate to="/welcome" replace />} />
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/app" element={settings.onboarded ? <LibraryPage /> : <Navigate to="/welcome" replace />} />
         <Route path="/welcome" element={<WelcomePage />} />
         <Route path="/edit/:id" element={<EditorPage />} />
         <Route path="/prompt/:id" element={<PrompterPage />} />
@@ -67,7 +70,7 @@ export function App() {
           element={
             <main className="page">
               <h1>Not found</h1>
-              <Link to="/">Back to scripts</Link>
+              <Link to="/app">Back to scripts</Link>
             </main>
           }
         />

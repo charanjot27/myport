@@ -25,7 +25,7 @@ export class DeepgramProvider implements SpeechProvider {
 
   async start(stream: MediaStream): Promise<void> {
     if (!this.options.apiUrl) {
-      this.onStatus?.("error", "Cloud speech needs the PromptSense API. Set the API URL in Settings.");
+      this.onStatus?.("error", "Cloud speech needs the JOTR API. Set the API URL in Settings.");
       return;
     }
     this.onStatus?.("starting");

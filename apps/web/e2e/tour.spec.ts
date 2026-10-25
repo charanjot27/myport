@@ -8,7 +8,7 @@ test.beforeEach(async ({ page }) => {
 
 test("first visit runs the setup tour end to end", async ({ page }) => {
   const started = Date.now();
-  await page.goto("/");
+  await page.goto("/app");
   await expect(page).toHaveURL(/\/welcome$/);
   await expect(page.getByRole("heading", { name: "Set up in under a minute" })).toBeVisible();
   await page.getByRole("button", { name: "Next" }).click();
@@ -46,7 +46,7 @@ test("first visit runs the setup tour end to end", async ({ page }) => {
   await expect(line.locator("span").nth(5)).toHaveCSS("opacity", "0.42");
   await page.getByRole("button", { name: "Finish" }).click();
 
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL(/\/app$/);
   await expect(page.getByRole("heading", { name: "Your scripts" })).toBeVisible();
   // The tour's own steps (excluding model loading on this CI machine) stay well under a minute.
   expect(Date.now() - started).toBeLessThan(60_000);
@@ -54,7 +54,7 @@ test("first visit runs the setup tour end to end", async ({ page }) => {
 
 test("prompter places dim text in a small window under the camera", async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem("promptsense.settings.v1", JSON.stringify({ onboarded: true, textBrightness: 0.5 })));
-  await page.goto("/");
+  await page.goto("/app");
   await page.getByRole("button", { name: "Try the sample script" }).click();
   await page.getByRole("button", { name: "Start prompting" }).click();
   await page.getByTestId("start").click();
@@ -70,6 +70,6 @@ test("prompter places dim text in a small window under the camera", async ({ pag
   // No bright camera preview in this layout.
   await expect(page.locator(".cam")).toBeHidden();
   // Voice-following still scrolls inside the window.
-  await page.evaluate(() => window.__promptsenseSpeak?.("hi I'm testing PromptSense a teleprompter that listens as I speak when I pause it waits for me", true));
+  await page.evaluate(() => window.__promptsenseSpeak?.("hi I'm testing JOTR a teleprompter that listens as I speak when I pause it waits for me", true));
   await expect(page.locator(".w.current")).toHaveText("me.");
 });

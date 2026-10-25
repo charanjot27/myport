@@ -18,7 +18,7 @@ export function AccountPage() {
       <main className="page">
         <h1>Account</h1>
         <p>
-          Accounts need the PromptSense API. Set its URL in <Link to="/settings">Settings</Link>. Everything else works without an account.
+          Accounts need the JOTR API. Set its URL in <Link to="/settings">Settings</Link>. Everything else works without an account.
         </p>
       </main>
     );

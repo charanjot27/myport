@@ -23,7 +23,7 @@ export function ReportPage() {
     return (
       <main className="page">
         <h1>Session not found</h1>
-        <Link to="/">Back</Link>
+        <Link to="/app">Back</Link>
       </main>
     );
 

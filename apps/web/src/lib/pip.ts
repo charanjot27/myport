@@ -51,7 +51,7 @@ export async function openFloatingWindow(size: { width: number; height: number }
   if (pip.window) return pip.window;
   const win = await pip.requestWindow({ width: Math.round(size.width), height: Math.round(size.height) });
   copyStyles(win.document);
-  win.document.title = "PromptSense";
+  win.document.title = "JOTR";
   win.document.documentElement.dataset.theme = document.documentElement.dataset.theme ?? "dark";
   win.document.body.className = "pip-body";
   return win;

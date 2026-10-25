@@ -42,7 +42,7 @@ export function EditorPage() {
     return (
       <main className="page">
         <h1>Script not found</h1>
-        <Link to="/">Back to scripts</Link>
+        <Link to="/app">Back to scripts</Link>
       </main>
     );
 
@@ -98,7 +98,7 @@ export function EditorPage() {
       {hard.length > 0 && (
         <>
           <h2>Words you might trip on</h2>
-          <p className="muted">PromptSense watches these more closely and highlights them when you approach.</p>
+          <p className="muted">JOTR watches these more closely and highlights them when you approach.</p>
           <div className="hard-list">
             {hard.map((w) => (
               <span key={w}>{w}</span>

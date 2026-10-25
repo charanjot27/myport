@@ -127,7 +127,7 @@ export function VerifyPage() {
       </div>
       {!serverMode && (
         <p className="muted">
-          {apiConfigured() ? "Sign in" : "Connect the PromptSense API in Settings"} to get a signed, verifiable result. Without it the check runs locally and the result is not signed.
+          {apiConfigured() ? "Sign in" : "Connect the JOTR API in Settings"} to get a signed, verifiable result. Without it the check runs locally and the result is not signed.
         </p>
       )}
       {step !== "running" && (

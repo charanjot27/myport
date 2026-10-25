@@ -1,11 +1,11 @@
 {
   "manifest_version": 3,
-  "name": "PromptSense for video calls",
-  "short_name": "PromptSense",
+  "name": "JOTR for video calls",
+  "short_name": "JOTR",
   "version": "0.1.0",
   "description": "Hide your script's reflection in your eyes and keep natural eye contact while reading, in Meet, Zoom, Teams and other web calls.",
   "icons": { "16": "icons/16.png", "48": "icons/48.png", "128": "icons/128.png" },
-  "action": { "default_popup": "popup.html", "default_title": "PromptSense" },
+  "action": { "default_popup": "popup.html", "default_title": "JOTR" },
   "permissions": ["storage"],
   "content_scripts": [
     {

@@ -41,9 +41,9 @@ export function ScoreRing({ score, size = 120, label = "score" }: { score: numbe
       <svg width={size} height={size}>
         <defs>
           <linearGradient id="score-gradient" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#7c6bff" />
-            <stop offset="55%" stopColor="#4f8cff" />
-            <stop offset="100%" stopColor="#22d3ee" />
+            <stop offset="0%" stopColor="#ff4d6d" />
+            <stop offset="55%" stopColor="#ff8a3d" />
+            <stop offset="100%" stopColor="#ffc93c" />
           </linearGradient>
         </defs>
         <circle className="track" cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth={9} />

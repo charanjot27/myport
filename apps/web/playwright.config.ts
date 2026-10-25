@@ -17,9 +17,19 @@ export default defineConfig({
     },
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"], permissions: ["camera", "microphone"] } }],
-  webServer: {
-    command: `pnpm exec vite preview --port ${port} --strictPort`,
-    url: `http://localhost:${port}`,
-    reuseExistingServer: !process.env.CI,
-  },
+  webServer: [
+    {
+      command: `pnpm exec vite preview --port ${port} --strictPort`,
+      url: `http://localhost:${port}`,
+      reuseExistingServer: !process.env.CI,
+      env: { API_PROXY_TARGET: "http://localhost:8788" },
+    },
+    {
+      // In-memory API for account and sync tests; reached through the preview server's /api proxy.
+      command: "pnpm --filter @promptsense/api start",
+      url: "http://localhost:8788/health",
+      reuseExistingServer: !process.env.CI,
+      env: { PORT: "8788", DATABASE_URL: ":memory:", NODE_ENV: "test", CORS_ORIGINS: `http://localhost:${port}` },
+    },
+  ],
 });

@@ -5,12 +5,13 @@
   "type": "module",
   "scripts": {
     "assets": "node scripts/fetch-models.mjs",
-    "dev": "node scripts/fetch-models.mjs && vite",
-    "build": "node scripts/fetch-models.mjs && tsc --noEmit && vite build",
+    "dev": "node scripts/fetch-models.mjs && node scripts/pack-extension.mjs && vite",
+    "build": "node scripts/fetch-models.mjs && node scripts/pack-extension.mjs && tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "pack-extension": "node scripts/pack-extension.mjs"
   },
   "dependencies": {
     "@fontsource-variable/atkinson-hyperlegible-next": "^5.3.0",

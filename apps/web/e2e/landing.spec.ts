@@ -56,3 +56,46 @@ test("star statement reacts to the pointer and the language FAQ answers", async 
   await page.getByText("Which languages can I speak?").click();
   await expect(page.getByText(/Devanagari, Gurmukhi or English letters/)).toBeVisible();
 });
+
+test("the demo popup can be dragged to an edge and still opens on click", async ({ page }) => {
+  await page.goto("/");
+  const mini = page.getByTestId("demo-mini");
+  await expect(mini).toBeVisible();
+  const box = (await mini.boundingBox())!;
+  const vp = page.viewportSize()!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  for (let i = 1; i <= 10; i++) await page.mouse.move(box.x + box.width / 2 - (i * (vp.width * 0.55)) / 10, box.y + box.height / 2 - i * 25);
+  await page.mouse.up();
+  // It glides to the left edge.
+  await expect.poll(async () => (await mini.boundingBox())!.x).toBeLessThan(40);
+  await page.reload();
+  await expect.poll(async () => (await page.getByTestId("demo-mini").boundingBox())?.x ?? 999).toBeLessThan(40); // remembered
+  await page.getByTestId("demo-mini").getByRole("button", { name: "Watch the demo" }).click();
+  await expect(page.getByRole("dialog", { name: "JOTR demo" })).toBeVisible();
+});
+
+test("Add to Chrome opens the install guide, and shows Added once installed", async ({ page, browser }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Add to Chrome" }).first().click();
+  const guide = page.getByRole("dialog", { name: "Add JOTR to Chrome" });
+  await expect(guide).toBeVisible();
+  await expect(guide.getByText("Load unpacked")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(guide).toBeHidden();
+
+  const ctx = await browser.newContext({ baseURL: test.info().project.use.baseURL });
+  await ctx.addInitScript(() => {
+    // What the extension's site script does (Chrome runs it once <html> exists).
+    const mark = () => {
+      document.documentElement.dataset.jotrExtension = "0.1.0";
+      window.dispatchEvent(new CustomEvent("jotr:extension"));
+    };
+    if (document.documentElement) mark();
+    else document.addEventListener("DOMContentLoaded", mark);
+  });
+  const p2 = await ctx.newPage();
+  await p2.goto("/");
+  await expect(p2.getByText("Added to Chrome").first()).toBeVisible();
+  await ctx.close();
+});

@@ -8,12 +8,15 @@ import { fileURLToPath } from "node:url";
 const root = dirname(fileURLToPath(import.meta.url));
 const dist = join(root, "dist");
 const test = process.argv.includes("--test");
+// Where the JOTR web app lives; the popup opens it and the site script marks it as "extension installed".
+const siteOrigin = (process.env.JOTR_SITE_ORIGIN || "http://localhost:5173").replace(/\/$/, "");
 
 await rm(dist, { recursive: true, force: true });
 await mkdir(dist, { recursive: true });
 
 await build({
-  entryPoints: { inject: "src/inject.ts", bridge: "src/bridge.ts", popup: "src/popup.ts" },
+  entryPoints: { inject: "src/inject.ts", bridge: "src/bridge.ts", popup: "src/popup.ts", site: "src/site.ts" },
+  define: { __JOTR_SITE__: JSON.stringify(siteOrigin) },
   bundle: true,
   format: "iife",
   target: "chrome116",
@@ -45,5 +48,8 @@ if (test) {
   for (const cs of manifest.content_scripts) cs.matches.push("http://localhost/*");
   manifest.web_accessible_resources[0].matches.push("http://localhost/*");
 }
+// The site script runs on the JOTR app (and local development servers).
+const siteMatches = [...new Set([`${siteOrigin}/*`, "http://localhost/*", "http://127.0.0.1/*"].map((m) => m.replace(/:\d+\/\*$/, "/*")))];
+manifest.content_scripts.push({ matches: siteMatches, js: ["site.js"], run_at: "document_start" });
 await writeFile(join(dist, "manifest.json"), JSON.stringify(manifest, null, 2));
 console.log(`extension built in ${dist}${test ? " (test build)" : ""}`);

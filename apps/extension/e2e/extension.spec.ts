@@ -34,3 +34,17 @@ test("call pages get a processed camera track and untouched audio", async () => 
     await context.close();
   }
 });
+
+test("the JOTR site can tell the extension is installed", async () => {
+  const context = await chromium.launchPersistentContext("", {
+    channel: "chromium",
+    args: [`--disable-extensions-except=${dist}`, `--load-extension=${dist}`],
+  });
+  try {
+    const page = await context.newPage();
+    await page.goto("http://localhost:4300/call.html");
+    await expect.poll(() => page.evaluate(() => document.documentElement.dataset.jotrExtension)).toBe("0.1.0");
+  } finally {
+    await context.close();
+  }
+});

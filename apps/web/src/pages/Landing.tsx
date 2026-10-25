@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Icon, ProIcon, Silhouette, type Hue, type ProIconName } from "./landing-icons";
 import type { Laptop3D, ScreenMode } from "./laptop3d";
 import type { StarField } from "./starfield";
+import { AddToChrome } from "../components/AddToChrome";
 import "./landing.css";
 
 /**
@@ -203,9 +204,7 @@ function Nav() {
         <span>Star</span>
         {Icon.star}
       </a>
-      <Link to="/app" className="lg-btn lg-btn-white sm">
-        Open JOTR
-      </Link>
+      <AddToChrome className="lg-btn lg-btn-white sm" />
       <button className="lg-burger" onClick={() => setMenu((m) => !m)} aria-label={menu ? "Close menu" : "Open menu"} aria-expanded={menu}>
         {menu ? Icon.close : Icon.menu}
       </button>
@@ -214,6 +213,7 @@ function Nav() {
         <a href={REPO_URL} target="_blank" rel="noopener noreferrer">
           Star on GitHub
         </a>
+        <AddToChrome className="lg-btn lg-btn-white" />
         <Link to="/app" className="lg-btn lg-btn-ember">
           Start free {Icon.arrow}
         </Link>
@@ -283,6 +283,7 @@ function Hero({ onWatch }: { onWatch: () => void }) {
           <Link to="/app" className="lg-btn lg-btn-white lg">
             <img src="/favicon.svg" width={22} height={22} alt="" /> Start free in your browser
           </Link>
+          <AddToChrome className="lg-btn lg-btn-glass lg" />
           <button className="lg-btn lg-btn-glass lg" onClick={onWatch}>
             <span className="lg-play">{Icon.play}</span> Watch the demo
           </button>
@@ -929,6 +930,72 @@ function DemoPopup({ open, setOpen }: { open: boolean; setOpen: (v: boolean) => 
     };
   }, [open, setOpen]);
 
+  // Drag the mini player anywhere; on release it glides to the nearest side (or corner) and stays there.
+  const boxRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(() => {
+    try {
+      return JSON.parse(localStorage.getItem("jotr.demo.pos") ?? "null") as { x: number; y: number } | null;
+    } catch {
+      return null;
+    }
+  });
+  const [dragging, setDragging] = useState(false);
+  const suppressClick = useRef(false);
+
+  const snap = useCallback(() => {
+    const el = boxRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const m = innerWidth < 620 ? 12 : 22;
+    const x = r.left + r.width / 2 < innerWidth / 2 ? m : innerWidth - r.width - m;
+    let y = Math.max(m + 64, Math.min(innerHeight - r.height - m, r.top));
+    if (y < innerHeight * 0.22) y = m + 64; // near the top: tuck into the top corner, below the bar
+    if (y > innerHeight - r.height - innerHeight * 0.22) y = innerHeight - r.height - m;
+    const next = { x, y };
+    setPos(next);
+    try {
+      localStorage.setItem("jotr.demo.pos", JSON.stringify(next));
+    } catch {
+      // Not remembered without storage.
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!pos) return;
+    addEventListener("resize", snap);
+    return () => removeEventListener("resize", snap);
+  }, [pos, snap]);
+
+  const startDrag = (e: React.PointerEvent) => {
+    if (e.button !== 0 || (e.target as HTMLElement).closest(".lg-mini-close")) return;
+    const el = boxRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const start = { x: e.clientX, y: e.clientY, dx: e.clientX - r.left, dy: e.clientY - r.top };
+    let moved = false;
+    const move = (ev: PointerEvent) => {
+      if (!moved && Math.hypot(ev.clientX - start.x, ev.clientY - start.y) < 6) return;
+      if (!moved) {
+        moved = true;
+        setDragging(true);
+      }
+      ev.preventDefault();
+      setPos({ x: ev.clientX - start.dx, y: ev.clientY - start.dy });
+    };
+    const up = () => {
+      removeEventListener("pointermove", move);
+      removeEventListener("pointerup", up);
+      removeEventListener("pointercancel", up);
+      if (!moved) return;
+      suppressClick.current = true; // the release is not a click on "Watch the demo"
+      setDragging(false);
+      requestAnimationFrame(snap);
+    };
+    addEventListener("pointermove", move, { passive: false });
+    addEventListener("pointerup", up);
+    addEventListener("pointercancel", up);
+  };
+
   const dismiss = () => {
     setDismissed(true);
     try {
@@ -941,11 +1008,28 @@ function DemoPopup({ open, setOpen }: { open: boolean; setOpen: (v: boolean) => 
   return (
     <>
       {!dismissed && !open && visible && (
-        <div className="lg-mini" data-testid="demo-mini">
+        <div
+          ref={boxRef}
+          className={`lg-mini${dragging ? " dragging" : ""}${pos ? " placed" : ""}`}
+          data-testid="demo-mini"
+          onPointerDown={startDrag}
+          style={pos ? { left: pos.x, top: pos.y, right: "auto", bottom: "auto" } : undefined}
+          title="Drag me anywhere"
+        >
           <button className="lg-mini-close" onClick={dismiss} aria-label="Close demo">
             {Icon.close}
           </button>
-          <button className="lg-mini-body" onClick={() => setOpen(true)} aria-label="Watch the demo">
+          <button
+            className="lg-mini-body"
+            onClick={() => {
+              if (suppressClick.current) {
+                suppressClick.current = false;
+                return;
+              }
+              setOpen(true);
+            }}
+            aria-label="Watch the demo"
+          >
             <DemoScene step={step} />
             <span className="lg-mini-label">
               <span className="lg-play">{Icon.play}</span> Watch with captions

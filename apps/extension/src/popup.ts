@@ -1,6 +1,13 @@
 import { DEFAULT_EFFECTS, type EffectSettings } from "./pipeline";
 
+declare const __JOTR_SITE__: string;
+
 const form = document.querySelector<HTMLFormElement>("#settings")!;
+
+document.querySelector("#open")!.addEventListener("click", () => {
+  void chrome.tabs.create({ url: `${__JOTR_SITE__}/app` });
+  window.close();
+});
 
 chrome.storage.sync.get(DEFAULT_EFFECTS, (raw) => {
   const s = raw as EffectSettings;

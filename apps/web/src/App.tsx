@@ -15,6 +15,7 @@ import { VerifyPage } from "./pages/Verify";
 import { WelcomePage } from "./pages/Welcome";
 import { LandingPage } from "./pages/Landing";
 import { Icon } from "./pages/landing-icons";
+import { AddToChrome } from "./components/AddToChrome";
 
 export function App() {
   const settings = useSettings();
@@ -99,6 +100,7 @@ function AppHeader({ researcher, apiUrl, user }: { researcher: boolean; apiUrl: 
         ))}
       </nav>
       <div className="spacer" />
+      <AddToChrome className="ext-btn" />
       <a className="header-star" href="https://github.com/charanjot27/myport" target="_blank" rel="noopener noreferrer" aria-label="Star JOTR on GitHub">
         {Icon.github}
         <span>Star</span>

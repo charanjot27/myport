@@ -3,7 +3,7 @@ import { createPrivateKey, createPublicKey, generateKeyPairSync, sign, verify, t
 /**
  * Ed25519 signing for liveness attestations. The payload is canonical JSON
  * signed as UTF-8 bytes; anyone can verify it with the public JWK served at
- * /liveness/keys, without trusting PromptSense's servers at verification time.
+ * /liveness/keys, without trusting JOTR's servers at verification time.
  */
 export class AttestationSigner {
   private readonly privateKey: KeyObject;

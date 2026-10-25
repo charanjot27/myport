@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "PromptSense for video calls: corneal reflection shield and reading-aware eye contact inside Meet, Zoom, Teams and other web apps.",
+  "description": "JOTR for video calls: corneal reflection shield and reading-aware eye contact inside Meet, Zoom, Teams and other web apps.",
   "scripts": {
     "build": "node build.mjs",
     "build:test": "node build.mjs --test",

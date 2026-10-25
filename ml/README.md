@@ -1,4 +1,4 @@
-# PromptSense ML: stumble predictor
+# JOTR ML: stumble predictor
 
 Trains the model behind *eye-voice span stumble prediction* (module 1). It
 predicts, every 100 ms, whether the speaker will stumble in the next 0.3–2 s.

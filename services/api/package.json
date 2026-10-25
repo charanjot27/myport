@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "PromptSense API: accounts, script sync, speech tokens, liveness attestations, billing and research uploads.",
+  "description": "JOTR API: accounts, script sync, speech tokens, liveness attestations, billing and research uploads.",
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "start": "node --import tsx src/server.ts",

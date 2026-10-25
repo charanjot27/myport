@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Platform-independent perception, alignment and fusion logic for PromptSense.",
+  "description": "Platform-independent perception, alignment and fusion logic for JOTR.",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {

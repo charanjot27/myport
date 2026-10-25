@@ -1,10 +1,14 @@
-# PromptSense
+<p align="center"><img src="apps/web/public/icons/icon-512.png" width="112" alt="JOTR logo"></p>
 
-A browser teleprompter that watches and listens to the speaker. It follows your
+# JOTR
+
+**Your script, right under your camera.** A browser teleprompter that watches and listens to the speaker. It follows your
 voice, predicts stumbles before they happen, keeps eye contact natural, hides
 your script's reflection in your eyes, and can prove the speaker is live.
 
 Video never leaves the device: face, eye and hand tracking run in the browser.
+
+Run `pnpm dev` and open http://localhost:5173 for the landing page, or http://localhost:5173/app for the app.
 
 ## What's in the box
 
@@ -113,7 +117,7 @@ balancer, or Cloudflare). The API runs migrations on start. Configuration:
 
 ## Privacy and security notes
 
-- Video and audio are never uploaded or stored by PromptSense. Speech audio goes to the recogniser the user picks (Google via the browser, or Deepgram for Pro); "Off" keeps it local.
+- Video and audio are never uploaded or stored by JOTR. Speech audio goes to the recogniser the user picks (Google via the browser, or Deepgram for Pro); "Off" keeps it local.
 - Research uploads need explicit consent on the account. They contain derived features only, the API rejects media fields, and withdrawing consent deletes them. Get **ethics board approval** before recruiting volunteers.
 - Passwords use scrypt. Sessions are httpOnly cookies. State-changing requests are checked against allowed origins. Auth endpoints are rate-limited.
 - The web app ships with a strict CSP: no third-party scripts, and models are served from the same origin.

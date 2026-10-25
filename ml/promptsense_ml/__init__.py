@@ -1,1 +1,1 @@
-"""Training pipeline for the PromptSense stumble predictor."""
+"""Training pipeline for the JOTR stumble predictor."""

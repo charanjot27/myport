@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "promptsense-ml"
 version = "0.1.0"
-description = "Training pipeline for the PromptSense stumble predictor (eye-voice span GRU)."
+description = "Training pipeline for the JOTR stumble predictor (eye-voice span GRU)."
 requires-python = ">=3.10"
 dependencies = ["numpy>=1.26", "torch>=2.3", "onnx>=1.16", "onnxruntime>=1.18", "onnxscript>=0.1"]
 

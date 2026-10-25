@@ -2,7 +2,7 @@
   "name": "promptsense",
   "private": true,
   "version": "0.1.0",
-  "description": "PromptSense: an AI teleprompter that watches and listens to the speaker.",
+  "description": "JOTR: an AI teleprompter that watches and listens to the speaker.",
   "packageManager": "pnpm@10.28.0",
   "engines": { "node": ">=20" },
   "scripts": {

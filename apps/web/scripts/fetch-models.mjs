@@ -23,6 +23,11 @@ async function exists(p) {
   }
 }
 
+if (!(await exists(join(wasmSrc, "vision_wasm_internal.wasm")))) {
+  console.error("\nDependencies are not installed yet. Run `pnpm install` in the promptsense folder, then try again.\n");
+  process.exit(1);
+}
+
 await mkdir(wasmDst, { recursive: true });
 await mkdir(modelDst, { recursive: true });
 for (const f of await readdir(wasmSrc)) await copyFile(join(wasmSrc, f), join(wasmDst, f));

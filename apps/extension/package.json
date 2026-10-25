@@ -6,6 +6,7 @@
   "description": "JOTR for video calls: corneal reflection shield and reading-aware eye contact inside Meet, Zoom, Teams and other web apps.",
   "scripts": {
     "build": "node build.mjs",
+    "package": "node ../web/scripts/pack-extension.mjs --store",
     "build:test": "node build.mjs --test",
     "typecheck": "tsc --noEmit",
     "test": "node build.mjs --test && playwright test"

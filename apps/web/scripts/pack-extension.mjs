@@ -9,11 +9,14 @@ import zlib from "node:zlib";
 
 const web = join(dirname(fileURLToPath(import.meta.url)), "..");
 const ext = join(web, "../extension");
-const out = join(web, "public/downloads/jotr-chrome-extension.zip");
+// --store: the Chrome Web Store upload (manifest.json at the zip root, fails loudly).
+const store = process.argv.includes("--store");
+const out = store ? join(ext, "jotr-chrome-web-store.zip") : join(web, "public/downloads/jotr-chrome-extension.zip");
 
 try {
-  execFileSync(process.execPath, [join(ext, "build.mjs")], { cwd: ext, stdio: "inherit", env: process.env });
+  execFileSync(process.execPath, [join(ext, "build.mjs")], { cwd: ext, stdio: "inherit", env: { ...process.env, JOTR_STORE: store ? "1" : "" } });
 } catch (e) {
+  if (store) throw e;
   console.warn(`[pack-extension] skipped: the extension did not build (${e.message}).`);
   process.exit(0);
 }
@@ -41,7 +44,7 @@ const crc32 = zlib.crc32 ?? ((buf) => {
 
 // Minimal ZIP writer (deflate), enough for Chrome's "Load unpacked" after unzipping.
 const dist = join(ext, "dist");
-const root = "jotr-chrome-extension/";
+const root = store ? "" : "jotr-chrome-extension/";
 const locals = [];
 const central = [];
 let offset = 0;

@@ -34,7 +34,10 @@ services:
     restart: unless-stopped
 
   web:
-    build: { context: .., dockerfile: deploy/Dockerfile.web }
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.web
+      args: { VITE_CHROME_STORE_URL: "${VITE_CHROME_STORE_URL:-}" }
     ports: ["${WEB_PORT:-8080}:8080"]
     depends_on:
       api: { condition: service_healthy }

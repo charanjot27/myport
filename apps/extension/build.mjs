@@ -49,7 +49,9 @@ if (test) {
   manifest.web_accessible_resources[0].matches.push("http://localhost/*");
 }
 // The site script runs on the JOTR app (and local development servers).
-const siteMatches = [...new Set([`${siteOrigin}/*`, "http://localhost/*", "http://127.0.0.1/*"].map((m) => m.replace(/:\d+\/\*$/, "/*")))];
+// Store builds only list the real site; local builds also match development servers.
+const local = process.env.JOTR_STORE ? [] : ["http://localhost/*", "http://127.0.0.1/*"];
+const siteMatches = [...new Set([`${siteOrigin}/*`, ...local].map((m) => m.replace(/:\d+\/\*$/, "/*")))];
 manifest.content_scripts.push({ matches: siteMatches, js: ["site.js"], run_at: "document_start" });
 await writeFile(join(dist, "manifest.json"), JSON.stringify(manifest, null, 2));
 console.log(`extension built in ${dist}${test ? " (test build)" : ""}`);

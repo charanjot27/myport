@@ -10,6 +10,9 @@ COPY packages/core packages/core
 COPY apps/web apps/web
 # Same-origin API behind nginx.
 ENV VITE_API_URL=/api
+# Chrome Web Store listing for the "Add to Chrome" button (empty: show the install guide).
+ARG VITE_CHROME_STORE_URL=""
+ENV VITE_CHROME_STORE_URL=$VITE_CHROME_STORE_URL
 RUN pnpm --filter @promptsense/web build
 
 FROM nginx:1.27-alpine

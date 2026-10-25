@@ -16,3 +16,9 @@ ml/data/
 apps/web/public/mediapipe/
 apps/web/public/onnx/
 apps/extension/e2e/site/harness.js
+
+# Python
+__pycache__/
+*.egg-info/
+.venv/
+.pytest_cache/

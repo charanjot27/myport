@@ -94,3 +94,19 @@ test("vision models load from our own origin", async ({ page }) => {
   await expect(page.locator(".chip", { hasText: /no face|face$/ })).toBeVisible({ timeout: 45_000 });
   expect(external).toEqual([]);
 });
+
+test("a trained ONNX stumble model is picked up when deployed", async ({ page }) => {
+  const fixtures = new URL("./fixtures/", import.meta.url);
+  const fs = await import("node:fs/promises");
+  await page.route("**/models/stumble.json", async (route) =>
+    route.fulfill({ contentType: "application/json", body: await fs.readFile(new URL("stumble.json", fixtures)) }),
+  );
+  await page.route("**/models/stumble.onnx", async (route) =>
+    route.fulfill({ contentType: "application/octet-stream", body: await fs.readFile(new URL("stumble.onnx", fixtures)) }),
+  );
+  await page.goto("/");
+  await page.getByRole("button", { name: "Try the sample script" }).click();
+  await page.getByRole("button", { name: "Start prompting" }).click();
+  await page.getByTestId("start").click();
+  await expect(page.getByTestId("prompter")).toHaveAttribute("data-predictor", /^gru-/, { timeout: 20_000 });
+});

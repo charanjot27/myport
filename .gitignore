@@ -11,7 +11,7 @@ apps/web/e2e/fixtures/*.y4m
 apps/web/e2e/fixtures/*.wav
 services/api/data/
 ml/runs/
-ml/data/raw/
+ml/data/
 *.onnx.tmp
 apps/web/public/mediapipe/
 apps/web/public/onnx/

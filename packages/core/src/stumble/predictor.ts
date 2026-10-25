@@ -71,12 +71,17 @@ export class StumbleMonitor {
 
   constructor(
     private predictor: StumblePredictor,
-    private readonly onThreshold = 0.6,
-    private readonly offThreshold = 0.4,
+    private onThreshold = 0.6,
+    private offThreshold = 0.4,
   ) {}
 
-  setPredictor(p: StumblePredictor): void {
+  /** Trained models ship their own operating point (chosen for a recall target on validation data). */
+  setPredictor(p: StumblePredictor, thresholds?: { on: number; off: number }): void {
     this.predictor = p;
+    if (thresholds) {
+      this.onThreshold = thresholds.on;
+      this.offThreshold = thresholds.off;
+    }
   }
 
   get predictorName(): string {

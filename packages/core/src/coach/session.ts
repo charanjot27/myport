@@ -26,6 +26,8 @@ export interface SessionRecord {
   /** Hand motion energy per frame, for fidget detection. */
   handMotion?: Array<{ t: number; energy: number }>;
   events: TimelineEvent[];
+  /** Stumbles detected automatically when the session ended (weak labels for training). */
+  autoStumbles?: Array<{ t: number; kind: StumbleKind; token: number }>;
   /** Manual labels added in the labelling tool. */
   labels?: Array<{ t: number; kind: StumbleKind | "none"; token?: number; note?: string }>;
   meta?: Record<string, unknown>;

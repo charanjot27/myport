@@ -1,0 +1,59 @@
+{
+  "version": "20261025-073052",
+  "model": "gru",
+  "spec": {
+    "version": 1,
+    "frameHz": 10,
+    "window": 20,
+    "horizon": {
+      "min": 0.3,
+      "max": 2.0
+    },
+    "features": [
+      "evs_words",
+      "evs_delta",
+      "gaze_valid",
+      "fixation_s",
+      "regression",
+      "next_difficulty_max",
+      "next_difficulty_mean",
+      "speech_rate",
+      "since_advance_s",
+      "speaking",
+      "align_confidence",
+      "off_script",
+      "break_ahead"
+    ]
+  },
+  "threshold": {
+    "on": 0.9,
+    "off": 0.7
+  },
+  "metrics": {
+    "val_ap": 0.6428569930104708,
+    "baseline_val_ap": 0.28984790015549133,
+    "threshold": 0.9,
+    "event_stumbles": 332,
+    "event_warnings": 269,
+    "event_caught": 254,
+    "event_recall": 0.7650602409638554,
+    "event_precision": 0.9442379182156134,
+    "event_mean_lead_s": 0.860236220472441,
+    "event_false_alarms_per_min": 0.29713757469708474,
+    "baseline_event_stumbles": 332,
+    "baseline_event_warnings": 56,
+    "baseline_event_caught": 21,
+    "baseline_event_recall": 0.06325301204819277,
+    "baseline_event_precision": 0.375,
+    "baseline_event_mean_lead_s": 0.6095238095238096,
+    "baseline_event_false_alarms_per_min": 0.693321007626531
+  },
+  "trainedOn": {
+    "sessions": 90,
+    "participants": 30,
+    "labels": [
+      "auto"
+    ],
+    "syntheticOnly": true
+  }
+}

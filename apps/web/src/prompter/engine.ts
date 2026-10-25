@@ -157,8 +157,8 @@ export class PrompterEngine {
     this.retarget();
   }
 
-  setPredictor(p: ConstructorParameters<typeof StumbleMonitor>[0]): void {
-    this.stumble.setPredictor(p);
+  setPredictor(p: ConstructorParameters<typeof StumbleMonitor>[0], thresholds?: { on: number; off: number }): void {
+    this.stumble.setPredictor(p, thresholds);
     this.patch({ predictor: p.name }, true);
   }
 

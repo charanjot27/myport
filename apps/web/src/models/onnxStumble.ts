@@ -11,6 +11,7 @@ export class OnnxStumblePredictor implements StumblePredictor {
     private readonly session: import("onnxruntime-web/wasm").InferenceSession,
     private readonly ort: typeof import("onnxruntime-web/wasm"),
     version: string,
+    readonly thresholds: { on: number; off: number },
   ) {
     this.name = `gru-${version}`;
   }
@@ -20,7 +21,7 @@ export class OnnxStumblePredictor implements StumblePredictor {
       const meta = await fetch(url.replace(/\.onnx$/, ".json"));
       // An SPA host answers unknown paths with index.html, so check the type too.
       if (!meta.ok || !meta.headers.get("content-type")?.includes("json")) return null;
-      const info = (await meta.json()) as { version: string; spec: { features: string[]; window: number } };
+      const info = (await meta.json()) as { version: string; spec: { features: string[]; window: number }; threshold?: { on: number; off: number } };
       if (info.spec.window !== STUMBLE_SPEC.window || info.spec.features.join() !== STUMBLE_SPEC.features.join()) {
         console.warn("stumble model was trained on a different feature spec; ignoring it");
         return null;
@@ -28,7 +29,7 @@ export class OnnxStumblePredictor implements StumblePredictor {
       const ort = await import("onnxruntime-web/wasm");
       ort.env.wasm.wasmPaths = `${import.meta.env.BASE_URL}onnx/`;
       const session = await ort.InferenceSession.create(url, { executionProviders: ["wasm"] });
-      return new OnnxStumblePredictor(session, ort, info.version);
+      return new OnnxStumblePredictor(session, ort, info.version, info.threshold ?? { on: 0.6, off: 0.4 });
     } catch (e) {
       console.warn("could not load stumble model", e);
       return null;

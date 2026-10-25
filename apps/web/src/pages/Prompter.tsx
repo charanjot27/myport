@@ -1,4 +1,4 @@
-import { parseScript, ReadingGate, readingFeatures, readingProbability, FusionTimeline, type ParsedScript } from "@promptsense/core";
+import { detectStumbles, parseScript, ReadingGate, readingFeatures, readingProbability, FusionTimeline, type ParsedScript } from "@promptsense/core";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { openMedia, stopMedia } from "../lib/media";
@@ -121,7 +121,7 @@ export function PrompterPage() {
     remeasure();
 
     // Background: trained stumble model if one is deployed.
-    void OnnxStumblePredictor.load().then((p) => p && engine.setPredictor(p));
+    void OnnxStumblePredictor.load().then((p) => p && engine.setPredictor(p, p.thresholds));
 
     // Countdown gives the speaker a beat to look at the text.
     setPhase("countdown");
@@ -220,6 +220,7 @@ export function PrompterPage() {
     recorderRef.current = null;
     teardown();
     const rec = engine.stop();
+    rec.autoStumbles = detectStumbles(rec).map(({ t, kind, token }) => ({ t, kind, token }));
     engineRef.current = null;
     await sessions.put({ id: rec.id, scriptId: rec.scriptId, scriptTitle: rec.scriptTitle, startedAt: rec.startedAt, durationMs: rec.durationMs, record: rec, research });
     if (blob) recordings.set(rec.id, blob);
@@ -319,7 +320,7 @@ export function PrompterPage() {
             : null;
 
   return (
-    <div className={`prompter${settings.mirror ? " mirrored" : ""}`} onMouseMove={poke} data-testid="prompter">
+    <div className={`prompter${settings.mirror ? " mirrored" : ""}`} onMouseMove={poke} data-testid="prompter" data-predictor={hud?.predictor}>
       <div className="viewport" ref={viewportRef}>
         <div
           className="content"

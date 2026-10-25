@@ -4,7 +4,7 @@ import { expect, test } from "@playwright/test";
 
 test("account sign-up and script sync across devices", async ({ browser }) => {
   const email = `e2e-${Date.now()}@example.com`;
-  const useApi = () => localStorage.setItem("promptsense.settings.v1", JSON.stringify({ apiUrl: "/api" }));
+  const useApi = () => localStorage.setItem("promptsense.settings.v1", JSON.stringify({ apiUrl: "/api", onboarded: true }));
 
   // Device 1: create a script, then sign up; the script uploads.
   const one = await browser.newContext();

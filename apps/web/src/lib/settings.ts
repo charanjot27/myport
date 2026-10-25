@@ -1,7 +1,13 @@
 import { useSyncExternalStore } from "react";
-import type { GazeModel } from "@promptsense/core";
+import type { CalibrationSample, GazeModel } from "@promptsense/core";
 
 export type SpeechProviderId = "webspeech" | "deepgram" | "none";
+
+/** Where the webcam is: x as a fraction of the screen width, and which screen edge. */
+export interface CameraPlacement {
+  x: number;
+  edge: "top" | "bottom";
+}
 
 export interface Settings {
   speechProvider: SpeechProviderId;
@@ -27,12 +33,27 @@ export interface Settings {
   cornealShield: boolean;
   /** Saccade-aware eye contact correction in recordings (module 2). */
   eyeContact: boolean;
+  /** "camera": a few lines right under the webcam, rest of the screen black. "full": classic full-screen prompter. */
+  layout: "camera" | "full";
+  cameraPlacement: CameraPlacement;
+  /** Lines of text visible in camera layout. */
+  focusLines: number;
+  /** Width of the camera-layout text column as a fraction of the window width. */
+  columnWidth: number;
+  /** 0.2..1 text luminance; lowered by the reflection check so text does not show in eyes or glasses. */
+  textBrightness: number;
+  textTone: "warm" | "neutral";
+  /** Result of the last reflection check, for display. */
+  reflectionCheck: { at: string; level: number; visibleAtFull: boolean; stillVisible: boolean } | null;
+  /** Explicit calibration samples, kept so the model can be refined while reading. */
+  calibrationSamples: CalibrationSample[];
+  onboarded: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
   speechProvider: "webspeech",
   language: "en-US",
-  fontSize: 44,
+  fontSize: 40,
   lineWidth: 34,
   readingLine: 0.22,
   mirror: false,
@@ -41,7 +62,7 @@ export const DEFAULT_SETTINGS: Settings = {
   pauseOnLookAway: true,
   stumbleAssist: true,
   gestureControl: false,
-  showCamera: true,
+  showCamera: false,
   cameraId: "",
   micId: "",
   theme: "dark",
@@ -50,6 +71,15 @@ export const DEFAULT_SETTINGS: Settings = {
   researchConsent: false,
   cornealShield: true,
   eyeContact: false,
+  layout: "camera",
+  cameraPlacement: { x: 0.5, edge: "top" },
+  focusLines: 3,
+  columnWidth: 0.42,
+  textBrightness: 0.8,
+  textTone: "warm",
+  reflectionCheck: null,
+  calibrationSamples: [],
+  onboarded: false,
 };
 
 const KEY = "promptsense.settings.v1";

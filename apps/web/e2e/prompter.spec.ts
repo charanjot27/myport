@@ -8,6 +8,8 @@ import { expect, test, type Page } from "@playwright/test";
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     window.__promptsenseFakeSpeech = true;
+    // These tests start after the setup tour (covered in tour.spec.ts).
+    if (!localStorage.getItem("promptsense.settings.v1")) localStorage.setItem("promptsense.settings.v1", JSON.stringify({ onboarded: true }));
   });
 });
 

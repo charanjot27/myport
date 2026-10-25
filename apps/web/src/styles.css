@@ -322,32 +322,59 @@ table.list th {
 .prompter.mirrored .viewport {
   transform: scaleX(-1);
 }
+
+/* Camera layout: a small window of text under the webcam, everything else black.
+   Lines fade out at the bottom so the bright area stays small (fewer reflections). */
+.prompter.camera-layout .viewport {
+  right: auto;
+  bottom: auto;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 100%);
+}
+.prompter.camera-layout .content {
+  font-weight: 500;
+  line-height: 1.45;
+}
+.prompter.camera-layout .section-title,
+.prompter.camera-layout .cue {
+  opacity: 0.55;
+}
+.prompter.camera-layout .risk {
+  opacity: 0.4;
+}
+.prompter.camera-layout .banner {
+  opacity: 0.85;
+  font-size: 0.85rem;
+}
 .prompter .w {
   transition: color 120ms linear, background-color 160ms linear;
   border-radius: 6px;
-  color: #f5f5f5;
+  color: var(--ps-text, #f5f5f5);
 }
 .prompter .w.spoken {
-  color: #6e7681;
+  color: var(--ps-spoken, #6e7681);
 }
 .prompter .w.current {
-  color: #ffffff;
+  color: var(--ps-text, #ffffff);
   text-decoration: underline;
-  text-decoration-color: var(--accent);
-  text-decoration-thickness: 4px;
+  text-decoration-color: rgba(47, 129, 247, 0.7);
+  text-decoration-thickness: 3px;
   text-underline-offset: 8px;
 }
 .prompter .w.hard {
+  color: var(--ps-hard, #ff9a3c);
+  text-decoration: underline wavy;
+  text-decoration-color: var(--ps-hard, #ff9a3c);
+  text-underline-offset: 8px;
+}
+.prompter:not(.camera-layout) .w.hard {
   color: #111;
   background: var(--hard);
   box-shadow: 0 0 0 4px var(--hard);
+  text-decoration: none;
 }
 .prompter .w.emph {
   font-style: italic;
-  color: #9ecbff;
-}
-.prompter .w.spoken.emph {
-  color: #4d6a87;
 }
 .prompter .cue {
   display: inline-block;
@@ -621,4 +648,146 @@ table.list th {
   .calib-dot {
     transition: none;
   }
+}
+
+/* -------------------------------------------------------------------- tour */
+
+.tour {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+.tour-dark {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 20;
+}
+.tour-panel {
+  width: min(520px, 100%);
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 20px;
+}
+.tour-panel h1 {
+  font-size: 1.4rem;
+  margin: 6px 0 8px;
+}
+.tour-panel h2 {
+  margin: 6px 0 8px;
+}
+/* In the dark steps the panel sits low and dim, away from the camera, so it doesn't add glare. */
+.tour-panel.bottom {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  background: #0b0d10;
+  border-color: #23272e;
+  color: #9aa4b2;
+}
+.tour-progress {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+.tour-progress span {
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--border);
+}
+.tour-progress span.on {
+  background: var(--accent);
+}
+.tour-preview {
+  width: 220px;
+  border-radius: 10px;
+  transform: scaleX(-1);
+  margin-bottom: 12px;
+}
+.tour-hidden-video {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+.tour-text,
+.tour-frame {
+  position: fixed;
+  line-height: 1.45;
+  font-weight: 500;
+  padding: 0 0.3em;
+}
+.tour-frame {
+  border: 1px dashed #2a2f36;
+  border-radius: 8px;
+}
+.checklist {
+  list-style: none;
+  padding: 0;
+}
+.checklist li {
+  padding: 4px 0 4px 26px;
+  position: relative;
+}
+.checklist li::before {
+  content: "○";
+  position: absolute;
+  left: 4px;
+  color: var(--text-muted);
+}
+.checklist li.ok::before {
+  content: "✓";
+  color: var(--good);
+}
+.meter {
+  display: inline-block;
+  width: 90px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--bg-sunken);
+  vertical-align: middle;
+  margin: 0 6px;
+  overflow: hidden;
+}
+.meter span {
+  display: block;
+  height: 100%;
+  background: var(--good);
+}
+.screen-picker {
+  position: relative;
+  height: 150px;
+  margin: 14px 4px 4px;
+  border: 3px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-sunken);
+}
+.cam-spot {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  margin-left: -9px;
+  border-radius: 50%;
+  border: 2px solid var(--text-muted);
+  background: var(--bg-raised);
+  padding: 0;
+}
+.cam-spot.selected {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(47, 129, 247, 0.3);
+}
+.picker-text {
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: 0.75rem;
+  color: #d9a066;
+  border: 1px dashed #6b5233;
+  border-radius: 6px;
+  padding: 2px 10px;
+  white-space: nowrap;
 }

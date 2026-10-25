@@ -57,15 +57,16 @@ Automated tests cover logic, the UI flow (fake camera and mic, scripted speech),
 pixel-level checks of the effects, the extension, and the full Docker stack.
 They can't judge real-world feel. Please check these with real hardware:
 
-1. **Voice following** (Chrome): open the sample script and read it, then try skipping a paragraph, re-reading a sentence, ad-libbing, and saying "um". The underline should track you within about 2 words.
-2. **Calibration** (`/calibrate`): the result should be "good" or "usable". The yellow gaze dot in the prompter should sit near the line you're reading.
-3. **Stumble assist**: after calibrating, read a script with hard words (names, numbers, jargon). Watch for highlights appearing just before you reach them, and look at the coach report's "caught X% in advance".
-4. **Look-away pause**: turn your head away; the scroll should pause and resume when you look back.
-5. **Gestures** (enable in Settings): an open palm toggles pause; ✌ jumps a section.
-6. **Recording** with the corneal shield and eye contact: tick "Record this take", then download and inspect the eyes. Glances away should look natural; reading should look like eye contact.
-7. **Liveness** (`/verify`): try it in a normally lit room, then hold a phone video of yourself up to the camera; that should fail.
-8. **Extension**: `pnpm --filter @promptsense/extension build`, then load `apps/extension/dist` via `chrome://extensions` (Developer mode → Load unpacked). Join a Meet test call and check the self-view.
-9. **Performance**: the HUD's vision chip should stay green. If your laptop struggles, note the browser and machine. The CPU fallback is slower.
+1. **Setup tour** (opens on first visit, or **Setup tour** in the header): it should take under a minute. Check that it detects your Mac and camera, and that the text in step 6 sits right under your camera.
+2. **Look at the lens:** record a take and watch it back. While reading, you should appear to be looking at the viewer.
+3. **Reflections:** wear your glasses if you have them. The reflection check should report whether text showed up and pick a brightness. Then zoom into a recording: no readable text in your eyes or lenses. Use ☾/☀ in the prompter toolbar to adjust.
+4. **Voice following** (Chrome): read the sample script, skip a paragraph, re-read a sentence, say "um". The underline should track you within about 2 words.
+5. **Calibration** (about 8 s, in the tour or at `/calibrate`): the result should be "good" or "usable". It keeps fine-tuning while you read.
+6. **Stumble assist**: read a script with hard words. Watch for hard words turning orange just before you reach them.
+7. **Look-away pause**: turn your head away; the scroll should pause and resume when you look back.
+8. **Gestures** (enable in Settings): an open palm toggles pause; ✌ jumps a section.
+9. **Liveness** (`/verify`): try it in a normally lit room, then hold a phone video of yourself up to the camera; that should fail.
+10. **Extension**: `pnpm --filter @promptsense/extension build`, then load `apps/extension/dist` via `chrome://extensions` (Developer mode → Load unpacked). Join a Meet test call and check the self-view.
 
 Tell me what breaks and what feels off; that is the feedback loop.
 

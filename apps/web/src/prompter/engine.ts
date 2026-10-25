@@ -6,15 +6,17 @@ import {
   handMotionEnergy,
   HeuristicStumblePredictor,
   OneEuroFilter,
+  fitGazeModel,
   predictGaze,
   ScriptAligner,
   ScrollController,
   StumbleFeatureExtractor,
   StumbleMonitor,
   STUMBLE_SPEC,
-  targetForWord,
   wordAtToken,
+  type CalibrationSample,
   type FaceSample,
+  type GazeModel,
   type GazeSample,
   type ParsedScript,
   type Point3,
@@ -94,6 +96,13 @@ export class PrompterEngine {
   private lastHudEmit = 0;
   private viewport: { rect: DOMRect; height: number } | null = null;
   private stopped = false;
+  /** Pixels from the top of the viewport to the reading line; set by the view's layout. */
+  private readingOffset: number | null = null;
+  private gazeModel: GazeModel | null;
+  private implicit: CalibrationSample[] = [];
+  private lastImplicitT = 0;
+  private lastRefitT = 0;
+  private refined = false;
 
   // Session record buffers (derived signals only, never media).
   private transcript: SessionRecord["transcript"] = [];
@@ -106,6 +115,7 @@ export class PrompterEngine {
 
   constructor(private readonly opts: EngineOptions) {
     this.aligner = new ScriptAligner(opts.script);
+    this.gazeModel = opts.settings.gazeModel;
     this.features = new StumbleFeatureExtractor(opts.script);
     this.scroll = new ScrollController({ fixedSpeed: opts.settings.fixedSpeed });
     this.scroll.mode = opts.settings.scrollMode;
@@ -233,7 +243,7 @@ export class PrompterEngine {
     let gazeWord: number | null = null;
     let gazePoint: { x: number; y: number } | null = null;
     if (face) {
-      const model = this.opts.settings.gazeModel;
+      const model = this.gazeModel;
       let gx = Number.NaN;
       let gy = Number.NaN;
       if (model && !face.features.blink) {
@@ -244,6 +254,7 @@ export class PrompterEngine {
         if (this.viewport) {
           gazeWord = this.opts.layout.wordAtPoint(gx * window.innerWidth, gy * window.innerHeight, this.viewport.rect, this.scroll.position, this.opts.settings.mirror);
         }
+        this.refineCalibration(t, face.features.vector, p);
       }
       const g: GazeSample = { t, x: gx, y: gy, valid: !face.features.blink, blink: face.features.blink, yaw: face.features.pose.yaw, pitch: face.features.pose.pitch };
       this.timeline.gaze.push(g);
@@ -356,10 +367,63 @@ export class PrompterEngine {
     if (this.scroll.mode !== "voice") this.scroll.position = this.scroll.target;
   }
 
+  /** Distance from the top of the viewport to the reading line, in pixels. */
+  setReadingOffset(px: number): void {
+    this.readingOffset = px;
+    this.retarget();
+  }
+
+  private get offset(): number {
+    return this.readingOffset ?? (this.viewport?.height ?? 0) * this.opts.settings.readingLine;
+  }
+
+  /** The gaze model after in-session refinement, if it changed. */
+  get refinedGazeModel(): { model: GazeModel; samples: CalibrationSample[] } | null {
+    return this.refined && this.gazeModel ? { model: this.gazeModel, samples: this.implicit } : null;
+  }
+
+  /**
+   * Implicit calibration: while the speaker is fluently reading on-script, their
+   * eyes are on (or just ahead of) the word being spoken. Those moments become
+   * extra calibration samples, and the model is refitted every few seconds, so
+   * accuracy improves as you read and drift from posture changes is corrected.
+   */
+  private refineCalibration(t: number, features: number[], predicted: { x: number; y: number }): void {
+    const h = this.hud;
+    if (!this.viewport || !this.gazeModel || !h.speaking || h.offScript || h.paused || h.confidence < 0.7) return;
+    if (t - this.lastImplicitT < 200) return;
+    const layout = this.opts.layout;
+    const w = Math.min(layout.tops.length - 1, h.currentWord + 1);
+    if (w < 0) return;
+    const rect = this.viewport.rect;
+    let x = rect.left + (layout.lefts[w] ?? 0) + (layout.widths[w] ?? 0) / 2;
+    if (this.opts.settings.mirror) x = rect.left + rect.width - (x - rect.left);
+    const line = layout.lines[layout.lineOf[w] ?? -1];
+    const y = rect.top + layout.wordTop(w) - this.scroll.position + (line ? (line.bottom - line.top) / 2 : 0);
+    const target = { x: x / window.innerWidth, y: y / window.innerHeight };
+    // Only trust moments where the current model already roughly agrees (within ~2 lines), so a glance away is never learnt.
+    const lineH = this.opts.settings.fontSize * 1.45;
+    if (Math.abs(predicted.y - target.y) * window.innerHeight > lineH * 2) return;
+    this.lastImplicitT = t;
+    this.implicit.push({ features, ...target });
+    if (this.implicit.length > 300) this.implicit.shift();
+    if (this.implicit.length >= 25 && t - this.lastRefitT > 8000) {
+      this.lastRefitT = t;
+      const explicit = this.opts.settings.calibrationSamples;
+      try {
+        this.gazeModel = fitGazeModel([...explicit, ...this.implicit.slice(-150)], 0.3);
+        this.refined = true;
+        this.timeline.emit("gaze-refit", t, { implicit: this.implicit.length, error: this.gazeModel.trainError });
+      } catch {
+        // Keep the previous model.
+      }
+    }
+  }
+
   private retarget(): void {
     if (!this.viewport || this.scroll.mode !== "voice") return;
     const top = this.opts.layout.wordTop(this.hud.currentWord);
-    this.scroll.setTarget(targetForWord(top, this.viewport.height, this.opts.settings.readingLine));
+    this.scroll.setTarget(Math.max(0, top - this.offset));
   }
 
   // ---------------------------------------------------------------- loop
@@ -374,7 +438,7 @@ export class PrompterEngine {
     this.scrollListeners.forEach((l) => l(px));
     // In fixed mode, the "current word" follows the reading line.
     if (this.scroll.mode !== "voice" && this.viewport) {
-      const lineY = px + this.viewport.height * this.opts.settings.readingLine;
+      const lineY = px + this.offset;
       const layout = this.opts.layout;
       let idx = this.hud.currentWord;
       while (idx + 1 < layout.tops.length && (layout.tops[idx + 1] ?? 0) <= lineY) idx++;

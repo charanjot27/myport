@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Link, NavLink, Route, Routes, useLocation } from "react-router-dom";
+import { Link, Navigate, NavLink, Route, Routes, useLocation } from "react-router-dom";
 import { useSettings } from "./lib/settings";
 import { useAuth } from "./lib/auth";
 import { AccountPage } from "./pages/Account";
@@ -12,12 +12,13 @@ import { PrompterPage } from "./pages/Prompter";
 import { ReportPage } from "./pages/Report";
 import { SettingsPage } from "./pages/Settings";
 import { VerifyPage } from "./pages/Verify";
+import { WelcomePage } from "./pages/Welcome";
 
 export function App() {
   const settings = useSettings();
   const location = useLocation();
   const user = useAuth();
-  const fullscreen = location.pathname.startsWith("/prompt/") || location.pathname === "/calibrate";
+  const fullscreen = location.pathname.startsWith("/prompt/") || location.pathname === "/calibrate" || location.pathname === "/welcome";
 
   useEffect(() => {
     document.documentElement.dataset.theme = settings.theme;
@@ -34,6 +35,7 @@ export function App() {
             <NavLink to="/" end>
               Scripts
             </NavLink>
+            <NavLink to="/welcome">Setup tour</NavLink>
             <NavLink to="/calibrate">Calibrate</NavLink>
             <NavLink to="/verify">Verify live</NavLink>
             {settings.researchConsent && <NavLink to="/label">Research</NavLink>}
@@ -48,7 +50,8 @@ export function App() {
         </header>
       )}
       <Routes>
-        <Route path="/" element={<LibraryPage />} />
+        <Route path="/" element={settings.onboarded ? <LibraryPage /> : <Navigate to="/welcome" replace />} />
+        <Route path="/welcome" element={<WelcomePage />} />
         <Route path="/edit/:id" element={<EditorPage />} />
         <Route path="/prompt/:id" element={<PrompterPage />} />
         <Route path="/report/:id" element={<ReportPage />} />

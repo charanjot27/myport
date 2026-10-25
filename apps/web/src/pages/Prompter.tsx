@@ -1,6 +1,7 @@
 import { detectStumbles, parseScript, ReadingGate, readingFeatures, readingProbability, FusionTimeline, type ParsedScript } from "@promptsense/core";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { focusFrame, textColor, type FocusFrame } from "../lib/device";
 import { openMedia, stopMedia } from "../lib/media";
 import { recordings } from "../lib/recordings";
 import { getSettings, updateSettings, useSettings } from "../lib/settings";
@@ -32,6 +33,7 @@ export function PrompterPage() {
   const [record, setRecord] = useState(false);
   const [research, setResearch] = useState(false);
   const [toolbarVisible, setToolbarVisible] = useState(true);
+  const [win, setWin] = useState({ w: window.innerWidth, h: window.innerHeight });
 
   const viewportRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -60,6 +62,26 @@ export function PrompterPage() {
     });
   }, [id]);
 
+  useEffect(() => {
+    const onResize = () => setWin({ w: window.innerWidth, h: window.innerHeight });
+    window.addEventListener("resize", onResize);
+    document.addEventListener("fullscreenchange", onResize);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      document.removeEventListener("fullscreenchange", onResize);
+    };
+  }, []);
+
+  // Camera layout: a few lines right under the webcam. Full layout: the classic full-screen prompter.
+  const cameraLayout = settings.layout === "camera";
+  const frame: FocusFrame | null = cameraLayout
+    ? focusFrame({ placement: settings.cameraPlacement, fontSize: settings.fontSize, lines: settings.focusLines, columnWidth: settings.columnWidth }, win.w, win.h)
+    : null;
+  const lineHeight = settings.fontSize * 1.45;
+  const readingOffset = frame ? Math.round(lineHeight * 0.15) : Math.round(settings.readingLine * win.h);
+  const readingOffsetRef = useRef(readingOffset);
+  readingOffsetRef.current = readingOffset;
+
   // Measure layout after render and on resize / font changes.
   const remeasure = useCallback(() => {
     const content = contentRef.current;
@@ -68,6 +90,7 @@ export function PrompterPage() {
     layoutRef.current.measure(content);
     highlighterRef.current.attach(content);
     engineRef.current?.setViewport(viewport.getBoundingClientRect());
+    engineRef.current?.setReadingOffset(readingOffsetRef.current);
   }, []);
 
   useEffect(() => {
@@ -76,7 +99,7 @@ export function PrompterPage() {
     const ro = new ResizeObserver(() => remeasure());
     if (viewportRef.current) ro.observe(viewportRef.current);
     return () => ro.disconnect();
-  }, [script, settings.fontSize, settings.lineWidth, remeasure]);
+  }, [script, settings.fontSize, settings.lineWidth, settings.layout, settings.focusLines, settings.columnWidth, settings.cameraPlacement, win, remeasure]);
 
   // Apply highlights from the HUD.
   useEffect(() => {
@@ -102,6 +125,8 @@ export function PrompterPage() {
     if (!script || !stored) return;
     setError("");
     const s = getSettings();
+    // Fullscreen makes the camera position map exactly onto the window (this click is the required user gesture).
+    if (s.layout === "camera") await document.documentElement.requestFullscreen?.().catch(() => undefined);
     const needVideo = s.showCamera || s.pauseOnLookAway || s.gestureControl || !!s.gazeModel || record;
     let stream: MediaStream | null = null;
     try {
@@ -219,6 +244,9 @@ export function PrompterPage() {
     const blob = (await recorderRef.current?.stop()) ?? null;
     recorderRef.current = null;
     teardown();
+    const refined = engine.refinedGazeModel;
+    if (refined) updateSettings({ gazeModel: refined.model });
+    if (document.fullscreenElement) await document.exitFullscreen().catch(() => undefined);
     const rec = engine.stop();
     rec.autoStumbles = detectStumbles(rec).map(({ t, kind, token }) => ({ t, kind, token }));
     engineRef.current = null;
@@ -319,17 +347,41 @@ export function PrompterPage() {
             ? "Off script · keep going, I'll find you when you're back"
             : null;
 
+  const colors = {
+    "--ps-text": textColor(settings.textBrightness, settings.textTone),
+    "--ps-spoken": textColor(settings.textBrightness, settings.textTone, 0.42),
+    // Hard words get a saturated orange instead of a bright background: visible to you, not to the lens.
+    "--ps-hard": `rgb(${[255, 150, 60].map((c) => Math.round(c * Math.max(0.3, settings.textBrightness))).join(", ")})`,
+  } as React.CSSProperties;
+
   return (
-    <div className={`prompter${settings.mirror ? " mirrored" : ""}`} onMouseMove={poke} data-testid="prompter" data-predictor={hud?.predictor}>
-      <div className="viewport" ref={viewportRef}>
+    <div
+      className={`prompter${settings.mirror ? " mirrored" : ""}${cameraLayout ? " camera-layout" : ""}`}
+      onMouseMove={poke}
+      data-testid="prompter"
+      data-predictor={hud?.predictor}
+      style={colors}
+    >
+      <div
+        className="viewport"
+        ref={viewportRef}
+        data-testid="text-window"
+        style={frame ? { left: frame.left, top: frame.top, width: frame.width, height: frame.height, right: "auto", bottom: "auto" } : undefined}
+      >
         <div
           className="content"
           ref={contentRef}
-          style={{ fontSize: settings.fontSize, maxWidth: `${settings.lineWidth}ch`, paddingTop: `${settings.readingLine * 100}vh` }}
+          style={{
+            fontSize: settings.fontSize,
+            maxWidth: frame ? "none" : `${settings.lineWidth}ch`,
+            paddingTop: readingOffset,
+            paddingLeft: frame ? lineHeight * 0.3 : undefined,
+            paddingRight: frame ? lineHeight * 0.3 : undefined,
+          }}
         >
           {script && <ScriptText script={script} onWordClick={(i) => engineRef.current?.seekWord(i)} />}
         </div>
-        <div className="reading-line" style={{ top: `calc(${settings.readingLine * 100}vh + ${settings.fontSize * 0.72}px)` }} />
+        {!frame && <div className="reading-line" style={{ top: readingOffset + settings.fontSize * 0.72 }} />}
       </div>
 
       {settings.stumbleAssist && running && hud && (
@@ -337,12 +389,17 @@ export function PrompterPage() {
           <div style={{ height: `${Math.round(hud.risk * 100)}%` }} />
         </div>
       )}
-      {banner && <div className="banner" role="status">{banner}</div>}
+      {banner && (
+        <div className="banner" role="status" style={frame ? { top: "auto", bottom: 70 } : undefined}>
+          {banner}
+        </div>
+      )}
       {hud?.gazePoint && running && (
         <div className="gaze-dot" style={{ left: `${hud.gazePoint.x * 100}%`, top: `${hud.gazePoint.y * 100}%` }} aria-hidden />
       )}
 
-      <div className="cam" style={{ display: settings.showCamera && running ? "block" : "none" }}>
+      {/* A bright camera preview reflects in eyes and glasses, so camera layout never shows it. */}
+      <div className="cam" style={{ display: settings.showCamera && !cameraLayout && running ? "block" : "none" }}>
         <div ref={camSlotRef} />
         <video ref={videoRef} muted playsInline style={{ display: processorRef.current && (record || settings.eyeContact) ? "none" : "block" }} />
       </div>
@@ -387,6 +444,29 @@ export function PrompterPage() {
         <button className="btn small" onClick={() => updateSettings({ mirror: !settings.mirror })} aria-pressed={settings.mirror}>
           Mirror
         </button>
+        <button
+          className="btn small"
+          onClick={() => updateSettings({ layout: cameraLayout ? "full" : "camera" })}
+          title="Camera layout keeps the text right under your webcam"
+        >
+          {cameraLayout ? "Full screen text" : "Text under camera"}
+        </button>
+        {cameraLayout && (
+          <>
+            <button className="btn small" onClick={() => updateSettings({ focusLines: Math.max(1, settings.focusLines - 1) })} aria-label="Fewer lines">
+              − line
+            </button>
+            <button className="btn small" onClick={() => updateSettings({ focusLines: Math.min(8, settings.focusLines + 1) })} aria-label="More lines">
+              + line
+            </button>
+            <button className="btn small" onClick={() => updateSettings({ textBrightness: Math.max(0.2, +(settings.textBrightness - 0.1).toFixed(2)) })} aria-label="Dimmer text">
+              ☾
+            </button>
+            <button className="btn small" onClick={() => updateSettings({ textBrightness: Math.min(1, +(settings.textBrightness + 0.1).toFixed(2)) })} aria-label="Brighter text">
+              ☀
+            </button>
+          </>
+        )}
         <div className="grow" />
         {running && hud && (
           <>
@@ -449,7 +529,7 @@ export function PrompterPage() {
         </div>
       )}
       {running && error && (
-        <div className="banner" style={{ top: 60 }} role="alert">
+        <div className="banner" style={frame ? { top: "auto", bottom: 110 } : { top: 60 }} role="alert">
           {error}
         </div>
       )}

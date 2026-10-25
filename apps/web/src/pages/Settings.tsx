@@ -39,6 +39,50 @@ export function SettingsPage() {
         </select>
       </div>
 
+      <h2>Text under the camera</h2>
+      <div className="field">
+        <label htmlFor="layout">Layout</label>
+        <select id="layout" value={s.layout} onChange={(e) => set("layout")(e.target.value as Settings["layout"])}>
+          <option value="camera">A few lines right under my camera (recommended)</option>
+          <option value="full">Full-screen text</option>
+        </select>
+        <span className="hint">Keeping the text next to the lens makes you look at the viewer.</span>
+      </div>
+      <div className="field">
+        <label htmlFor="campos">Camera position: {Math.round(s.cameraPlacement.x * 100)}% across, {s.cameraPlacement.edge} edge</label>
+        <input id="campos" type="range" min={5} max={95} value={Math.round(s.cameraPlacement.x * 100)} onChange={(e) => set("cameraPlacement")({ ...s.cameraPlacement, x: Number(e.target.value) / 100 })} />
+        <label className="check">
+          <input type="checkbox" checked={s.cameraPlacement.edge === "bottom"} onChange={(e) => set("cameraPlacement")({ ...s.cameraPlacement, edge: e.target.checked ? "bottom" : "top" })} />
+          <span>My camera is below the screen</span>
+        </label>
+      </div>
+      <div className="field">
+        <label htmlFor="lines">Visible lines: {s.focusLines}</label>
+        <input id="lines" type="range" min={1} max={8} value={s.focusLines} onChange={(e) => set("focusLines")(Number(e.target.value))} />
+      </div>
+      <div className="field">
+        <label htmlFor="colw">Column width: {Math.round(s.columnWidth * 100)}% of the screen</label>
+        <input id="colw" type="range" min={20} max={90} value={Math.round(s.columnWidth * 100)} onChange={(e) => set("columnWidth")(Number(e.target.value) / 100)} />
+        <span className="hint">Narrower keeps your eyes closer to the lens; wider fits more words per line.</span>
+      </div>
+      <div className="field">
+        <label htmlFor="bright">Text brightness: {Math.round(s.textBrightness * 100)}%</label>
+        <input id="bright" type="range" min={20} max={100} value={Math.round(s.textBrightness * 100)} onChange={(e) => set("textBrightness")(Number(e.target.value) / 100)} />
+        <span className="hint">
+          {s.reflectionCheck
+            ? `Reflection check on ${new Date(s.reflectionCheck.at).toLocaleDateString()} chose ${Math.round(s.reflectionCheck.level * 100)}%.`
+            : "Run the setup tour to measure the brightest level that doesn't reflect in your eyes or glasses."}{" "}
+          <Link to="/welcome">Run setup tour</Link>
+        </span>
+      </div>
+      <div className="field">
+        <label htmlFor="tone">Text colour</label>
+        <select id="tone" value={s.textTone} onChange={(e) => set("textTone")(e.target.value as Settings["textTone"])}>
+          <option value="warm">Warm (less glare, recommended)</option>
+          <option value="neutral">Neutral white</option>
+        </select>
+      </div>
+
       <h2>Prompter</h2>
       <div className="field">
         <label htmlFor="font">Text size: {s.fontSize}px</label>
@@ -61,7 +105,7 @@ export function SettingsPage() {
       <Toggle label="Pause when I look away" value={s.pauseOnLookAway} onChange={set("pauseOnLookAway")} />
       <Toggle label="Stumble assist: slow down and highlight hard words before I reach them" value={s.stumbleAssist} onChange={set("stumbleAssist")} />
       <Toggle label="Hand gestures: open palm = pause, ✌ = next section, ☝ = rewind sentence, 👍 = resume, 👎 = previous section" value={s.gestureControl} onChange={set("gestureControl")} />
-      <Toggle label="Show camera preview" value={s.showCamera} onChange={set("showCamera")} />
+      <Toggle label="Show camera preview (full-screen layout only; a bright preview reflects in glasses)" value={s.showCamera} onChange={set("showCamera")} />
 
       <h2>Recording</h2>
       <Toggle label="Corneal reflection shield: blur the reflection of the prompter in your eyes" value={s.cornealShield} onChange={set("cornealShield")} />

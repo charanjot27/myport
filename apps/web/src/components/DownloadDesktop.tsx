@@ -188,7 +188,7 @@ export function GetJotr() {
               </Step>
               <Step n={2} title="Or download the app">
                 <div className="gj-buttons">
-                  <a className="lg-btn lg-btn-white" href={arch === "intel" ? DESKTOP_FILES.macIntel : DESKTOP_FILES.macArm}>
+                  <a className="lg-btn lg-btn-white" data-testid="download-mac" href={arch === "intel" ? DESKTOP_FILES.macIntel : DESKTOP_FILES.macArm}>
                     <Apple /> Download for macOS
                   </a>
                   <a className="gj-alt" href={arch === "intel" ? DESKTOP_FILES.macArm : DESKTOP_FILES.macIntel}>
@@ -214,7 +214,7 @@ export function GetJotr() {
             <ol className="gj-steps">
               <Step n={1} title="Download and run the installer">
                 <div className="gj-buttons">
-                  <a className="lg-btn lg-btn-white" href={DESKTOP_FILES.windows}>
+                  <a className="lg-btn lg-btn-white" data-testid="download-windows" href={DESKTOP_FILES.windows}>
                     <WindowsLogo /> Download for Windows
                   </a>
                 </div>

@@ -118,17 +118,17 @@ test("the user counter counts a new browser once and shows the total", async ({ 
   await expect.poll(async () => Number((await badge.textContent())!.match(/([\d,]+)\s+(people|person)/)?.[1]?.replace(/,/g, "") ?? 0)).toBeGreaterThanOrEqual(first);
 });
 
-test("desktop download buttons point at the latest release, own system first", async ({ browser }) => {
+test("desktop downloads point at the latest release, own system first", async ({ browser }) => {
   const ctx = await browser.newContext({ userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0 Safari/537.36" });
   const page = await ctx.newPage();
   await page.addInitScript(() => Object.defineProperty(navigator, "platform", { get: () => "Win32" }));
   await page.goto(test.info().project.use.baseURL + "/");
-  const win = page.getByTestId("download-windows");
-  await expect(win).toHaveAttribute("href", /releases\/latest\/download\/JOTR-windows-x64\.exe$/);
+  await page.getByRole("navigation", { name: "Site" }).getByRole("link", { name: "Download" }).click();
+  // Windows visitors land on the Windows tab.
+  await expect(page.getByRole("tab", { name: /Windows/ })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByTestId("download-windows")).toHaveAttribute("href", /releases\/latest\/download\/JOTR-windows-x64\.exe$/);
+  await page.getByRole("tab", { name: /mac/i }).click();
   await expect(page.getByTestId("download-mac")).toHaveAttribute("href", /JOTR-mac-(arm64|x64)\.dmg$/);
-  // Windows visitors see the Windows button first.
-  const first = await page.locator(".lg-downloads-row > *").first().getAttribute("data-testid");
-  expect(first).toBe("download-windows");
   await ctx.close();
 });
 
@@ -140,8 +140,8 @@ test("Mac visitors get a one-line install command they can copy", async ({ brows
     Object.defineProperty(navigator, "userAgentData", { get: () => ({ platform: "macOS", getHighEntropyValues: async () => ({ architecture: "arm" }) }) });
   });
   await page.goto("/");
-  await expect(page.locator(".lg-downloads-row > *").first()).toHaveAttribute("href", /JOTR-mac-arm64\.dmg$/); // Mac first, Apple Silicon file
   await page.locator("#get").scrollIntoViewIfNeeded();
+  await expect(page.getByTestId("download-mac")).toHaveAttribute("href", /JOTR-mac-arm64\.dmg$/); // Mac tab first, Apple Silicon file
   const cmd = page.getByTestId("mac-install-command");
   await expect(cmd).toHaveText(/^curl -fsSL https?:\/\/.+\/install\.sh \| sh$/);
   await expect(page.getByText(/Why macOS may say “JOTR is damaged”/)).toBeVisible(); // the reason comes first
@@ -169,7 +169,6 @@ test("phones get the phone tab first, and the prompter hangs from the camera lik
     localStorage.setItem("promptsense.settings.v1", JSON.stringify({ onboarded: true }));
   });
   await page.goto("/");
-  await expect(page.locator(".lg-downloads-row > *").first()).toHaveAttribute("data-testid", "get-phone");
   await page.locator("#get").scrollIntoViewIfNeeded();
   await expect(page.getByRole("tab", { name: /iPhone & Android/ })).toHaveAttribute("aria-selected", "true");
   await expect(page.getByText("Add it to your Home Screen")).toBeVisible();
@@ -186,43 +185,24 @@ test("phones get the phone tab first, and the prompter hangs from the camera lik
   await ctx.close();
 });
 
-test("time machine stack, scene book and focus links", async ({ page }) => {
-  const errors: string[] = [];
-  page.on("pageerror", (e) => errors.push(e.message));
+test("navigation lives in the bottom dock, and the JOTR notch stays pinned at the top", async ({ page }) => {
   await page.goto("/");
+  const dock = page.getByRole("navigation", { name: "Site" });
+  await expect(dock).toBeVisible();
+  await expect(page.locator("header.lg-nav")).toHaveCount(0); // nothing at the top but the notch
 
-  // Time Machine: the timeline jumps straight to a card.
-  await page.locator(".lg-screens").scrollIntoViewIfNeeded();
-  await page.getByRole("tab", { name: "No glare in your glasses" }).click();
-  await expect(page.locator('.tm-card[data-state="now"] h3')).toHaveText("No glare in your glasses");
-  await page.locator(".tm-stage").press("ArrowUp");
-  await expect(page.locator('.tm-card[data-state="now"] h3')).toHaveText("Warns you before you stumble");
+  const notch = page.locator(".lg-top-notch");
+  const top0 = (await notch.boundingBox())!.y;
+  await dock.getByRole("link", { name: "FAQ" }).click();
+  await expect(page.locator("#faq")).toBeInViewport();
+  await expect(dock.getByRole("link", { name: "FAQ" })).toHaveClass(/on/);
+  expect((await notch.boundingBox())!.y).toBe(top0); // still pinned after scrolling
 
-  // Scene book: dithered prints load, pages turn both ways, and the last page invites your story.
-  await page.locator("#stories").scrollIntoViewIfNeeded();
-  await expect(page.locator(".sb-art img").first()).toBeVisible({ timeout: 15_000 });
-  const next = page.getByRole("button", { name: "Next scene" });
-  await next.click();
-  await expect(page.locator(".sb-caption")).toHaveText(/Scene 02/);
-  await page.getByRole("button", { name: "Previous scene" }).click();
-  await expect(page.locator(".sb-caption")).toHaveText(/Scene 01/);
-  for (let k = 0; k < 5; k++) {
-    await next.click();
-    await expect(page.locator(".sb-caption")).toHaveText(new RegExp(`Scene 0${k + 2}`));
-  }
-  await expect(next).toBeDisabled();
-  await expect(page.locator("#stories")).toContainText("Your story, next");
-
-  // Print settings open.
-  await page.getByRole("button", { name: "Print settings" }).click();
-  await expect(page.getByRole("dialog", { name: "Print settings" })).toContainText("Dither");
-
-  // Connect: hovering one link blurs the others.
-  await page.locator(".lg-connect").scrollIntoViewIfNeeded();
-  const links = page.locator(".lg-connect .focus-link");
-  await links.nth(1).hover();
-  await expect.poll(() => links.nth(0).evaluate((el) => getComputedStyle(el).filter)).toContain("blur");
-  expect(errors).toEqual([]);
+  await expect(dock.getByRole("link", { name: "GitHub" })).toHaveAttribute("href", /github\.com\/charanjot27/);
+  await dock.getByRole("link", { name: "Home" }).click();
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeLessThan(10);
+  await notch.click();
+  await expect(page).toHaveURL(/\/(app|welcome)$/); // first visit goes through the welcome tour
 });
 
 test("the boot screen shows the wave loader before any script runs", async ({ browser }) => {

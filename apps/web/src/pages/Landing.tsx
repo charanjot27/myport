@@ -4,11 +4,10 @@ import { Icon, ProIcon, Silhouette, type Hue, type ProIconName } from "./landing
 import type { Laptop3D, ScreenMode } from "./laptop3d";
 import type { StarField } from "./starfield";
 import { AddToChrome } from "../components/AddToChrome";
-import { DownloadDesktop, GetJotr } from "../components/DownloadDesktop";
+import { GetJotr } from "../components/DownloadDesktop";
+import { Dock, DockIcon } from "../components/Dock";
 import { AnimatedNumber } from "../components/Animated";
 import { useUserCount } from "../lib/counter";
-import { TimeMachine, type TimeCard } from "../components/TimeMachine";
-import { CLOSING_SCENE, SCENES, SceneBook } from "../components/SceneBook";
 import { WaveLoader } from "../components/WaveLoader";
 import "./landing.css";
 
@@ -28,6 +27,32 @@ const SOCIALS = [
   { label: "Instagram", href: "https://www.instagram.com/charanjott27/", icon: Icon.instagram },
   { label: "GitHub", href: "https://github.com/charanjot27", icon: Icon.github },
   { label: "LinkedIn", href: "https://www.linkedin.com/in/charanjot-singh-402412310/", icon: Icon.linkedin },
+];
+
+/**
+ * Your Buy Me a Coffee page, e.g. "https://buymeacoffee.com/yourname". Supporters pay
+ * there and it goes to your account; signing up is free (they keep 5% of each tip).
+ * Left empty, the coffee buttons stay hidden.
+ */
+const BUY_ME_A_COFFEE = "";
+
+const DOCK = [
+  [
+    { label: "Home", icon: DockIcon.home, href: "#top" },
+    { label: "Features", icon: DockIcon.layers, href: "#features" },
+    { label: "How it works", icon: DockIcon.pulse, href: "#how" },
+    { label: "Download", icon: DockIcon.download, href: "#get" },
+    { label: "FAQ", icon: DockIcon.help, href: "#faq" },
+  ],
+  [
+    { label: "GitHub", icon: DockIcon.github, href: REPO_URL },
+    { label: "LinkedIn", icon: DockIcon.linkedin, href: SOCIALS[2]!.href, optional: true },
+    { label: "Instagram", icon: DockIcon.instagram, href: SOCIALS[0]!.href, optional: true },
+  ],
+  [
+    ...(BUY_ME_A_COFFEE ? [{ label: "Buy me a coffee", icon: DockIcon.coffee, href: BUY_ME_A_COFFEE }] : []),
+    { label: "Open the app", icon: DockIcon.terminal, href: "/app" },
+  ],
 ];
 
 const FAQ: Array<{ q: string; a: ReactNode }> = [
@@ -145,13 +170,23 @@ export function LandingPage() {
   const [demoOpen, setDemoOpen] = useState(false);
   useReveal(root);
   useEffect(() => {
-    document.documentElement.classList.add("landing-root");
-    return () => document.documentElement.classList.remove("landing-root");
+    const html = document.documentElement;
+    html.classList.add("landing-root");
+    // The pinned notch tucks into a slim pill once you scroll, so it never sits on content.
+    const on = () => html.classList.toggle("lg-scrolled", scrollY > 80);
+    on();
+    addEventListener("scroll", on, { passive: true });
+    return () => {
+      removeEventListener("scroll", on);
+      html.classList.remove("landing-root", "lg-scrolled");
+    };
   }, []);
 
   return (
     <div className="landing" ref={root}>
-      <Nav />
+      <Link to="/app" className="lg-top-notch" aria-label="JOTR: your script, right under your camera. Try it free">
+        <NotchDemo className="hero fixed" lines={2} />
+      </Link>
       <Hero onWatch={() => setDemoOpen(true)} />
       <Statement />
       <CloserLook />
@@ -160,12 +195,12 @@ export function LandingPage() {
       <GetJotr />
       <HowItWorks />
       <UseCases />
-      <Stories />
+      {TESTIMONIALS.length > 0 && <Testimonials />}
       <Faq />
-      <Connect />
       <FinalCta onWatch={() => setDemoOpen(true)} />
       <Footer />
       <DemoPopup open={demoOpen} setOpen={setDemoOpen} />
+      <Dock groups={DOCK} />
     </div>
   );
 }
@@ -179,61 +214,6 @@ function Logo({ size = 30 }: { size?: number }) {
   );
 }
 
-function Nav() {
-  const [scrolled, setScrolled] = useState(false);
-  const [menu, setMenu] = useState(false);
-  useEffect(() => {
-    const on = () => setScrolled(window.scrollY > 24);
-    on();
-    window.addEventListener("scroll", on, { passive: true });
-    return () => window.removeEventListener("scroll", on);
-  }, []);
-  const links = (
-    <>
-      <a href="#features" onClick={() => setMenu(false)}>
-        Features
-      </a>
-      <a href="#how" onClick={() => setMenu(false)}>
-        How it works
-      </a>
-      <a href="#get" onClick={() => setMenu(false)}>
-        Download
-      </a>
-      <a href="#faq" onClick={() => setMenu(false)}>
-        FAQ
-      </a>
-    </>
-  );
-  return (
-    <header className={`lg-nav${scrolled ? " scrolled" : ""}${menu ? " open" : ""}`}>
-      <Link to="/" aria-label="JOTR home" className="lg-home">
-        <Logo />
-      </Link>
-      <nav className="lg-links">{links}</nav>
-      <a href={REPO_URL} target="_blank" rel="noopener noreferrer" className="lg-star" aria-label="Star JOTR on GitHub">
-        {Icon.github}
-        <span>Star</span>
-        {Icon.star}
-      </a>
-      <AddToChrome className="lg-btn lg-btn-white sm" />
-      <button className="lg-burger" onClick={() => setMenu((m) => !m)} aria-label={menu ? "Close menu" : "Open menu"} aria-expanded={menu}>
-        {menu ? Icon.close : Icon.menu}
-      </button>
-      <div className="lg-sheet" aria-hidden={!menu}>
-        {links}
-        <a href={REPO_URL} target="_blank" rel="noopener noreferrer">
-          Star on GitHub
-        </a>
-        <AddToChrome className="lg-btn lg-btn-white" />
-        <Link to="/app" className="lg-btn lg-btn-ember">
-          Start free {Icon.arrow}
-        </Link>
-      </div>
-    </header>
-  );
-}
-
-/** The black notch hanging from the camera, with words lighting up as if spoken. */
 function NotchDemo({ script = HERO_SCRIPT, speed = 320, lines = 3, className = "" }: { script?: string; speed?: number; lines?: number; className?: string }) {
   const words = script.split(" ");
   const [i, setI] = useState(0);
@@ -278,7 +258,6 @@ function Hero({ onWatch }: { onWatch: () => void }) {
     <section className="lg-hero">
       <div className="lg-bloom" aria-hidden />
       <div className="lg-rays" aria-hidden />
-      <NotchDemo className="hero" lines={2} />
       <div className="lg-hero-copy">
         <span className="lg-badge" data-reveal data-testid="user-count">
           <span className="pulse" />{" "}
@@ -312,18 +291,10 @@ function Hero({ onWatch }: { onWatch: () => void }) {
             <img src="/favicon.svg" width={22} height={22} alt="" /> Start free in your browser
           </Link>
           <AddToChrome className="lg-btn lg-btn-glass lg" />
-          <button className="lg-btn lg-btn-glass lg" onClick={onWatch}>
-            <span className="lg-play">{Icon.play}</span> Watch the demo
-          </button>
         </div>
-        <div data-reveal style={{ ["--d" as string]: "280ms" }}>
-          <DownloadDesktop />
-        </div>
-        <ul className="lg-ticks" data-reveal style={{ ["--d" as string]: "320ms" }}>
-          <li>{Icon.check} Nothing to install</li>
-          <li>{Icon.check} Works over Meet, Zoom &amp; any tab</li>
-          <li>{Icon.check} Video never leaves your device</li>
-        </ul>
+        <button className="lg-watch" data-reveal style={{ ["--d" as string]: "300ms" }} onClick={onWatch}>
+          <span className="lg-play">{Icon.play}</span> Watch the 30-second demo
+        </button>
       </div>
     </section>
   );
@@ -528,124 +499,119 @@ function CloserLook() {
 
 /* ---------------------------------------------------------- screenshots */
 
-const SHOTS: TimeCard[] = [
-  {
-    label: "Eye contact",
-    title: "Keep eye contact with your audience",
-    tone: "rose",
-    body: (
-      <div className="sh-phone">
-        <div className="sh-island" />
-        <NotchDemo className="in-phone" lines={4} speed={420} script="Your words sit right under the lens, so every viewer feels you're talking to them, and only them." />
-        <Silhouette className="sh-sil" />
-      </div>
-    ),
-  },
-  {
-    label: "Floats anywhere",
-    title: "Floats over Meet, Zoom & any tab",
-    tone: "amber",
-    body: (
-      <div className="sh-mac">
-        <div className="sh-mac-screen">
-          <div className="sh-grid">
-            {Array.from({ length: 6 }, (_, k) => (
-              <span key={k}>
-                <Silhouette />
-              </span>
-            ))}
-          </div>
-          <div className="sh-float">Thanks for joining. Today I'll walk you through the plan…</div>
-        </div>
-      </div>
-    ),
-  },
-  {
-    label: "Stumble alert",
-    title: "Warns you before you stumble",
-    tone: "violet",
-    body: (
-      <div className="sh-phone">
-        <div className="sh-island" />
-        <div className="sh-text">
-          <span className="said">It slows down and lights up </span>
-          <span className="sh-hard">psycholinguistics</span>
-          <span> a second before you reach it.</span>
-        </div>
-        <div className="sh-risk">
-          <span />
-        </div>
-      </div>
-    ),
-  },
-  {
-    label: "No glare",
-    title: "No glare in your glasses",
-    tone: "ink",
-    body: (
-      <div className="sh-lenses">
-        <figure>
-          <div className="lens bad">
-            <i />
-          </div>
-          <figcaption>Bright prompter</figcaption>
-        </figure>
-        <figure>
-          <div className="lens good" />
-          <figcaption className="ok">JOTR</figcaption>
-        </figure>
-        <div className="sh-auto">
-          <span>Auto brightness</span>
-          <div className="bar">
-            <i />
-          </div>
-        </div>
-      </div>
-    ),
-  },
-  {
-    label: "Coach report",
-    title: "A coach after every take",
-    tone: "mint",
-    body: (
-      <div className="sh-report">
-        <div className="ring">
-          <b>86</b>
-          <small>score</small>
-        </div>
-        <ul>
-          <li>
-            <span>Pace</span>
-            <b>148 wpm</b>
-          </li>
-          <li>
-            <span>Fillers</span>
-            <b>2</b>
-          </li>
-          <li>
-            <span>Eye contact</span>
-            <b>94%</b>
-          </li>
-          <li>
-            <span>Stumbles caught early</span>
-            <b>3 of 4</b>
-          </li>
-        </ul>
-      </div>
-    ),
-  },
-];
-
 function Screens() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [page, setPage] = useState(0);
+  const count = 5;
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const on = () => {
+      const card = el.firstElementChild as HTMLElement | null;
+      if (card) setPage(Math.round(el.scrollLeft / (card.offsetWidth + 20)));
+    };
+    el.addEventListener("scroll", on, { passive: true });
+    return () => el.removeEventListener("scroll", on);
+  }, []);
+  const go = (n: number) => {
+    const el = ref.current;
+    const card = el?.firstElementChild as HTMLElement | null;
+    if (el && card) el.scrollTo({ left: Math.max(0, Math.min(count - 1, n)) * (card.offsetWidth + 20), behavior: "smooth" });
+  };
   return (
-    <section className="lg-section lg-screens">
+    <section className="lg-section">
       <div className="lg-head" data-reveal>
         <span className="lg-eyebrow">See it in action</span>
         <h2>Made for talking to a camera</h2>
-        <p>Scroll, swipe or tap the timeline to travel through it.</p>
       </div>
-      <div data-reveal>
-        <TimeMachine cards={SHOTS} />
+      <div className="lg-shots-wrap">
+        <div className="lg-shots" ref={ref}>
+          <Shot tone="rose" title="Keep eye contact with your audience" d={0}>
+            <div className="sh-phone">
+              <div className="sh-island" />
+              <NotchDemo className="in-phone" lines={4} speed={420} script="Your words sit right under the lens, so every viewer feels you're talking to them, and only them." />
+              <Silhouette className="sh-sil" />
+            </div>
+          </Shot>
+          <Shot tone="amber" title="Floats over Meet, Zoom & any tab" d={80}>
+            <div className="sh-mac">
+              <div className="sh-mac-screen">
+                <div className="sh-grid">
+                  {Array.from({ length: 6 }, (_, k) => (
+                    <span key={k}>
+                      <Silhouette />
+                    </span>
+                  ))}
+                </div>
+                <div className="sh-float">Thanks for joining. Today I'll walk you through the plan…</div>
+              </div>
+            </div>
+          </Shot>
+          <Shot tone="violet" title="Warns you before you stumble" d={160}>
+            <div className="sh-phone">
+              <div className="sh-island" />
+              <div className="sh-text">
+                <span className="said">It slows down and lights up </span>
+                <span className="sh-hard">psycholinguistics</span>
+                <span> a second before you reach it.</span>
+              </div>
+              <div className="sh-risk">
+                <span />
+              </div>
+            </div>
+          </Shot>
+          <Shot tone="ink" title="No glare in your glasses" d={240}>
+            <div className="sh-lenses">
+              <figure>
+                <div className="lens bad">
+                  <i />
+                </div>
+                <figcaption>Bright prompter</figcaption>
+              </figure>
+              <figure>
+                <div className="lens good" />
+                <figcaption className="ok">JOTR</figcaption>
+              </figure>
+              <div className="sh-auto">
+                <span>Auto brightness</span>
+                <div className="bar">
+                  <i />
+                </div>
+              </div>
+            </div>
+          </Shot>
+          <Shot tone="mint" title="A coach after every take" d={320}>
+            <div className="sh-report">
+              <div className="ring">
+                <b>86</b>
+                <small>score</small>
+              </div>
+              <ul>
+                <li>
+                  <span>Pace</span>
+                  <b>148 wpm</b>
+                </li>
+                <li>
+                  <span>Fillers</span>
+                  <b>2</b>
+                </li>
+                <li>
+                  <span>Eye contact</span>
+                  <b>94%</b>
+                </li>
+                <li>
+                  <span>Stumbles caught early</span>
+                  <b>3 of 4</b>
+                </li>
+              </ul>
+            </div>
+          </Shot>
+        </div>
+        <div className="lg-dots" role="tablist" aria-label="Screenshots">
+          {Array.from({ length: count }, (_, k) => (
+            <button key={k} role="tab" aria-selected={page === k} aria-label={`Screenshot ${k + 1}`} className={page === k ? "on" : ""} onClick={() => go(k)} />
+          ))}
+        </div>
       </div>
       <div className="lg-stores" data-reveal>
         <span className="lg-store">
@@ -662,6 +628,20 @@ function Screens() {
         </span>
       </div>
     </section>
+  );
+}
+
+function Shot({ title, tone, children, d }: { title: string; tone: string; children: ReactNode; d: number }) {
+  const ref = useTilt<HTMLElement>(6);
+  return (
+    // The wrapper reveals on scroll; the card inside tilts (separate transforms, so neither lags the other).
+    <div className="lg-shot-cell" data-reveal style={{ ["--d" as string]: `${d}ms` }}>
+      <article ref={ref} className={`lg-shot tone-${tone}`}>
+        <div className="lg-shot-shine" aria-hidden />
+        <h3>{title}</h3>
+        <div className="lg-shot-stage">{children}</div>
+      </article>
+    </div>
   );
 }
 
@@ -789,62 +769,6 @@ function UseCases() {
   );
 }
 
-function Stories() {
-  return (
-    <section className="lg-section lg-stories" id="stories">
-      <div className="lg-head" data-reveal>
-        <span className="lg-eyebrow">Wherever you talk</span>
-        <h2>One teleprompter, every room</h2>
-        <p>Turn the pages to see where JOTR fits. Open the print settings to play with the dither.</p>
-      </div>
-      <div data-reveal>
-        <SceneBook
-          scenes={SCENES}
-          closing={{
-            ...CLOSING_SCENE,
-            extra: (
-              <div className="sb-cta">
-                <FocusLinks links={[...SOCIALS.map((x) => ({ ...x, label: `@${x.label}` }))]} tone="paper" />
-              </div>
-            ),
-          }}
-        />
-      </div>
-      {TESTIMONIALS.length > 0 && <Testimonials />}
-    </section>
-  );
-}
-
-/** Links that pull focus: hover (or tab to) one and the others blur back. */
-function FocusLinks({ links, tone = "dark" }: { links: Array<{ label: string; href: string; icon?: ReactNode }>; tone?: "dark" | "paper" }) {
-  return (
-    <span className={`focus-links ${tone}`}>
-      {links.map((l) => (
-        <a key={l.href} href={l.href} target="_blank" rel="noopener noreferrer" className="focus-link">
-          {l.icon}
-          {l.label}
-        </a>
-      ))}
-    </span>
-  );
-}
-
-function Connect() {
-  return (
-    <section className="lg-connect" aria-label="Connect">
-      <div className="lg-connect-card" data-reveal>
-        <span className="lg-eyebrow">Say hi</span>
-        <FocusLinks
-          links={[
-            ...SOCIALS.map((x) => ({ label: `@${x.label}`, href: x.href })),
-            { label: "★ Star on GitHub", href: REPO_URL },
-          ]}
-        />
-      </div>
-    </section>
-  );
-}
-
 function Testimonials() {
   return (
     <section className="lg-section">
@@ -916,7 +840,12 @@ function Footer() {
   return (
     <footer className="lg-footer">
       <Logo size={24} />
-      <span>© {new Date().getFullYear()} JOTR. Made for people who talk to cameras.</span>
+      <span>© {new Date().getFullYear()} JOTR. Free, made for people who talk to cameras.</span>
+      {BUY_ME_A_COFFEE && (
+        <a href={BUY_ME_A_COFFEE} target="_blank" rel="noopener noreferrer" className="lg-coffee">
+          {DockIcon.coffee} Buy me a coffee
+        </a>
+      )}
       <nav>
         <Link to="/privacy">Privacy</Link>
         <Link to="/app">Open app</Link>

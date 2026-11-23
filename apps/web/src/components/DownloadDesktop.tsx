@@ -3,6 +3,9 @@ import { useEffect, useState } from "react";
 /** Where the installers live: the latest GitHub Release by default (set VITE_DESKTOP_DOWNLOAD_BASE to host them elsewhere). */
 const BASE = ((import.meta.env.VITE_DESKTOP_DOWNLOAD_BASE as string | undefined) || "https://github.com/charanjot27/myport/releases/latest/download").replace(/\/$/, "");
 
+/** One-line installer for Macs: curl downloads aren't flagged, so macOS never says "damaged". */
+export const MAC_INSTALL = `curl -fsSL ${typeof location !== "undefined" && /^https:/.test(location.origin) ? location.origin : "https://jotr1.netlify.app"}/install.sh | sh`;
+
 export const DESKTOP_FILES = {
   macArm: `${BASE}/JOTR-mac-arm64.dmg`,
   macIntel: `${BASE}/JOTR-mac-x64.dmg`,
@@ -74,14 +77,6 @@ export function DownloadDesktop({ className = "lg-btn lg-btn-glass" }: { classNa
       <div className="lg-downloads-row">{os === "windows" ? [win, mac] : [mac, win]}</div>
       <span className="lg-downloads-note">
         Desktop app: the prompter floats over every app and stays out of screen recordings.
-        {os !== "windows" && (
-          <>
-            {" "}
-            <button className="lg-mac-help-btn" onClick={() => setHelp((h) => !h)} aria-expanded={help}>
-              Mac says “damaged”?
-            </button>
-          </>
-        )}
         {os === "mac" && arch !== "intel" && (
           <>
             {" "}
@@ -89,15 +84,32 @@ export function DownloadDesktop({ className = "lg-btn lg-btn-glass" }: { classNa
           </>
         )}
       </span>
-      {help && (
-        <div className="lg-mac-help" role="note">
-          JOTR isn't signed by Apple yet, so macOS flags any downloaded copy. Drag JOTR into Applications, then run this once in Terminal:
-          <code>xattr -dr com.apple.quarantine /Applications/JOTR.app</code>
-          <button
-            onClick={() => void navigator.clipboard?.writeText("xattr -dr com.apple.quarantine /Applications/JOTR.app").then(() => setCopied(true))}
-          >
-            {copied ? "Copied" : "Copy command"}
+      {os !== "windows" && (
+        <div className="lg-mac-install">
+          <span className="lg-mac-install-label">
+            <b>Mac:</b> install in one step. Paste this into Terminal:
+          </span>
+          <div className="lg-mac-install-row">
+            <code data-testid="mac-install-command">{MAC_INSTALL}</code>
+            <button
+              onClick={() =>
+                void navigator.clipboard?.writeText(MAC_INSTALL).then(() => {
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 2500);
+                })
+              }
+            >
+              {copied ? "Copied ✓" : "Copy"}
+            </button>
+          </div>
+          <button className="lg-mac-help-btn" onClick={() => setHelp((h) => !h)} aria-expanded={help}>
+            {help ? "Hide" : "Downloaded the .dmg and macOS says “damaged”?"}
           </button>
+          {help && (
+            <span className="lg-mac-help-text">
+              JOTR isn't signed by Apple yet. Drag it into Applications, then run once in Terminal: <code>xattr -dr com.apple.quarantine /Applications/JOTR.app</code>
+            </span>
+          )}
         </div>
       )}
     </div>

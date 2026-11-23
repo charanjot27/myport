@@ -27,6 +27,14 @@ pnpm install
 pnpm --filter @promptsense/desktop start
 ```
 
+## Install on a Mac
+
+```
+curl -fsSL https://jotr1.netlify.app/install.sh | sh
+```
+
+Downloads the latest release for Apple Silicon or Intel, installs it into Applications and opens it (no "damaged" warning, because curl downloads aren't flagged).
+
 ## Build the app
 
 On a Mac: `pnpm --filter @promptsense/desktop dist:mac` → `apps/desktop/release/JOTR-0.1.0-arm64.dmg`.

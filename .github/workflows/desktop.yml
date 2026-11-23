@@ -55,5 +55,6 @@ jobs:
           files: files/*
           make_latest: true
           body: |
-            **Mac:** JOTR-mac-arm64.dmg (Apple Silicon) or JOTR-mac-x64.dmg (Intel). If macOS says JOTR is damaged (it isn't signed yet), drag it to Applications and run once in Terminal: `xattr -dr com.apple.quarantine /Applications/JOTR.app`
+            **Mac (easiest):** paste into Terminal: `curl -fsSL https://jotr1.netlify.app/install.sh | sh`
+            Or download JOTR-mac-arm64.dmg (Apple Silicon) / JOTR-mac-x64.dmg (Intel). If macOS says JOTR is damaged (it isn't signed yet), drag it to Applications and run once in Terminal: `xattr -dr com.apple.quarantine /Applications/JOTR.app`
             **Windows:** JOTR-windows-x64.exe

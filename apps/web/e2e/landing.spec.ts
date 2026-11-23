@@ -131,3 +131,23 @@ test("desktop download buttons point at the latest release, own system first", a
   expect(first).toBe("download-windows");
   await ctx.close();
 });
+
+test("Mac visitors get a one-line install command they can copy", async ({ browser }) => {
+  const ctx = await browser.newContext({ baseURL: test.info().project.use.baseURL, permissions: ["clipboard-read", "clipboard-write"] });
+  const page = await ctx.newPage();
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "platform", { get: () => "MacIntel" });
+    Object.defineProperty(navigator, "userAgentData", { get: () => ({ platform: "macOS", getHighEntropyValues: async () => ({ architecture: "arm" }) }) });
+  });
+  await page.goto("/");
+  await expect(page.locator(".lg-downloads-row a").first()).toHaveAttribute("href", /JOTR-mac-arm64\.dmg$/); // Mac first, Apple Silicon file
+  const cmd = page.getByTestId("mac-install-command");
+  await expect(cmd).toHaveText(/^curl -fsSL https?:\/\/.+\/install\.sh \| sh$/);
+  await page.getByRole("button", { name: "Copy", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Copied ✓" })).toBeVisible();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(/install\.sh \| sh$/);
+  // The installer itself is served as a file, not the app's HTML.
+  const sh = await page.request.get("/install.sh");
+  expect(await sh.text()).toMatch(/^#!\/bin\/sh/);
+  await ctx.close();
+});

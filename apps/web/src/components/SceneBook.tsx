@@ -6,6 +6,8 @@ import "./scene-book.css";
 
 export interface Scene {
   key: string;
+  /** A real photo of the scene (public/scenes/…); the drawing below stands in until it exists. */
+  photo?: string;
   art: () => ReactNode;
   title: string;
   where: string;
@@ -18,62 +20,91 @@ export interface Scene {
 export const SCENES: Scene[] = [
   {
     key: "explain",
+    photo: "/scenes/explain.jpg",
     art: SceneExplain,
-    title: "Explaining a concept",
-    where: "Excalidraw · screen recording",
-    story: "Your talking points sit under the camera while you sketch, so the explanation flows and you look up at your viewers between drawings.",
-    helps: ["Floats over the whiteboard tab", "Follows your voice while you draw", "Hidden from the recording in the desktop app"],
-  },
-  {
-    key: "interview",
-    art: SceneInterview,
-    title: "A job interview",
-    where: "Zoom · Google Meet",
-    story: "Keep your key stories and numbers right under the lens. You answer naturally and keep eye contact, with no glancing down at notes.",
-    helps: ["Bullet notes, not a word-for-word script", "Waits when you pause to think", "Only you can see it"],
+    title: "Recording a tutorial",
+    where: "Whiteboard · screen recording",
+    story: "Idea → Build → Ship on the whiteboard, the outline in the notch. He sketches, glances up at the lens, and the next point is already there.",
+    helps: ["Notch reads “Explain the idea. Build. Test. Ship.”", "Sits under the camera, over the whiteboard", "Hidden from the screen recording"],
   },
   {
     key: "call",
+    photo: "/scenes/call.jpg",
     art: SceneCall,
-    title: "The weekly team call",
-    where: "Meet · Teams · Zoom",
-    story: "Run the update from your notes while looking at your team, not at a second monitor.",
-    helps: ["Floats above every app", "Finds you again when you ad-lib", "No glare in your glasses"],
-  },
-  {
-    key: "debate",
-    art: SceneDebate,
-    title: "Debate practice",
-    where: "Rehearsing out loud",
-    story: "Rehearse your opening and rebuttals. JOTR keeps your pace, warns you before tongue-twisters, and scores your delivery after each take.",
-    helps: ["Slows down before hard words", "Coach report: pace and fillers", "English, हिन्दी, ਪੰਜਾਬੀ or Hinglish"],
+    title: "The launch call",
+    where: "Team video call · 6 people",
+    story: "Eighteen minutes into the weekly call, the plan is still right under her camera. She talks to the team, not to a second screen.",
+    helps: ["Notch reads “Launch: Friday. Next: QA and handoff.”", "Floats above the meeting app", "Waits while others are talking"],
   },
   {
     key: "group",
+    photo: "/scenes/group.jpg",
     art: SceneGroup,
-    title: "A group discussion",
-    where: "GD rounds · online or on your phone",
-    story: "Keep your three points and a strong opening ready, and jump in with confidence when it's your turn.",
-    helps: ["Short points in big, calm text", "Jumps to whichever point you start", "Hands-free: open palm to pause"],
+    title: "An online group discussion",
+    where: "GD round · “Remote work: yes or no?”",
+    story: "Four faces on the call, three points in the notch. She makes her case on flexibility first, then cost, culture and trust, without looking down.",
+    helps: ["Notch reads “Flexibility first. Cost. Culture. Trust.”", "Short points, big calm text", "Jumps to whichever point she starts"],
+  },
+  {
+    key: "debate",
+    photo: "/scenes/debate.jpg",
+    art: SceneDebate,
+    title: "Debate practice",
+    where: "Lectern · motion: remote work",
+    story: "At the lectern, the opponent waiting her turn. The notch keeps his line of attack in view while he holds the room’s eye.",
+    helps: ["Notch reads “Lead with evidence. Rebut the cost claim.”", "Slows down before hard words", "English, हिन्दी, ਪੰਜਾਬੀ or Hinglish"],
+  },
+  {
+    key: "record",
+    photo: "/scenes/record.jpg",
+    art: SceneInterview,
+    title: "Rehearse, record, review",
+    where: "Recording a practice take",
+    story: "JOTR records the take, tracks where he is (Opening, Evidence, Rebuttal) and scores pace and fillers after. One minute twenty-four in, still on track.",
+    helps: ["Records with the camera behind the text", "Shows which part you’re in", "A coach report after every take"],
   },
 ];
 
 type Settings = { dither: number; padding: number; crease: number };
 
 /** Renders a scene into a dithered image (shows the wave loader while it prints). */
+const photos = new Map<string, Promise<HTMLImageElement | null>>();
+/** Loads a scene photo once; null when the file isn't there (the drawing is used instead). */
+function loadPhoto(url: string): Promise<HTMLImageElement | null> {
+  let p = photos.get(url);
+  if (!p) {
+    p = new Promise((resolve) => {
+      const img = new Image();
+      img.decoding = "async";
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      img.src = url;
+    });
+    photos.set(url, p);
+  }
+  return p;
+}
+
+/** The picture for a scene: its photo when there is one, else the drawing. */
+async function printScene(scene: Scene, svg: SVGSVGElement, amount: number): Promise<string> {
+  const photo = scene.photo ? await loadPhoto(scene.photo) : null;
+  return photo ? ditherSvg(`${scene.key}-photo`, photo, amount) : ditherSvg(scene.key, svg, amount);
+}
+
 function Art({ scene, amount }: { scene: Scene; amount: number }) {
   const holder = useRef<HTMLDivElement>(null);
-  const [src, setSrc] = useState<string | null>(() => peekDither(scene.key, amount));
+  const peek = () => peekDither(`${scene.key}-photo`, amount) ?? peekDither(scene.key, amount);
+  const [src, setSrc] = useState<string | null>(peek);
   // Only a freshly printed image fades in; one already printed shows at once (no blur mid page-turn).
   const [fresh, setFresh] = useState(false);
   useEffect(() => {
     const svg = holder.current?.querySelector("svg");
     if (!svg) return;
-    const hit = peekDither(scene.key, amount);
+    const hit = peek();
     if (hit) return setSrc(hit);
     let live = true;
     const t = setTimeout(() => {
-      ditherSvg(scene.key, svg, amount)
+      printScene(scene, svg, amount)
         .then((u) => {
           if (!live) return;
           setFresh(true);
@@ -140,7 +171,7 @@ export function SceneBook({ scenes, closing }: { scenes: Scene[]; closing?: Scen
   const [idx, setIdx] = useState(0);
   const [flip, setFlip] = useState<Flip | null>(null);
   const [open, setOpen] = useState(false);
-  const [s, setS] = useState<Settings>({ dither: 70, padding: 14, crease: 60 });
+  const [s, setS] = useState<Settings>({ dither: 0, padding: 14, crease: 60 });
   const narrow = useNarrow();
   const warm = useRef<HTMLDivElement>(null);
 
@@ -155,7 +186,7 @@ export function SceneBook({ scenes, closing }: { scenes: Scene[]; closing?: Scen
         io.disconnect();
         const svgs = Array.from(el.querySelectorAll<SVGSVGElement>(":scope > div > svg"));
         for (let k = 0; k < svgs.length && !stop; k++) {
-          await ditherSvg(all[k]!.key, svgs[k]!, s.dither / 100).catch(() => undefined);
+          await printScene(all[k]!, svgs[k]!, s.dither / 100).catch(() => undefined);
         }
       },
       { rootMargin: "600px" },

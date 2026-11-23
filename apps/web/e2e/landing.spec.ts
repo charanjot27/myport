@@ -258,12 +258,35 @@ test("phones and tablets install JOTR from the site, no app store", async ({ bro
     e.userChoice = Promise.resolve({ outcome: "accepted" });
     dispatchEvent(e);
   });
+  // The Android app (floats over any app) downloads straight from the latest release.
+  await expect(page.getByTestId("download-android")).toHaveAttribute("href", /releases\/latest\/download\/JOTR-android\.apk$/);
   await page.getByTestId("pwa-install").click();
   await expect.poll(() => page.evaluate(() => (window as unknown as { __prompted?: boolean }).__prompted)).toBe(true);
   // The app is installable: a manifest that opens full screen, and a service worker.
   const manifest = await (await page.request.get("/site.webmanifest")).json();
   expect(manifest.display).toBe("standalone");
   expect((await page.request.get("/sw.js")).ok()).toBe(true);
+  await ctx.close();
+});
+
+test("on a phone, the script floats over other apps as a scrolling picture-in-picture window", async ({ browser }) => {
+  const ctx = await browser.newContext({ baseURL: test.info().project.use.baseURL, viewport: { width: 412, height: 915 }, isMobile: true, hasTouch: true, userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0 Mobile Safari/537.36" });
+  const page = await ctx.newPage();
+  await page.addInitScript(() => localStorage.setItem("promptsense.settings.v1", JSON.stringify({ onboarded: true })));
+  await page.goto("/app");
+  await page.getByRole("button", { name: "Try the sample script" }).click();
+  await page.getByRole("button", { name: "Start prompting" }).click();
+  const card = page.getByTestId("phone-float");
+  await expect(card.getByTestId("android-apk")).toHaveAttribute("href", /JOTR-android\.apk$/);
+  await card.getByRole("button", { name: /Prepare floating window/ }).click();
+  await expect(card.getByTestId("float-now")).toBeVisible({ timeout: 30_000 });
+  // A real video of the notch scrolling: it keeps playing over other apps.
+  const meta = await page.locator(".pf-video").evaluate(async (v: HTMLVideoElement) => {
+    if (v.readyState < 1) await new Promise((r) => v.addEventListener("loadedmetadata", r, { once: true }));
+    return { duration: v.duration, width: v.videoWidth };
+  });
+  expect(meta.width).toBe(720);
+  expect(meta.duration).toBeGreaterThan(20);
   await ctx.close();
 });
 

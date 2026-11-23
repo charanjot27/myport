@@ -24,16 +24,23 @@ function rasterize(svg: SVGSVGElement, w: number, h: number): Promise<HTMLImageE
  * amount 0..1 blends from the clean illustration to a fully dithered print
  * (4 tones per channel, 2px dots). Results are cached per key.
  */
-export function ditherSvg(key: string, svg: SVGSVGElement, amount: number, width = 800, height = 1000): Promise<string> {
+export function ditherSvg(key: string, source: SVGSVGElement | HTMLImageElement, amount: number, width = 800, height = 1000): Promise<string> {
   const k = keyOf(key, amount, width);
   let p = cache.get(k);
   if (!p) {
-    p = rasterize(svg, width, height).then((img) => {
+    const image = source instanceof HTMLImageElement ? Promise.resolve(source) : rasterize(source, width, height);
+    p = image.then((img) => {
       const c = document.createElement("canvas");
       c.width = width;
       c.height = height;
       const ctx = c.getContext("2d", { willReadFrequently: true })!;
-      ctx.drawImage(img, 0, 0, width, height);
+      // Cover-fit (photos may not be exactly 4:5).
+      const iw = img.naturalWidth || width;
+      const ih = img.naturalHeight || height;
+      const scale = Math.max(width / iw, height / ih);
+      const dw = iw * scale;
+      const dh = ih * scale;
+      ctx.drawImage(img, (width - dw) / 2, (height - dh) / 2, dw, dh);
       const out = () => new Promise<string>((res, rej) => c.toBlob((b) => (b ? res(URL.createObjectURL(b)) : rej(new Error("toBlob"))), "image/png"));
       if (amount <= 0) return out();
       const data = ctx.getImageData(0, 0, width, height);

@@ -13,6 +13,7 @@ export const MAC_INSTALL = `curl -fsSL ${SITE}/install.sh | sh`;
 export const MAC_UNBLOCK = "xattr -dr com.apple.quarantine /Applications/JOTR.app";
 
 export const DESKTOP_FILES = {
+  android: `${BASE}/JOTR-android.apk`,
   macArm: `${BASE}/JOTR-mac-arm64.dmg`,
   macIntel: `${BASE}/JOTR-mac-x64.dmg`,
   windows: `${BASE}/JOTR-windows-x64.exe`,
@@ -279,8 +280,27 @@ function PhoneInstall({ onPhone }: { onPhone: boolean }) {
     <div className="gj-panel" role="tabpanel">
       <div className="gj-why">
         <b>No app store needed</b>
-        <p>JOTR installs straight from this site, gets its own icon on your home screen and opens full screen, with the script right under your camera.</p>
+        <p>
+          <b>Android:</b> the JOTR app floats your script in a notch over any app (WhatsApp, Instagram, the camera) and follows your voice.{" "}
+          <b>iPhone &amp; iPad:</b> Apple lets no app draw over other apps, so JOTR installs from Safari and floats a scrolling window instead.
+        </p>
       </div>
+
+      {(!onPhone || !apple) && (
+        <div className="gj-android">
+          <div className="gj-buttons">
+            <a className="lg-btn lg-btn-white" href={DESKTOP_FILES.android} data-testid="download-android">
+              Download for Android (APK)
+            </a>
+          </div>
+          <ol className="gj-steps compact">
+            <Step n={1} title="Open the downloaded file" />
+            <Step n={2} title="Allow “Install unknown apps” once" />
+            <Step n={3} title="In JOTR, allow “Display over other apps”" />
+          </ol>
+          <p className="gj-fine">Free and outside the Play Store, so Android may ask you to confirm. Tap “Install anyway”.</p>
+        </div>
+      )}
 
       {installed ? (
         <div className="gj-installed" data-testid="pwa-installed">
@@ -319,13 +339,7 @@ function PhoneInstall({ onPhone }: { onPhone: boolean }) {
           <Step n={3} title="Tap “Add to Home Screen”" />
         </ol>
       )}
-      {!installed && (onPhone ? !apple && !canInstall : true) && (
-        <ol className="gj-steps compact">
-          <Step n={1} title="Android: in Chrome" />
-          <Step n={2} title="Tap ⋮ (top right)" />
-          <Step n={3} title="Tap “Install app”" />
-        </ol>
-      )}
+
       <div className="gj-buttons">
         <Link className="lg-btn lg-btn-glass" to="/app">
           Use it in the browser

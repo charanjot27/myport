@@ -71,7 +71,7 @@ const FAQ: Array<{ q: string; a: ReactNode }> = [
   { q: "Which languages can I speak?", a: "English, Hindi, Punjabi and Hinglish, and you can mix them in one script. Write in Devanagari, Gurmukhi or English letters: JOTR matches what you say to what you wrote even when the recogniser spells it in another script, so “meeting” in your script follows “मीटिंग” or “ਮੀਟਿੰਗ”. Spanish, French, German, Portuguese and Japanese work too." },
   { q: "What if I lose my place?", a: "Just keep talking. JOTR listens and finds you again, even if you skip a paragraph, repeat a sentence or ad-lib. You can also press Space or raise an open palm to pause." },
   { q: "Does my video leave my computer?", a: "No. Face and eye tracking run in your browser. Speech goes only to the recogniser you choose, and recordings are saved only when you download them." },
-  { q: "Which browsers and devices?", a: "Chrome and Edge on Mac, Windows and ChromeOS give the full experience, including the floating window. iPhone and Android apps are on the way." },
+  { q: "Which browsers and devices?", a: "Mac and Windows: the desktop app or Chrome/Edge. Android: the JOTR app floats your script in a notch over any app and follows your voice. iPhone and iPad: add JOTR to your Home Screen from Safari; to read over other apps it floats a scrolling picture-in-picture window, because iOS lets nothing else draw over apps." },
   { q: "How much does it cost?", a: "The web app is free while JOTR is in early access." },
   {
     q: "Who made JOTR? Let's connect.",
@@ -80,7 +80,7 @@ const FAQ: Array<{ q: string; a: ReactNode }> = [
         <span className="lg-equation">
           <b>JOTR</b> = <span>Charanjot</span> + <span>Teleprompter</span>
         </span>
-        Built by Charanjot Singh. Say hi, share feedback, or follow along as the iPhone and Android apps come together.
+        Built by Charanjot Singh. Say hi, share feedback, or follow along as JOTR grows.
         <span className="lg-socials focus-group">
           {SOCIALS.map((s) => (
             <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" className="lg-social">
@@ -650,20 +650,6 @@ function Screens() {
             <button key={k} role="tab" aria-selected={page === k} aria-label={`Screenshot ${k + 1}`} className={page === k ? "on" : ""} onClick={() => go(k)} />
           ))}
         </div>
-      </div>
-      <div className="lg-stores" data-reveal>
-        <span className="lg-store">
-          {Icon.apple}
-          <span>
-            <small>Coming soon to</small>App Store
-          </span>
-        </span>
-        <span className="lg-store">
-          {Icon.android}
-          <span>
-            <small>Coming soon to</small>Google Play
-          </span>
-        </span>
       </div>
     </section>
   );

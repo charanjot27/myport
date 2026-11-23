@@ -6,6 +6,7 @@ import { AdaptiveBrightness, AmbientMeter } from "../lib/adaptive";
 import { focusFrame, isPhone, safeAreaTop, textColor, type FocusFrame } from "../lib/device";
 import { EyeGlareMeter } from "../lib/reflection";
 import { openMedia, stopMedia } from "../lib/media";
+import { PhoneFloat } from "../components/PhoneFloat";
 import { closeFloatingWindow, floatingSupported, floatingUnavailableReason, openFloatingWindow } from "../lib/pip";
 import { recordings } from "../lib/recordings";
 import { getSettings, updateSettings, useSettings } from "../lib/settings";
@@ -762,6 +763,9 @@ export function PrompterPage() {
                 <b>Start here</b>
                 <span>Full screen in this tab.{record && settings.cameraBehindText ? " Your camera shows behind the text." : " Best for recording a video."}</span>
               </button>
+{phone ? (
+                script && <PhoneFloat text={script.words.map((w) => w.display).join(" ")} />
+              ) : (
               <button
                 className={`start-mode${floatingSupported() ? "" : " unavailable"}`}
                 disabled={!script}
@@ -779,6 +783,7 @@ export function PrompterPage() {
                 <b>Float over any tab</b>
                 <span>{floatingSupported() ? "An always-on-top window for Meet, interviews and other apps." : "Not available in this browser. Click to see why."}</span>
               </button>
+              )}
             </div>
             <div className="row" style={{ marginTop: 12 }}>
               <Link className="btn small ghost" to={`/edit/${id}`}>

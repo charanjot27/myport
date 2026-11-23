@@ -1470,3 +1470,55 @@ input:focus {
 .prompter.phone .toolbar {
   padding-bottom: max(10px, env(safe-area-inset-bottom));
 }
+
+/* Phones: float the script over other apps (Android app, or a Picture-in-Picture window). */
+.phone-float {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  text-align: left;
+}
+.phone-float p {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  opacity: 0.8;
+}
+.phone-float a {
+  color: #ffb27a;
+  font-weight: 700;
+}
+.pf-speed {
+  display: grid;
+  gap: 6px;
+  font-size: 0.88rem;
+}
+.pf-speed input {
+  width: 100%;
+}
+.pf-bar {
+  height: 8px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #ff4d6d, #ff8a3d) 0 / calc(var(--p, 0) * 100%) 100% no-repeat, rgba(255, 255, 255, 0.12);
+  transition: background-size 200ms;
+}
+.pf-note {
+  font-size: 0.85rem !important;
+}
+.pf-note.error {
+  color: #ff9a9a;
+  opacity: 1 !important;
+}
+/* iOS only floats a video that's in the page; keep it there, out of sight. */
+.pf-video {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 2px;
+  height: 2px;
+  opacity: 0.01;
+  pointer-events: none;
+}

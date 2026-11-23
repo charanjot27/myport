@@ -2988,3 +2988,19 @@ html.lg-scrolled .lg-notch.hero.fixed .lg-notch-text {
     align-items: flex-start;
   }
 }
+.gj-android {
+  margin: 16px 0 6px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.gj-fine {
+  margin: 10px 0 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+/* Stories: the book fits the screen above the dock (laptops and tablets). */
+@media (min-width: 761px) {
+  .lg-view .sb {
+    width: min(1040px, 100%, calc((100svh - 400px) * 1.6));
+  }
+}

@@ -7,6 +7,9 @@
   publish = "apps/web/dist"
 
 [build.environment]
+  # The website doesn't need the desktop app: skip it (and Electron's ~100 MB download) when installing.
+  PNPM_FLAGS = "--filter=!@promptsense/desktop"
+  ELECTRON_SKIP_BINARY_DOWNLOAD = "1"
   NODE_VERSION = "22"
   # The counter lives at /api/stats on this site (see netlify/functions/stats.mjs).
   VITE_COUNTER_URL = "/api"

@@ -23,6 +23,8 @@ async function speak(page: Page, text: string) {
 }
 
 test("sample script: voice-following, pause, finish and report", async ({ page }) => {
+  // Loads face tracking and the stumble model; slow on CI machines that also run the Docker stack.
+  test.slow();
   await page.goto("/app");
   await page.getByRole("button", { name: "Try the sample script" }).click();
   await expect(page.getByLabel("Title")).toHaveValue(/Sample/);
@@ -119,6 +121,7 @@ test("a trained ONNX stumble model is picked up when deployed", async ({ page })
 });
 
 test("multilingual: a Hinglish script follows Hindi speech in Devanagari, and scrolling glides", async ({ page }) => {
+  test.slow();
   await page.goto("/app");
   await page.getByRole("button", { name: "New script" }).click();
   await page.getByLabel("Title").fill("Hinglish");
@@ -134,6 +137,9 @@ test("multilingual: a Hinglish script follows Hindi speech in Devanagari, and sc
   await page.getByTestId("start").click();
   await expect(page.getByTestId("stop")).toBeVisible({ timeout: 10_000 });
 
+  // Measure only once the reading fonts are in: a late font swap re-lays the text out once, which is not a scroll jump.
+  await page.evaluate(() => document.fonts.ready);
+  await page.waitForTimeout(300);
   // Record every scroll offset while speaking: a smooth glide has many small moves, not a few line jumps.
   await page.evaluate(() => {
     const el = document.querySelector<HTMLElement>(".content")!;

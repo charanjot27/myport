@@ -7,8 +7,13 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { App } from "./App";
+import { captureInstallPrompt, registerServiceWorker } from "./lib/install";
 import "./styles.css";
 import "./app.css";
+
+// Phones and tablets install JOTR straight from the site (no app store).
+captureInstallPrompt();
+if (import.meta.env.PROD) registerServiceWorker();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

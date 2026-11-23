@@ -37,27 +37,31 @@ const SOCIALS = [
  */
 const BUY_ME_A_COFFEE = "https://buymeacoffee.com/charanjot27";
 
+/** The landing page's pages, one per dock icon. Each shows only its own content. */
+const PAGES = ["home", "look", "features", "stories", "get", "faq"] as const;
+type PageId = (typeof PAGES)[number];
+
 const DOCK = [
   [
-    { label: "Home", icon: DockIcon.home, href: "#top" },
-    { label: "Closer look", icon: DockIcon.look, href: "#look", optional: true },
-    { label: "In action", icon: DockIcon.action, href: "#action" },
+    { label: "Home", icon: DockIcon.home, href: "#home" },
+    { label: "Closer look", icon: DockIcon.look, href: "#look" },
     { label: "Features", icon: DockIcon.layers, href: "#features" },
     { label: "Stories", icon: DockIcon.book, href: "#stories" },
-    { label: "How it works", icon: DockIcon.pulse, href: "#how", optional: true },
     { label: "Download", icon: DockIcon.download, href: "#get" },
     { label: "FAQ", icon: DockIcon.help, href: "#faq" },
   ],
   [
     { label: "GitHub", icon: DockIcon.github, href: REPO_URL },
-    { label: "LinkedIn", icon: DockIcon.linkedin, href: SOCIALS[2]!.href, optional: true },
-    { label: "Instagram", icon: DockIcon.instagram, href: SOCIALS[0]!.href, optional: true },
-  ],
-  [
     { label: "Buy me a coffee", icon: DockIcon.coffee, href: BUY_ME_A_COFFEE },
-    { label: "Open the app", icon: DockIcon.terminal, href: "/app" },
   ],
 ];
+
+function pageFromHash(): PageId {
+  const h = location.hash.slice(1);
+  // Old section links still land on the right page.
+  const alias: Record<string, PageId> = { top: "home", action: "features", how: "get", why: "home" };
+  return (PAGES as readonly string[]).includes(h) ? (h as PageId) : (alias[h] ?? "home");
+}
 
 const FAQ: Array<{ q: string; a: ReactNode }> = [
   { q: "Who is JOTR for?", a: "Anyone who talks to a camera from notes: creators recording videos, teachers and coaches teaching online, founders pitching, and anyone practising presentations or interviews." },
@@ -93,83 +97,10 @@ const FAQ: Array<{ q: string; a: ReactNode }> = [
   },
 ];
 
-/**
- * Mouse and trackpad paging: one flick moves exactly one page. A page taller than
- * the screen scrolls normally until its edge, then the next flick turns the page.
- * Touch screens use the browser's own scroll snapping (CSS), which feels native there.
- */
-function usePaging() {
-  useEffect(() => {
-    const fine = matchMedia("(hover: hover) and (pointer: fine)");
-    const still = matchMedia("(prefers-reduced-motion: reduce)");
-    let busyUntil = 0;
-    let turnTo: number | null = null;
-    let turnStarted = 0;
-    let lastWheel = 0;
-    let edgeAcc = 0;
-    const pages = () => Array.from(document.querySelectorAll<HTMLElement>(".lg-page"));
-    const onWheel = (e: WheelEvent) => {
-      if (!fine.matches || still.matches || e.ctrlKey || Math.abs(e.deltaY) < Math.abs(e.deltaX)) return;
-      // Let things that scroll on their own (dialogs, the demo player, sliders) keep the wheel.
-      if ((e.target as Element | null)?.closest?.("[role=dialog], .lg-mini, input, textarea, .sb-panel")) return;
-      const now = performance.now();
-      const gap = now - lastWheel;
-      lastWheel = now;
-      // A page turn is over when the page has arrived (or after 1.6 s, whichever comes first).
-      const turning = turnTo !== null && Math.abs(scrollY - turnTo) > 2 && now - turnStarted < 1600;
-      if (!turning) turnTo = null;
-      if (turning || now < busyUntil) {
-        e.preventDefault(); // swallow the rest of the flick (trackpad momentum) while the page turns
-        busyUntil = Math.max(busyUntil, now + 120);
-        return;
-      }
-      const list = pages();
-      const y = scrollY;
-      const vh = innerHeight;
-      let i = 0;
-      for (let k = 0; k < list.length; k++) if (list[k]!.offsetTop <= y + 2) i = k;
-      const cur = list[i]!;
-      const top = cur.offsetTop;
-      const bottom = top + cur.offsetHeight;
-      const dir = Math.sign(e.deltaY);
-      // Still inside a long page: scroll it normally.
-      if (dir > 0 && y + vh < bottom - 2) return void (edgeAcc = 0);
-      if (dir < 0 && y > top + 2) return void (edgeAcc = 0);
-      e.preventDefault();
-      edgeAcc = gap > 200 ? Math.abs(e.deltaY) : edgeAcc + Math.abs(e.deltaY);
-      if (edgeAcc < 30) return;
-      edgeAcc = 0;
-      let target: number | null = null;
-      if (dir > 0 && list[i + 1]) target = list[i + 1]!.offsetTop;
-      if (dir < 0 && list[i - 1]) {
-        const prev = list[i - 1]!;
-        // Going back into a long page lands on its last screen, like turning back a page.
-        target = Math.max(prev.offsetTop, prev.offsetTop + prev.offsetHeight - vh);
-      }
-      if (target === null) return;
-      busyUntil = now + 250;
-      turnTo = Math.min(target, document.documentElement.scrollHeight - vh);
-      turnStarted = now;
-      scrollTo({ top: target, behavior: "smooth" });
-    };
-    addEventListener("wheel", onWheel, { passive: false });
-    return () => removeEventListener("wheel", onWheel);
-  }, []);
-}
-
-/** One screen of the landing page: fills the viewport and snaps into place; longer ones scroll through in full. */
-function Page({ children, id, className = "" }: { children: ReactNode; id?: string; className?: string }) {
-  return (
-    <div className={`lg-page ${className}`} id={id}>
-      {children}
-    </div>
-  );
-}
-
 /* ----------------------------------------------------------------- motion */
 
 /** Reveal elements marked data-reveal as they scroll into view. */
-function useReveal(root: React.RefObject<HTMLElement | null>) {
+function useReveal(root: React.RefObject<HTMLElement | null>, page: string) {
   useEffect(() => {
     const els = root.current?.querySelectorAll<HTMLElement>("[data-reveal]") ?? [];
     if (!("IntersectionObserver" in window)) {
@@ -189,7 +120,7 @@ function useReveal(root: React.RefObject<HTMLElement | null>) {
     );
     els.forEach((e) => io.observe(e));
     return () => io.disconnect();
-  }, [root]);
+  }, [root, page]);
 }
 
 /** 3D tilt that follows the pointer (mouse or finger), eased with requestAnimationFrame. */
@@ -245,8 +176,8 @@ function useTilt<T extends HTMLElement>(max = 7) {
 export function LandingPage() {
   const root = useRef<HTMLDivElement>(null);
   const [demoOpen, setDemoOpen] = useState(false);
-  useReveal(root);
-  usePaging();
+  const [page, setPage] = useState<PageId>(pageFromHash);
+  useReveal(root, page);
   useEffect(() => {
     const html = document.documentElement;
     html.classList.add("landing-root");
@@ -254,51 +185,60 @@ export function LandingPage() {
     const on = () => html.classList.toggle("lg-scrolled", scrollY > 80);
     on();
     addEventListener("scroll", on, { passive: true });
+    // Back and forward move between pages.
+    const onHash = () => setPage(pageFromHash());
+    addEventListener("hashchange", onHash);
+    addEventListener("popstate", onHash);
     return () => {
       removeEventListener("scroll", on);
+      removeEventListener("hashchange", onHash);
+      removeEventListener("popstate", onHash);
       html.classList.remove("landing-root", "lg-scrolled");
     };
   }, []);
 
+  const open = useCallback(
+    (id: string) => {
+      if (!(PAGES as readonly string[]).includes(id)) return;
+      if (id !== page) history.pushState(null, "", id === "home" ? location.pathname : `#${id}`);
+      setPage(id as PageId);
+      scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+    },
+    [page],
+  );
+
+  const watch = () => setDemoOpen(true);
   return (
     <div className="landing" ref={root}>
       <Link to="/app" className="lg-top-notch" aria-label="JOTR: your script, right under your camera. Try it free">
         <NotchDemo className="hero fixed" lines={2} />
       </Link>
-      <Page id="top">
-        <Hero onWatch={() => setDemoOpen(true)} />
-      </Page>
-      <Page>
-        <Statement />
-      </Page>
-      <Page>
-        <CloserLook />
-      </Page>
-      <Page>
-        <Screens />
-      </Page>
-      <Page>
-        <Features />
-      </Page>
-      <Page>
-        <Stories />
-      </Page>
-      <Page>
-        <HowItWorks />
-        <UseCases />
-      </Page>
-      <Page>
-        <GetJotr />
-      </Page>
-      <Page className="paper">
-        <Faq />
-      </Page>
-      <Page className="end">
-        <FinalCta onWatch={() => setDemoOpen(true)} />
+      <main className="lg-view" key={page} data-page={page}>
+        {page === "home" && (
+          <>
+            <Hero onWatch={watch} />
+            <Statement />
+          </>
+        )}
+        {page === "look" && <CloserLook />}
+        {page === "features" && (
+          <>
+            <Screens />
+            <Features />
+          </>
+        )}
+        {page === "stories" && <Stories />}
+        {page === "get" && (
+          <>
+            <GetJotr />
+            <HowItWorks />
+          </>
+        )}
+        {page === "faq" && <Faq />}
         <Footer />
-      </Page>
+      </main>
       <DemoPopup open={demoOpen} setOpen={setDemoOpen} />
-      <Dock groups={DOCK} />
+      <Dock groups={DOCK} active={page} onNavigate={open} />
     </div>
   );
 }
@@ -852,21 +792,6 @@ function HowItWorks() {
   );
 }
 
-function UseCases() {
-  const uses = ["YouTube & course videos", "Online classes", "Investor pitches", "Sales demos", "Webinars", "Interview practice", "Presentations", "Podcasts"];
-  return (
-    <section className="lg-uses" aria-label="Who uses JOTR">
-      <div className="lg-marquee">
-        <div>
-          {[...uses, ...uses].map((u, k) => (
-            <span key={k}>{u}</span>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function Stories() {
   return (
     <section className="lg-section lg-stories" id="stories">
@@ -948,27 +873,6 @@ function Faq() {
             </details>
           ))}
         </div>
-      </div>
-    </section>
-  );
-}
-
-function FinalCta({ onWatch }: { onWatch: () => void }) {
-  return (
-    <section className="lg-final">
-      <div className="lg-final-glow" aria-hidden />
-      <h2 data-reveal>
-        Say exactly what you mean.
-        <br />
-        <span>And look like you mean it.</span>
-      </h2>
-      <div className="lg-ctas" data-reveal style={{ ["--d" as string]: "120ms" }}>
-        <Link to="/app" className="lg-btn lg-btn-white lg">
-          Start free {Icon.arrow}
-        </Link>
-        <button className="lg-btn lg-btn-glass lg" onClick={onWatch}>
-          <span className="lg-play">{Icon.play}</span> Watch the demo
-        </button>
       </div>
     </section>
   );

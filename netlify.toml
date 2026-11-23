@@ -38,3 +38,9 @@
   from = "/*"
   to = "/index.html"
   status = 200
+
+# The service worker must always be fresh, so installed apps pick up updates at once.
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"

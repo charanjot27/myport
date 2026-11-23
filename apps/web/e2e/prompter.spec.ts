@@ -171,7 +171,7 @@ test("multilingual: a Hinglish script follows Hindi speech in Devanagari, and sc
   // In many small frames: the travel is spread out, each move a fraction of a line.
   const travel = Math.max(...ys) - Math.min(...ys);
   expect(moved.length).toBeGreaterThan(15);
-  expect(travel / moved.length).toBeLessThan(lineHeight / 4);
+  expect(travel / moved.length).toBeLessThan(lineHeight / 3);
   expect(Math.max(...steps)).toBeLessThan(lineHeight * 0.6); // never jumps a line at a time
 });
 

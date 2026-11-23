@@ -1,6 +1,8 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { AddToChrome } from "./AddToChrome";
+import QRCode from "qrcode";
+import { useInstall } from "../lib/install";
 
 /** Where the installers live: the latest GitHub Release by default (set VITE_DESKTOP_DOWNLOAD_BASE to host them elsewhere). */
 const BASE = ((import.meta.env.VITE_DESKTOP_DOWNLOAD_BASE as string | undefined) || "https://github.com/charanjot27/myport/releases/latest/download").replace(/\/$/, "");
@@ -138,7 +140,7 @@ type Tab = "mac" | "windows" | "phone" | "chrome";
 const TABS: Array<{ id: Tab; label: string; icon: ReactNode }> = [
   { id: "mac", label: "macOS", icon: <Apple /> },
   { id: "windows", label: "Windows", icon: <WindowsLogo /> },
-  { id: "phone", label: "iPhone & Android", icon: <PhoneIcon /> },
+  { id: "phone", label: "Phone & tablet", icon: <PhoneIcon /> },
   { id: "chrome", label: "Chrome", icon: <span className="gj-chrome" aria-hidden /> },
 ];
 
@@ -154,7 +156,6 @@ export function GetJotr() {
     window.addEventListener("jotr:get", on);
     return () => window.removeEventListener("jotr:get", on);
   }, []);
-  const ios = typeof navigator !== "undefined" && /iphone|ipad|ipod/i.test(navigator.userAgent);
 
   return (
     <section className="lg-section gj" id="get" aria-labelledby="get-title">
@@ -229,42 +230,7 @@ export function GetJotr() {
           </div>
         )}
 
-        {tab === "phone" && (
-          <div className="gj-panel" role="tabpanel">
-            <div className="gj-why">
-              <b>Right under your phone’s camera</b>
-              <p>
-                On iPhone and Android, JOTR’s text hangs from the camera cut-out like a notch, follows your voice, and records you with the front camera. Phones don’t
-                let any app float over other apps, so you read and record inside JOTR.
-              </p>
-            </div>
-            <ol className="gj-steps">
-              <Step n={1} title={`Open ${SITE.replace(/^https:\/\//, "")} in ${ios ? "Safari" : "Chrome"}`} />
-              <Step n={2} title="Add it to your Home Screen">
-                <p>
-                  {ios ? (
-                    <>
-                      Tap <b>Share</b> (the square with an arrow), then <b>Add to Home Screen</b>.
-                    </>
-                  ) : (
-                    <>
-                      Tap the <b>⋮</b> menu, then <b>Install app</b> (or <b>Add to Home screen</b>).
-                    </>
-                  )}{" "}
-                  JOTR then opens full screen like an app.
-                </p>
-              </Step>
-              <Step n={3} title="Read under the camera">
-                <p>Open a script, tick “Record this take”, and press Start. Hold the phone upright with the camera at the top.</p>
-                <div className="gj-buttons">
-                  <Link className="lg-btn lg-btn-white" to="/app">
-                    Open JOTR
-                  </Link>
-                </div>
-              </Step>
-            </ol>
-          </div>
-        )}
+        {tab === "phone" && <PhoneInstall onPhone={platform === "phone"} />}
 
         {tab === "chrome" && (
           <div className="gj-panel" role="tabpanel">
@@ -282,5 +248,89 @@ export function GetJotr() {
         )}
       </div>
     </section>
+  );
+}
+
+const ShareIcon = () => (
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="gj-inline-ic">
+    <path d="M12 3v12M8 7l4-4 4 4" />
+    <path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1" />
+  </svg>
+);
+
+/** QR code of the site, so a laptop visitor can open it on their phone in one scan. */
+function SiteQr() {
+  const [svg, setSvg] = useState("");
+  useEffect(() => {
+    void QRCode.toString(SITE, { type: "svg", margin: 1, errorCorrectionLevel: "M", color: { dark: "#1b1016", light: "#ffffff" } }).then(setSvg);
+  }, []);
+  return <div className="gj-qr" role="img" aria-label={`QR code for ${SITE}`} dangerouslySetInnerHTML={{ __html: svg }} />;
+}
+
+/**
+ * Phones and tablets: no app store. JOTR is an installable web app: Chrome/Edge
+ * install it with one tap; iPhone and iPad add it from Safari's Share menu.
+ */
+function PhoneInstall({ onPhone }: { onPhone: boolean }) {
+  const { canInstall, installed, apple, install } = useInstall();
+  const [busy, setBusy] = useState(false);
+  const safari = typeof navigator !== "undefined" && /safari/i.test(navigator.userAgent) && !/crios|fxios|edgios|chrome|android/i.test(navigator.userAgent);
+  return (
+    <div className="gj-panel" role="tabpanel">
+      <div className="gj-why">
+        <b>No app store needed</b>
+        <p>JOTR installs straight from this site, gets its own icon on your home screen and opens full screen, with the script right under your camera.</p>
+      </div>
+
+      {installed ? (
+        <div className="gj-installed" data-testid="pwa-installed">
+          <span>✓</span> JOTR is installed. Open it from your home screen.
+        </div>
+      ) : !onPhone ? (
+        <div className="gj-qr-row">
+          <SiteQr />
+          <div>
+            <b>Scan with your phone or tablet</b>
+            <p>
+              Or open <span className="gj-url">{SITE.replace(/^https:\/\//, "")}</span> there, then follow the steps for your device.
+            </p>
+          </div>
+        </div>
+      ) : canInstall ? (
+        <div className="gj-buttons">
+          <button
+            className="lg-btn lg-btn-white lg"
+            data-testid="pwa-install"
+            disabled={busy}
+            onClick={() => {
+              setBusy(true);
+              void install().finally(() => setBusy(false));
+            }}
+          >
+            Install JOTR
+          </button>
+        </div>
+      ) : null}
+
+      {!installed && (onPhone ? apple : true) && (
+        <ol className="gj-steps compact">
+          <Step n={1} title={apple && !safari ? "Open this page in Safari" : "iPhone & iPad: in Safari"} />
+          <Step n={2} title={<>Tap Share <ShareIcon /></>} />
+          <Step n={3} title="Tap “Add to Home Screen”" />
+        </ol>
+      )}
+      {!installed && (onPhone ? !apple && !canInstall : true) && (
+        <ol className="gj-steps compact">
+          <Step n={1} title="Android: in Chrome" />
+          <Step n={2} title="Tap ⋮ (top right)" />
+          <Step n={3} title="Tap “Install app”" />
+        </ol>
+      )}
+      <div className="gj-buttons">
+        <Link className="lg-btn lg-btn-glass" to="/app">
+          Use it in the browser
+        </Link>
+      </div>
+    </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import {
   Activity,
@@ -56,28 +56,12 @@ const MAX_SCALE = 1.75;
 const REACH = 150;
 
 /**
- * The site's only navigation: a dock pinned to the bottom. With a mouse it
- * magnifies like the macOS dock (icons swell by distance from the pointer and
- * push their neighbours apart); the section on screen stays marked.
+ * The site's only navigation: a dock pinned to the bottom. Each icon opens its own
+ * page. With a mouse it magnifies like the macOS dock (icons swell by distance from
+ * the pointer and push their neighbours apart); the open page stays marked.
  */
-export function Dock({ groups }: { groups: DockItem[][] }) {
-  const [active, setActive] = useState("#top");
+export function Dock({ groups, active, onNavigate }: { groups: DockItem[][]; active: string; onNavigate: (page: string) => void }) {
   const bar = useRef<HTMLDivElement>(null);
-
-  // Mark the section in view.
-  useEffect(() => {
-    const ids = groups.flat().filter((i) => i.href.startsWith("#") && i.href !== "#top").map((i) => i.href.slice(1));
-    const els = ids.map((id) => document.getElementById(id)).filter((e): e is HTMLElement => !!e);
-    const on = () => {
-      const mid = innerHeight * 0.5;
-      let cur = "#top";
-      for (const el of els) if (el.getBoundingClientRect().top <= mid) cur = `#${el.id}`;
-      setActive(cur);
-    };
-    on();
-    addEventListener("scroll", on, { passive: true });
-    return () => removeEventListener("scroll", on);
-  }, [groups]);
 
   // macOS-style magnification, spring-smoothed, written straight to CSS variables (no re-renders).
   useEffect(() => {
@@ -130,9 +114,7 @@ export function Dock({ groups }: { groups: DockItem[][] }) {
   const go = (href: string) => (e: React.MouseEvent) => {
     if (!href.startsWith("#")) return;
     e.preventDefault();
-    if (href === "#top") scrollTo({ top: 0, behavior: "smooth" });
-    else document.getElementById(href.slice(1))?.scrollIntoView({ behavior: "smooth", block: "start" });
-    history.replaceState(null, "", href === "#top" ? location.pathname : href);
+    onNavigate(href.slice(1));
   };
 
   return (
@@ -147,7 +129,7 @@ export function Dock({ groups }: { groups: DockItem[][] }) {
                   <span className="dock-tip">{item.label}</span>
                 </>
               );
-              const cls = `dock-item${active === item.href ? " on" : ""}${item.optional ? " optional" : ""}`;
+              const cls = `dock-item${active === item.href.slice(1) ? " on" : ""}${item.optional ? " optional" : ""}`;
               if (item.href.startsWith("/"))
                 return (
                   <Link key={item.label} to={item.href} className={cls} aria-label={item.label}>
@@ -161,7 +143,7 @@ export function Dock({ groups }: { groups: DockItem[][] }) {
                   href={item.href}
                   className={cls}
                   aria-label={item.label}
-                  aria-current={active === item.href ? "location" : undefined}
+                  aria-current={active === item.href.slice(1) ? "page" : undefined}
                   onClick={go(item.href)}
                   {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
                 >

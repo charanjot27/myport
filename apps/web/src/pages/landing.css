@@ -2853,130 +2853,48 @@ html.lg-scrolled .lg-notch.hero.fixed .lg-notch-text {
   }
 }
 
-/* --------------------------------------------- full-screen pages that snap */
+/* ------------------------------------------------ one page per dock icon */
 
-/* Each section is one screen: scrolling lands on the next page instead of drifting between them.
-   A page taller than the screen (features, FAQ) scrolls through in full before the next snaps in. */
-/* Touch screens snap natively; mouse and trackpad paging is handled in script (usePaging). */
-@media (pointer: coarse) {
-  html.landing-root {
-    scroll-snap-type: y mandatory;
-  }
-}
-.lg-page {
-  position: relative;
+.lg-view {
   min-height: 100vh;
   min-height: 100svh;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  box-sizing: border-box;
   /* Clear the pinned notch above and the dock below. */
-  padding: 92px 0 calc(92px + env(safe-area-inset-bottom, 0px));
-  scroll-snap-align: start;
-}
-.lg-page > .lg-section,
-.lg-page > section {
-  width: 100%;
+  padding: 108px 0 calc(96px + env(safe-area-inset-bottom, 0px));
   box-sizing: border-box;
+  animation: lg-page-in 520ms var(--spring) both;
 }
-.lg-page .lg-section {
-  padding-top: clamp(16px, 3vw, 40px);
-  padding-bottom: clamp(16px, 3vw, 40px);
+.lg-view[data-page="home"] {
+  padding-top: 0;
 }
-.lg-page .lg-look {
-  padding: 0;
+.lg-view > :not(.lg-footer) + .lg-footer {
+  margin-top: auto;
 }
-.lg-page .lg-hero-copy {
-  margin-top: 0;
+/* The FAQ sheet starts at the top of its page. */
+.lg-view[data-page="faq"] {
+  padding-top: 0;
 }
-.lg-page .lg-uses {
-  margin-top: 24px;
+.lg-view[data-page="faq"] .lg-paper {
+  padding-top: 70px;
+  border-radius: 0 0 48px 48px;
 }
-/* The FAQ sheet fills its page edge to edge. */
-.lg-page.paper {
-  padding: 0;
+.lg-view[data-page="look"] .lg-look {
+  padding-top: 24px;
 }
-.lg-page.paper > .lg-paper {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 92px 0 calc(110px + env(safe-area-inset-bottom, 0px));
-}
-.lg-page.end {
-  padding-bottom: calc(86px + env(safe-area-inset-bottom, 0px));
-}
-.lg-page.end > .lg-final {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding-top: 40px;
-  padding-bottom: 40px;
-}
-/* The pages carry the dock clearance now. */
-.landing {
-  padding-bottom: 0;
-}
-@media (prefers-reduced-motion: reduce) {
-  html.landing-root {
-    scroll-snap-type: y proximity;
+@keyframes lg-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
   }
 }
-
-/* Fit each page to one screen. */
-.lg-page:has(> .lg-statement) {
-  padding: 0;
-}
-.lg-page > .lg-statement {
-  height: 100svh;
-  min-height: 0;
-  margin: 0;
-}
-.lg-page .lg-head {
-  margin-bottom: clamp(20px, 4vh, 48px);
-}
-/* "Made for talking to a camera": the cards take whatever height the screen has left. */
-.lg-page .lg-shot {
-  height: clamp(340px, calc(100svh - 430px), 560px);
-}
-.lg-page .lg-shots {
-  padding-bottom: 10px;
-}
-.lg-page .lg-dots {
-  margin-top: 4px;
-}
-.lg-page .lg-stores {
-  display: none; /* "coming soon" badges: cut to keep the page to one screen */
-}
-/* The book is sized by the screen's height as well as its width. */
-.lg-page .sb {
-  width: min(1040px, 100%, calc((100svh - 530px) * 1.6));
-}
-.lg-page .sb-controls {
-  margin-top: 14px;
-}
-/* The 3D laptop panel fills the screen under its headline. */
-.lg-page .lg-look-panel {
-  height: clamp(420px, calc(100svh - 300px), 760px);
-  min-height: 0;
-}
-.lg-page .lg-apple-h {
-  margin-bottom: clamp(16px, 3vh, 40px);
-}
-@media (max-width: 760px) {
-  /* Phones show the book one page at a time; let it use the width. */
-  .lg-page .sb {
-    width: 100%;
+@media (prefers-reduced-motion: reduce) {
+  .lg-view {
+    animation: none;
   }
 }
 /* Short laptop screens (13" at 720–800 px tall): tighter pages so each still fits one screen. */
 @media (max-height: 820px) and (min-width: 640px) {
-  .lg-page {
-    padding-top: 76px;
-    padding-bottom: 84px;
-  }
   .lg-hero h1 {
     font-size: min(clamp(2.7rem, 7vw, 5.6rem), 11vh);
   }
@@ -2992,5 +2910,81 @@ html.lg-scrolled .lg-notch.hero.fixed .lg-notch-text {
   }
   .lg-badge {
     margin-bottom: 0;
+  }
+}
+
+/* Phone & tablet install */
+.gj-qr-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin: 18px 0 6px;
+}
+.gj-qr {
+  flex: none;
+  width: 132px;
+  height: 132px;
+  padding: 8px;
+  border-radius: 18px;
+  background: #fff;
+  box-sizing: border-box;
+}
+.gj-qr svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.gj-qr-row b {
+  font-size: 1.05rem;
+}
+.gj-qr-row p {
+  margin: 6px 0 0;
+  color: var(--muted);
+}
+.gj-url {
+  color: #fff;
+  font-weight: 700;
+}
+.gj-installed {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(46, 230, 166, 0.1);
+  color: #b9f5dd;
+  font-weight: 650;
+}
+.gj-installed span {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--mint);
+  color: #06281c;
+  font-weight: 900;
+}
+.gj-steps.compact {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+.gj-steps.compact > li {
+  margin: 0;
+}
+.gj-inline-ic {
+  vertical-align: -3px;
+  margin-left: 2px;
+}
+@media (max-width: 620px) {
+  .gj-steps.compact {
+    grid-template-columns: 1fr;
+  }
+  .gj-qr-row {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

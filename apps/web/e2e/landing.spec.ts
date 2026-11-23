@@ -16,13 +16,15 @@ test("landing page: hero, demo popup and start", async ({ page }) => {
   await page.keyboard.press("Escape");
   await expect(dialog).toBeHidden();
 
-  // FAQ opens.
+  // FAQ opens (on its own page).
+  await page.getByRole("navigation", { name: "Site" }).getByRole("link", { name: "FAQ" }).click();
   await page.getByText("I wear glasses. Will the text reflect in them?").click();
   await expect(page.getByText(/reflection check that measures your glasses/)).toBeVisible();
 
   // No fabricated social proof: the testimonials section is hidden until real quotes are added.
   await expect(page.getByText("What people say")).toHaveCount(0);
 
+  await page.getByRole("navigation", { name: "Site" }).getByRole("link", { name: "Home" }).click();
   await page.getByRole("link", { name: /Start free in your browser/ }).click();
   await expect(page).toHaveURL(/\/welcome$/);
 });
@@ -30,15 +32,13 @@ test("landing page: hero, demo popup and start", async ({ page }) => {
 test("closer look: the 3D laptop loads and the pills switch views", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  await page.goto("/");
-  await page.locator("#look").scrollIntoViewIfNeeded();
+  await page.goto("/#look");
   // WebGL scene (or the CSS laptop where WebGL is unavailable) appears under the production CSP.
-  await expect(page.locator(".lg-look-canvas[data-ready], .lg-look-stage .lg-laptop")).toBeVisible();
+  await expect(page.locator(".lg-look-canvas[data-ready], .lg-look-stage .lg-laptop")).toBeVisible({ timeout: 15_000 });
   const notch = page.getByRole("tab", { name: /Under the camera/ });
   await notch.click();
   await expect(notch).toHaveAttribute("aria-selected", "true");
   await expect(notch).toContainText("no wider than the notch");
-  await expect(page.getByRole("heading", { name: /Here’s what you get with JOTR/ })).toBeAttached();
   expect(errors).toEqual([]);
 });
 
@@ -53,6 +53,7 @@ test("star statement reacts to the pointer and the language FAQ answers", async 
   const before = await snap();
   for (let i = 0; i < 10; i++) await page.mouse.move(box.x + box.width / 2 + i * 10, box.y + box.height / 2);
   await expect.poll(snap).not.toBe(before);
+  await page.goto("/#faq");
   await page.getByText("Which languages can I speak?").click();
   await expect(page.getByText(/Devanagari, Gurmukhi or English letters/)).toBeVisible();
 });
@@ -139,8 +140,7 @@ test("Mac visitors get a one-line install command they can copy", async ({ brows
     Object.defineProperty(navigator, "platform", { get: () => "MacIntel" });
     Object.defineProperty(navigator, "userAgentData", { get: () => ({ platform: "macOS", getHighEntropyValues: async () => ({ architecture: "arm" }) }) });
   });
-  await page.goto("/");
-  await page.locator("#get").scrollIntoViewIfNeeded();
+  await page.goto("/#get");
   await expect(page.getByTestId("download-mac")).toHaveAttribute("href", /JOTR-mac-arm64\.dmg$/); // Mac tab first, Apple Silicon file
   const cmd = page.getByTestId("mac-install-command");
   await expect(cmd).toHaveText(/^curl -fsSL https?:\/\/.+\/install\.sh \| sh$/);
@@ -168,10 +168,9 @@ test("phones get the phone tab first, and the prompter hangs from the camera lik
     (window as unknown as { __promptsenseFakeSpeech: boolean }).__promptsenseFakeSpeech = true;
     localStorage.setItem("promptsense.settings.v1", JSON.stringify({ onboarded: true }));
   });
-  await page.goto("/");
-  await page.locator("#get").scrollIntoViewIfNeeded();
-  await expect(page.getByRole("tab", { name: /iPhone & Android/ })).toHaveAttribute("aria-selected", "true");
-  await expect(page.getByText("Add it to your Home Screen")).toBeVisible();
+  await page.goto("/#get");
+  await expect(page.getByRole("tab", { name: /Phone & tablet/ })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByText("Tap “Add to Home Screen”")).toBeVisible();
   // No horizontal scrolling on a phone.
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
 
@@ -229,17 +228,43 @@ test("the scene book turns its pages", async ({ page }) => {
 
 });
 
-test("a mouse wheel flick turns exactly one full-screen page", async ({ page }) => {
+test("each dock icon opens only its own page, and Back returns", async ({ page }) => {
   await page.goto("/");
-  await page.waitForLoadState("networkidle");
-  const pages = await page.evaluate(() => [...document.querySelectorAll<HTMLElement>(".lg-page")].map((e) => e.offsetTop));
-  await page.mouse.move(600, 300);
-  await page.mouse.wheel(0, 100);
-  await expect.poll(() => page.evaluate(() => Math.round(scrollY)), { timeout: 5000 }).toBe(pages[1]);
-  await page.mouse.wheel(0, 100);
-  await expect.poll(() => page.evaluate(() => Math.round(scrollY)), { timeout: 5000 }).toBe(pages[2]);
-  await page.mouse.wheel(0, -100);
-  await expect.poll(() => page.evaluate(() => Math.round(scrollY)), { timeout: 5000 }).toBe(pages[1]);
+  const dock = page.getByRole("navigation", { name: "Site" });
+  await expect(page.locator(".lg-hero")).toBeVisible();
+  await dock.getByRole("link", { name: "Features" }).click();
+  await expect(page).toHaveURL(/#features$/);
+  await expect(page.locator("#features")).toBeVisible();
+  await expect(page.locator(".lg-hero, #get, #faq, #stories")).toHaveCount(0); // nothing from other pages
+  await dock.getByRole("link", { name: "Download" }).click();
+  await expect(page.locator("#get")).toBeVisible();
+  await expect(page.locator("#features")).toHaveCount(0);
+  await page.goBack();
+  await expect(page.locator("#features")).toBeVisible();
+  await page.goto("/#faq"); // pages can be linked directly
+  await expect(page.locator("#faq")).toBeVisible();
+  await expect(page.locator(".lg-hero")).toHaveCount(0);
+});
+
+test("phones and tablets install JOTR from the site, no app store", async ({ browser }) => {
+  // Android Chrome: our own Install button triggers the browser's install.
+  const ctx = await browser.newContext({ baseURL: test.info().project.use.baseURL, viewport: { width: 412, height: 915 }, isMobile: true, hasTouch: true, userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0 Mobile Safari/537.36" });
+  const page = await ctx.newPage();
+  await page.goto("/#get");
+  await expect(page.getByRole("tab", { name: /Phone & tablet/ })).toHaveAttribute("aria-selected", "true");
+  await page.evaluate(() => {
+    const e = new Event("beforeinstallprompt") as Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
+    e.prompt = async () => void ((window as unknown as { __prompted: boolean }).__prompted = true);
+    e.userChoice = Promise.resolve({ outcome: "accepted" });
+    dispatchEvent(e);
+  });
+  await page.getByTestId("pwa-install").click();
+  await expect.poll(() => page.evaluate(() => (window as unknown as { __prompted?: boolean }).__prompted)).toBe(true);
+  // The app is installable: a manifest that opens full screen, and a service worker.
+  const manifest = await (await page.request.get("/site.webmanifest")).json();
+  expect(manifest.display).toBe("standalone");
+  expect((await page.request.get("/sw.js")).ok()).toBe(true);
+  await ctx.close();
 });
 
 test("the boot screen shows the wave loader before any script runs", async ({ browser }) => {

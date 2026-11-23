@@ -1,5 +1,6 @@
 import { app, BrowserWindow, globalShortcut, ipcMain, Menu, nativeImage, screen, session, shell, systemPreferences, Tray, type Display, type MenuItemConstructorOptions } from "electron";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { ChromeListener } from "./listenServer";
 import { dirname, join } from "node:path";
 import {
   cameraGuess,
@@ -42,7 +43,10 @@ const storePath = () => join(app.getPath("userData"), "settings.json");
 
 function load(): void {
   try {
-    settings = { ...DEFAULT_SETTINGS, ...(JSON.parse(readFileSync(storePath(), "utf8")) as Partial<DesktopSettings>) };
+    const saved = JSON.parse(readFileSync(storePath(), "utf8")) as Partial<DesktopSettings>;
+    settings = { ...DEFAULT_SETTINGS, ...saved };
+    // Version 2 made Chrome voice (word by word) the default.
+    if ((saved.settingsVersion ?? 1) < 2) settings = { ...settings, mode: "chrome", settingsVersion: 2 };
   } catch {
     settings = { ...DEFAULT_SETTINGS };
   }
@@ -244,6 +248,7 @@ function sendState(): void {
 // -------------------------------------------------------------------- tray
 
 const MODES: Array<[Mode, string]> = [
+  ["chrome", "Chrome voice (word by word, free)"],
   ["pace", "Voice pace (offline, any language)"],
   ["words", "Follow my words (Deepgram)"],
   ["steady", "Steady speed"],
@@ -304,6 +309,14 @@ if (!app.requestSingleInstanceLock()) {
       state = s;
       sendState();
     });
+    const toNotch = (channel: string, payload: unknown) => notch && !notch.isDestroyed() && notch.webContents.send(channel, payload);
+    const listener = new ChromeListener(join(__dirname, "listener"), {
+      onTranscript: (text, isFinal) => toNotch("listen:transcript", { text, isFinal }),
+      onStatus: (status, detail) => toNotch("listen:status", { status, detail }),
+    });
+    ipcMain.on("listen:start", (_e, lang: string) => void listener.start(lang).catch((err: Error) => toNotch("listen:status", { status: "error", detail: err.message })));
+    ipcMain.on("listen:stop", () => listener.stop());
+    app.on("will-quit", () => listener.close());
     ipcMain.on("open-external", (_e, url: string) => {
       if (/^https:\/\//.test(url)) void shell.openExternal(url);
     });

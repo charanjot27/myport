@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>JOTR · listening</title>
+    <link rel="icon" href="/logo.svg" />
+    <style>
+      :root { color-scheme: dark; }
+      html, body { margin: 0; height: 100%; background: #0b0710; color: #f5f0ee; font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; }
+      main { height: 100%; display: grid; place-items: center; text-align: center; padding: 20px; box-sizing: border-box; }
+      .orb { position: relative; width: 64px; height: 64px; margin: 0 auto 14px; border-radius: 50%; background: #1c1c1e; display: grid; place-items: center; }
+      .orb img { width: 34px; height: 34px; }
+      .orb::after { content: ""; position: absolute; inset: -6px; border-radius: 50%; border: 2px solid #30d158; opacity: 0; }
+      .live .orb::after { opacity: 1; animation: ping 1.6s ease-out infinite; }
+      @keyframes ping { from { transform: scale(0.9); opacity: 0.9; } to { transform: scale(1.35); opacity: 0; } }
+      h1 { margin: 0 0 4px; font-size: 16px; letter-spacing: -0.01em; }
+      p { margin: 0; color: rgba(245, 240, 238, 0.6); font-size: 12.5px; max-width: 300px; }
+      #heard { margin-top: 12px; min-height: 1.4em; font: 500 12.5px ui-monospace, "SF Mono", Menlo, monospace; color: #ffd8b5; max-width: 320px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; direction: rtl; }
+      button { margin-top: 12px; border: 0; border-radius: 999px; padding: 8px 16px; background: linear-gradient(120deg, #ff4d6d, #ff8a3d 55%, #ffc93c); color: #1b1016; font: 700 13px inherit; cursor: pointer; }
+      .err #state { color: #ff8aa0; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div>
+        <div class="orb"><img src="/logo.svg" alt="" /></div>
+        <h1 id="title">JOTR is connecting…</h1>
+        <p id="state">Keep this window open while you read. You can put it behind other windows.</p>
+        <div id="heard" aria-live="polite"></div>
+        <button id="retry" hidden>Allow microphone</button>
+      </div>
+    </main>
+    <script src="/listen.js"></script>
+  </body>
+</html>

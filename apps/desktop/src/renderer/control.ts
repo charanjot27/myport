@@ -14,6 +14,7 @@ document.body.classList.toggle("mac", mac);
 document.querySelectorAll<HTMLElement>("kbd.mod").forEach((k) => (k.textContent = (mac ? "⌘" : "Ctrl+") + k.textContent));
 
 const HELP: Record<Mode, string> = {
+  chrome: "Follows your exact words, word by word, with Chrome's free speech recognition (the same as the JOTR website). Press Start and JOTR opens a small Chrome window that listens: keep it open, behind other windows is fine. Needs Google Chrome and internet.",
   pace: "Scrolls while you talk, at your speaking speed, and waits when you pause. Works offline in any language.",
   words: "Follows your exact words, even when you skip or repeat. Needs a Deepgram API key and an internet connection.",
   steady: "Scrolls at a fixed speed. Pause any time with the shortcut.",
@@ -37,6 +38,8 @@ function render(next: DesktopSettings): void {
   $("words-settings").hidden = s.mode !== "words";
   if (active !== $("dg-key")) ($("dg-key") as HTMLInputElement).value = s.deepgramKey;
   ($("language") as HTMLSelectElement).value = s.language;
+  $("lang-settings").hidden = s.mode !== "chrome";
+  ($("chrome-language") as HTMLSelectElement).value = s.language;
 
   const slider = (id: string, v: number, text: string) => {
     const el = $(id) as HTMLInputElement;
@@ -98,6 +101,7 @@ $("file").addEventListener("change", async (e) => {
 });
 document.querySelectorAll<HTMLButtonElement>("[data-mode]").forEach((b) => b.addEventListener("click", () => set({ mode: b.dataset.mode as Mode })));
 $("dg-key").addEventListener("change", (e) => set({ deepgramKey: (e.target as HTMLInputElement).value.trim() }));
+$("chrome-language").addEventListener("change", (e) => set({ language: (e.target as HTMLSelectElement).value }));
 $("language").addEventListener("change", (e) => set({ language: (e.target as HTMLSelectElement).value }));
 const num = (id: string, key: "wpm" | "fontSize" | "lines" | "width") => $(id).addEventListener("input", (e) => set({ [key]: Number((e.target as HTMLInputElement).value) }));
 num("wpm", "wpm");

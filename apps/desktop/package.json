@@ -1,6 +1,6 @@
 {
   "name": "@promptsense/desktop",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "description": "JOTR Desktop: a notch teleprompter that floats over every app and stays out of screen recordings.",
   "main": "dist/main.js",
@@ -14,15 +14,18 @@
     "dist:win": "node build.mjs --minify && electron-builder --win"
   },
   "dependencies": {
-    "@promptsense/core": "workspace:*"
+    "@promptsense/core": "workspace:*",
+    "ws": "8.18.3"
   },
   "devDependencies": {
+    "@types/dom-speech-recognition": "0.0.6",
+    "@types/node": "^22.15.0",
+    "@types/ws": "8.18.1",
     "electron": "45.2.3",
+    "electron-builder": "26.0.12",
     "esbuild": "^0.25.0",
     "typescript": "~5.9.3",
-    "vitest": "^3.2.7",
-    "@types/node": "^22.15.0",
-    "electron-builder": "26.0.12"
+    "vitest": "^3.2.7"
   },
   "author": "Charanjot Singh",
   "build": {

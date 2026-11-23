@@ -1,11 +1,11 @@
 /** Settings shared by the main process and both windows. Stored as JSON in the app's user-data folder. */
 
-export type Mode = "pace" | "words" | "steady";
+export type Mode = "chrome" | "pace" | "words" | "steady";
 export type Theme = "ember" | "rose" | "ice" | "mint" | "gold" | "mono";
 
 export interface DesktopSettings {
   script: { title: string; source: string };
-  /** pace: scroll while you talk (offline, any language). words: follow your exact words (Deepgram key). steady: fixed speed. */
+  /** chrome: follow your exact words with Chrome's free speech recognition. pace: scroll while you talk (offline). words: Deepgram key. steady: fixed speed. */
   mode: Mode;
   /** Words per minute for steady mode, and the starting pace for voice pace. */
   wpm: number;
@@ -26,6 +26,8 @@ export interface DesktopSettings {
   mirror: boolean;
   /** React the glow to your voice. */
   voiceGlow: boolean;
+  /** Bumped when defaults change in a way existing users should get. */
+  settingsVersion: number;
 }
 
 export const DEFAULT_SCRIPT = `Hi, I'm using JOTR, a teleprompter that sits right under my camera.
@@ -34,7 +36,7 @@ When I pause, it waits for me. When I keep talking, it keeps up.`;
 
 export const DEFAULT_SETTINGS: DesktopSettings = {
   script: { title: "Welcome to JOTR", source: DEFAULT_SCRIPT },
-  mode: "pace",
+  mode: "chrome",
   wpm: 140,
   fontSize: 16,
   width: 470,
@@ -47,6 +49,7 @@ export const DEFAULT_SETTINGS: DesktopSettings = {
   language: "auto",
   mirror: false,
   voiceGlow: true,
+  settingsVersion: 2,
 };
 
 export const THEMES: Record<Theme, { name: string; accent: string; glow: string; text: string }> = {
@@ -128,6 +131,11 @@ export interface JotrBridge {
   openExternal(url: string): void;
   /** Prompter window layout: floating or under the notch, and the menu-bar height to keep the text below. */
   onLayout(fn: (l: Layout) => void): void;
+  /** Chrome voice: listen through the user's Google Chrome. */
+  startListening(lang: string): void;
+  stopListening(): void;
+  onTranscript(fn: (t: { text: string; isFinal: boolean }) => void): void;
+  onListenStatus(fn: (s: { status: "starting" | "on" | "error" | "off"; detail?: string }) => void): void;
 }
 
 export interface Layout {

@@ -40,6 +40,8 @@ let scrollV = 0;
 
 let voice: { stream: MediaStream; stop: () => void } | null = null;
 let stopWords: (() => void) | null = null;
+/** Chrome voice is listening (words arrive from the user's Chrome). */
+let chromeOn = false;
 let aligner: ScriptAligner | null = null;
 const pace = new ReadingPace({ lead: 0.8 });
 let listening: PrompterState["listening"] = "off";
@@ -138,7 +140,34 @@ async function start(): Promise<void> {
   paused = false;
   if (settings.mode !== "steady" || settings.voiceGlow) await openMic();
   if (settings.mode === "words") startWords();
+  if (settings.mode === "chrome") startChrome();
   report();
+}
+
+function scriptLang(): string {
+  if (settings.language !== "auto") return settings.language;
+  return ({ hi: "hi-IN", pa: "pa-IN" } as Record<string, string>)[detectScriptLanguage(settings.script.source)] ?? (navigator.language || "en-US");
+}
+
+function startChrome(): void {
+  aligner = new ScriptAligner(script);
+  aligner.seek(script.words[Math.floor(pos)]?.tokenStart ?? 0);
+  pace.reset(pos);
+  chromeOn = true;
+  window.jotr.startListening(scriptLang());
+}
+
+function stopChrome(): void {
+  if (!chromeOn) return;
+  chromeOn = false;
+  window.jotr.stopListening();
+}
+
+/** A transcript from Chrome or Deepgram: find where the speaker is and glide there. */
+function heard(text: string, isFinal: boolean): void {
+  if (!aligner || !script.words.length) return;
+  const u = aligner.update(text, isFinal, performance.now());
+  if (!u.offScript) pace.confirm(wordAtToken(script, Math.max(0, u.position - 1)), performance.now());
 }
 
 async function openMic(): Promise<void> {
@@ -165,17 +194,14 @@ function startWords(): void {
     showHint("Add a Deepgram key to follow your words · using voice pace");
     return;
   }
-  const lang = settings.language === "auto" ? ({ hi: "hi-IN", pa: "pa-IN" } as Record<string, string>)[detectScriptLanguage(settings.script.source)] ?? "en-US" : settings.language;
+  const lang = scriptLang();
   aligner = new ScriptAligner(script);
   pace.reset(pos);
   stopWords = connectDeepgram(
     voice.stream,
     settings.deepgramKey,
     lang,
-    (t) => {
-      const u = aligner!.update(t.text, t.isFinal, performance.now());
-      if (!u.offScript && script.words.length) pace.confirm(wordAtToken(script, Math.max(0, u.position - 1)), performance.now());
-    },
+    (t) => heard(t.text, t.isFinal),
     (s, d) => {
       if (s === "error") showHint(d ?? "Speech service error");
       detail = d;
@@ -185,6 +211,7 @@ function startWords(): void {
 }
 
 function stopMic(): void {
+  stopChrome();
   stopWords?.();
   stopWords = null;
   voice?.stop();
@@ -194,6 +221,11 @@ function stopMic(): void {
 
 function pause(on = !paused): void {
   paused = on;
+  // Chrome voice stops listening while paused, and picks up where you are on resume.
+  if (settings.mode === "chrome" && running) {
+    if (on) stopChrome();
+    else startChrome();
+  }
   report();
 }
 
@@ -207,7 +239,7 @@ function showHint(text: string, ms = 5000): void {
 function jump(word: number): void {
   pos = Math.max(0, Math.min(spans.length, word));
   pace.reset(pos);
-  aligner?.seek(script.words[Math.floor(pos)]?.tokenStart ?? script.tokens.length);
+  if (aligner) aligner.seek(script.words[Math.floor(pos)]?.tokenStart ?? script.tokens.length);
   render();
   renderPill();
 }
@@ -223,7 +255,7 @@ function currentSection(): number {
   return idx;
 }
 
-const MODE_LABEL = { pace: "Voice pace", words: "Following your words", steady: "Steady" } as const;
+const MODE_LABEL = { chrome: "Following your words", pace: "Voice pace", words: "Following your words", steady: "Steady" } as const;
 
 function renderPill(): void {
   const now = performance.now();
@@ -273,7 +305,7 @@ function tick(now: number): void {
     const base = settings.wpm / 60;
     if (settings.mode === "steady") {
       pos += base * dt;
-    } else if (settings.mode === "words" && stopWords) {
+    } else if ((settings.mode === "words" && stopWords) || (settings.mode === "chrome" && chromeOn)) {
       pos = pace.step(dt * 1000, frame.speaking);
     } else if (frame.speaking) {
       // Voice pace: your measured syllable rate turned into words, blended with your usual pace.
@@ -284,6 +316,7 @@ function tick(now: number): void {
     if (pos >= spans.length) {
       pos = spans.length;
       running = false;
+      stopChrome();
       showHint("The end · press ▶ to read it again");
       report();
     }
@@ -354,6 +387,8 @@ function apply(s: DesktopSettings): void {
       stopWords?.();
       stopWords = null;
     }
+    if (s.mode === "chrome" && !paused) startChrome();
+    else stopChrome();
   }
   renderPill();
 }
@@ -435,6 +470,16 @@ void (async () => {
   apply(await window.jotr.getSettings());
   window.jotr.onSettings(apply);
   window.jotr.onCommand(command);
+  window.jotr.onTranscript((t) => chromeOn && heard(t.text, t.isFinal));
+  window.jotr.onListenStatus((st) => {
+    if (st.status === "error") {
+      detail = st.detail;
+      showHint(st.detail ?? "Chrome voice stopped", 7000);
+    } else if (st.status === "starting" && st.detail) showHint(st.detail, 7000);
+    else if (st.status === "starting") showHint("Opening Chrome for word-by-word listening…", 4000);
+    else if (st.status === "on") showHint("Chrome is listening · start reading", 2500);
+    report();
+  });
   window.jotr.onLayout((l) => {
     root.classList.toggle("floating", l.floating);
     root.classList.toggle("notched", l.notched);

@@ -33,11 +33,29 @@
       <section class="group">
         <h2>Scrolling</h2>
         <div class="segmented" role="radiogroup" aria-label="Scrolling">
+          <button role="radio" data-mode="chrome">Chrome voice</button>
           <button role="radio" data-mode="pace">Voice pace</button>
-          <button role="radio" data-mode="words">Follow words</button>
+          <button role="radio" data-mode="words">Deepgram</button>
           <button role="radio" data-mode="steady">Steady</button>
         </div>
         <p id="mode-help" class="help"></p>
+        <div id="lang-settings" class="rows" hidden>
+          <label class="row">
+            <span>Language<small>Chrome hears Hindi, Punjabi, Hinglish, English and more.</small></span>
+            <select id="chrome-language">
+              <option value="auto">Auto (from the script)</option>
+              <option value="en-US">English (US)</option>
+              <option value="en-GB">English (UK)</option>
+              <option value="en-IN">English (India)</option>
+              <option value="hi-IN">हिन्दी · Hindi</option>
+              <option value="hinglish">Hinglish</option>
+              <option value="pa-IN">ਪੰਜਾਬੀ · Punjabi</option>
+              <option value="es-ES">Español</option>
+              <option value="fr-FR">Français</option>
+              <option value="de-DE">Deutsch</option>
+            </select>
+          </label>
+        </div>
         <div id="words-settings" class="rows" hidden>
           <label class="row">
             <span>Deepgram API key<small>Audio goes only to Deepgram. <a href="https://console.deepgram.com/signup" class="ext">Get a free key</a></small></span>

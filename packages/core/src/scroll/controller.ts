@@ -74,7 +74,10 @@ export class ScrollController {
     this.velocity += accel * dt;
     const cap = this.options.maxSpeed * (0.25 + 0.75 * slow);
     this.velocity = Math.max(-cap, Math.min(cap, this.velocity));
-    this.position += this.velocity * dt;
+    // Never travel more than one 60 fps frame's worth at full speed in a single step: after the
+    // page stalls (a long frame), catch up over the next frames instead of lurching.
+    const maxTravel = (cap / 60) * 1.2;
+    this.position += Math.max(-maxTravel, Math.min(maxTravel, this.velocity * dt));
     if (Math.abs(this.target - this.position) < 0.25 && Math.abs(this.velocity) < 1) {
       this.position = this.target;
       this.velocity = 0;

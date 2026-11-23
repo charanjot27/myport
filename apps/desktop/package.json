@@ -1,6 +1,6 @@
 {
   "name": "@promptsense/desktop",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "private": true,
   "description": "JOTR Desktop: a notch teleprompter that floats over every app and stays out of screen recordings.",
   "main": "dist/main.js",

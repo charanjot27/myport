@@ -326,7 +326,9 @@ function tick(now: number): void {
   const target = targetTop(pos);
   const k = 140;
   scrollV += (k * (target - scrollY) - 2 * Math.sqrt(k) * scrollV) * dt;
-  scrollY += scrollV * dt;
+  // At most a third of a line per frame, so a stalled frame never makes the text lurch.
+  const maxTravel = lineHeight / 3;
+  scrollY += Math.max(-maxTravel, Math.min(maxTravel, scrollV * dt));
   if (Math.abs(target - scrollY) < 0.2 && Math.abs(scrollV) < 1) scrollY = target;
   textEl.style.transform = `translate3d(0, ${-scrollY}px, 0)`;
   render();

@@ -308,3 +308,18 @@ describe("coach report", () => {
     expect(r.tips.length).toBeGreaterThan(0);
   });
 });
+
+describe("ScrollController stalls", () => {
+  it("catches up smoothly after a long frame instead of jumping", async () => {
+    const { ScrollController } = await import("../src/scroll/controller.js");
+    const s = new ScrollController();
+    s.setBounds(10_000);
+    s.setTarget(600);
+    for (let i = 0; i < 10; i++) s.step(16.7);
+    const before = s.position;
+    s.step(100); // a 100 ms stall
+    expect(s.position - before).toBeLessThanOrEqual((900 / 60) * 1.2 + 1e-6);
+    for (let i = 0; i < 200; i++) s.step(16.7);
+    expect(s.position).toBeCloseTo(600, 0);
+  });
+});

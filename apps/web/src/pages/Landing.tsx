@@ -5,6 +5,7 @@ import type { Laptop3D, ScreenMode } from "./laptop3d";
 import type { StarField } from "./starfield";
 import { AddToChrome } from "../components/AddToChrome";
 import { GetJotr } from "../components/DownloadDesktop";
+import { CLOSING_SCENE, SCENES, SceneBook } from "../components/SceneBook";
 import { Dock, DockIcon } from "../components/Dock";
 import { AnimatedNumber } from "../components/Animated";
 import { useUserCount } from "../lib/counter";
@@ -34,13 +35,16 @@ const SOCIALS = [
  * there and it goes to your account; signing up is free (they keep 5% of each tip).
  * Left empty, the coffee buttons stay hidden.
  */
-const BUY_ME_A_COFFEE = "";
+const BUY_ME_A_COFFEE = "https://buymeacoffee.com/charanjot27";
 
 const DOCK = [
   [
     { label: "Home", icon: DockIcon.home, href: "#top" },
+    { label: "Closer look", icon: DockIcon.look, href: "#look", optional: true },
+    { label: "In action", icon: DockIcon.action, href: "#action" },
     { label: "Features", icon: DockIcon.layers, href: "#features" },
-    { label: "How it works", icon: DockIcon.pulse, href: "#how" },
+    { label: "Stories", icon: DockIcon.book, href: "#stories" },
+    { label: "How it works", icon: DockIcon.pulse, href: "#how", optional: true },
     { label: "Download", icon: DockIcon.download, href: "#get" },
     { label: "FAQ", icon: DockIcon.help, href: "#faq" },
   ],
@@ -50,7 +54,7 @@ const DOCK = [
     { label: "Instagram", icon: DockIcon.instagram, href: SOCIALS[0]!.href, optional: true },
   ],
   [
-    ...(BUY_ME_A_COFFEE ? [{ label: "Buy me a coffee", icon: DockIcon.coffee, href: BUY_ME_A_COFFEE }] : []),
+    { label: "Buy me a coffee", icon: DockIcon.coffee, href: BUY_ME_A_COFFEE },
     { label: "Open the app", icon: DockIcon.terminal, href: "/app" },
   ],
 ];
@@ -88,6 +92,79 @@ const FAQ: Array<{ q: string; a: ReactNode }> = [
     ),
   },
 ];
+
+/**
+ * Mouse and trackpad paging: one flick moves exactly one page. A page taller than
+ * the screen scrolls normally until its edge, then the next flick turns the page.
+ * Touch screens use the browser's own scroll snapping (CSS), which feels native there.
+ */
+function usePaging() {
+  useEffect(() => {
+    const fine = matchMedia("(hover: hover) and (pointer: fine)");
+    const still = matchMedia("(prefers-reduced-motion: reduce)");
+    let busyUntil = 0;
+    let turnTo: number | null = null;
+    let turnStarted = 0;
+    let lastWheel = 0;
+    let edgeAcc = 0;
+    const pages = () => Array.from(document.querySelectorAll<HTMLElement>(".lg-page"));
+    const onWheel = (e: WheelEvent) => {
+      if (!fine.matches || still.matches || e.ctrlKey || Math.abs(e.deltaY) < Math.abs(e.deltaX)) return;
+      // Let things that scroll on their own (dialogs, the demo player, sliders) keep the wheel.
+      if ((e.target as Element | null)?.closest?.("[role=dialog], .lg-mini, input, textarea, .sb-panel")) return;
+      const now = performance.now();
+      const gap = now - lastWheel;
+      lastWheel = now;
+      // A page turn is over when the page has arrived (or after 1.6 s, whichever comes first).
+      const turning = turnTo !== null && Math.abs(scrollY - turnTo) > 2 && now - turnStarted < 1600;
+      if (!turning) turnTo = null;
+      if (turning || now < busyUntil) {
+        e.preventDefault(); // swallow the rest of the flick (trackpad momentum) while the page turns
+        busyUntil = Math.max(busyUntil, now + 120);
+        return;
+      }
+      const list = pages();
+      const y = scrollY;
+      const vh = innerHeight;
+      let i = 0;
+      for (let k = 0; k < list.length; k++) if (list[k]!.offsetTop <= y + 2) i = k;
+      const cur = list[i]!;
+      const top = cur.offsetTop;
+      const bottom = top + cur.offsetHeight;
+      const dir = Math.sign(e.deltaY);
+      // Still inside a long page: scroll it normally.
+      if (dir > 0 && y + vh < bottom - 2) return void (edgeAcc = 0);
+      if (dir < 0 && y > top + 2) return void (edgeAcc = 0);
+      e.preventDefault();
+      edgeAcc = gap > 200 ? Math.abs(e.deltaY) : edgeAcc + Math.abs(e.deltaY);
+      if (edgeAcc < 30) return;
+      edgeAcc = 0;
+      let target: number | null = null;
+      if (dir > 0 && list[i + 1]) target = list[i + 1]!.offsetTop;
+      if (dir < 0 && list[i - 1]) {
+        const prev = list[i - 1]!;
+        // Going back into a long page lands on its last screen, like turning back a page.
+        target = Math.max(prev.offsetTop, prev.offsetTop + prev.offsetHeight - vh);
+      }
+      if (target === null) return;
+      busyUntil = now + 250;
+      turnTo = Math.min(target, document.documentElement.scrollHeight - vh);
+      turnStarted = now;
+      scrollTo({ top: target, behavior: "smooth" });
+    };
+    addEventListener("wheel", onWheel, { passive: false });
+    return () => removeEventListener("wheel", onWheel);
+  }, []);
+}
+
+/** One screen of the landing page: fills the viewport and snaps into place; longer ones scroll through in full. */
+function Page({ children, id, className = "" }: { children: ReactNode; id?: string; className?: string }) {
+  return (
+    <div className={`lg-page ${className}`} id={id}>
+      {children}
+    </div>
+  );
+}
 
 /* ----------------------------------------------------------------- motion */
 
@@ -169,6 +246,7 @@ export function LandingPage() {
   const root = useRef<HTMLDivElement>(null);
   const [demoOpen, setDemoOpen] = useState(false);
   useReveal(root);
+  usePaging();
   useEffect(() => {
     const html = document.documentElement;
     html.classList.add("landing-root");
@@ -187,18 +265,38 @@ export function LandingPage() {
       <Link to="/app" className="lg-top-notch" aria-label="JOTR: your script, right under your camera. Try it free">
         <NotchDemo className="hero fixed" lines={2} />
       </Link>
-      <Hero onWatch={() => setDemoOpen(true)} />
-      <Statement />
-      <CloserLook />
-      <Screens />
-      <Features />
-      <GetJotr />
-      <HowItWorks />
-      <UseCases />
-      {TESTIMONIALS.length > 0 && <Testimonials />}
-      <Faq />
-      <FinalCta onWatch={() => setDemoOpen(true)} />
-      <Footer />
+      <Page id="top">
+        <Hero onWatch={() => setDemoOpen(true)} />
+      </Page>
+      <Page>
+        <Statement />
+      </Page>
+      <Page>
+        <CloserLook />
+      </Page>
+      <Page>
+        <Screens />
+      </Page>
+      <Page>
+        <Features />
+      </Page>
+      <Page>
+        <Stories />
+      </Page>
+      <Page>
+        <HowItWorks />
+        <UseCases />
+      </Page>
+      <Page>
+        <GetJotr />
+      </Page>
+      <Page className="paper">
+        <Faq />
+      </Page>
+      <Page className="end">
+        <FinalCta onWatch={() => setDemoOpen(true)} />
+        <Footer />
+      </Page>
       <DemoPopup open={demoOpen} setOpen={setDemoOpen} />
       <Dock groups={DOCK} />
     </div>
@@ -519,7 +617,7 @@ function Screens() {
     if (el && card) el.scrollTo({ left: Math.max(0, Math.min(count - 1, n)) * (card.offsetWidth + 20), behavior: "smooth" });
   };
   return (
-    <section className="lg-section">
+    <section className="lg-section" id="action">
       <div className="lg-head" data-reveal>
         <span className="lg-eyebrow">See it in action</span>
         <h2>Made for talking to a camera</h2>
@@ -766,6 +864,46 @@ function UseCases() {
         </div>
       </div>
     </section>
+  );
+}
+
+function Stories() {
+  return (
+    <section className="lg-section lg-stories" id="stories">
+      <div className="lg-head" data-reveal>
+        <span className="lg-eyebrow">Wherever you talk</span>
+        <h2>One teleprompter, every room</h2>
+        <p>Turn the pages to see where JOTR fits. Open the print settings to play with the dither.</p>
+      </div>
+      <div data-reveal>
+        <SceneBook
+          scenes={SCENES}
+          closing={{
+            ...CLOSING_SCENE,
+            extra: (
+              <div className="sb-cta">
+                <FocusLinks links={[...SOCIALS.map((x) => ({ ...x, label: `@${x.label}` }))]} tone="paper" />
+              </div>
+            ),
+          }}
+        />
+      </div>
+      {TESTIMONIALS.length > 0 && <Testimonials />}
+    </section>
+  );
+}
+
+/** Links that pull focus: hover (or tab to) one and the others blur back. */
+function FocusLinks({ links, tone = "dark" }: { links: Array<{ label: string; href: string; icon?: ReactNode }>; tone?: "dark" | "paper" }) {
+  return (
+    <span className={`focus-links ${tone}`}>
+      {links.map((l) => (
+        <a key={l.href} href={l.href} target="_blank" rel="noopener noreferrer" className="focus-link">
+          {l.icon}
+          {l.label}
+        </a>
+      ))}
+    </span>
   );
 }
 

@@ -205,6 +205,43 @@ test("navigation lives in the bottom dock, and the JOTR notch stays pinned at th
   await expect(page).toHaveURL(/\/(app|welcome)$/); // first visit goes through the welcome tour
 });
 
+test("the scene book turns its pages", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("navigation", { name: "Site" }).getByRole("link", { name: "Stories" }).click();
+  // Scene book: dithered prints load, pages turn both ways, and the last page invites your story.
+  await page.locator("#stories").scrollIntoViewIfNeeded();
+  await expect(page.locator(".sb-art img").first()).toBeVisible({ timeout: 15_000 });
+  const next = page.getByRole("button", { name: "Next scene" });
+  await next.click();
+  await expect(page.locator(".sb-caption")).toHaveText(/Scene 02/);
+  await page.getByRole("button", { name: "Previous scene" }).click();
+  await expect(page.locator(".sb-caption")).toHaveText(/Scene 01/);
+  for (let k = 0; k < 5; k++) {
+    await next.click();
+    await expect(page.locator(".sb-caption")).toHaveText(new RegExp(`Scene 0${k + 2}`));
+  }
+  await expect(next).toBeDisabled();
+  await expect(page.locator("#stories")).toContainText("Your story, next");
+
+  // Print settings open.
+  await page.getByRole("button", { name: "Print settings" }).click();
+  await expect(page.getByRole("dialog", { name: "Print settings" })).toContainText("Dither");
+
+});
+
+test("a mouse wheel flick turns exactly one full-screen page", async ({ page }) => {
+  await page.goto("/");
+  await page.waitForLoadState("networkidle");
+  const pages = await page.evaluate(() => [...document.querySelectorAll<HTMLElement>(".lg-page")].map((e) => e.offsetTop));
+  await page.mouse.move(600, 300);
+  await page.mouse.wheel(0, 100);
+  await expect.poll(() => page.evaluate(() => Math.round(scrollY)), { timeout: 5000 }).toBe(pages[1]);
+  await page.mouse.wheel(0, 100);
+  await expect.poll(() => page.evaluate(() => Math.round(scrollY)), { timeout: 5000 }).toBe(pages[2]);
+  await page.mouse.wheel(0, -100);
+  await expect.poll(() => page.evaluate(() => Math.round(scrollY)), { timeout: 5000 }).toBe(pages[1]);
+});
+
 test("the boot screen shows the wave loader before any script runs", async ({ browser }) => {
   const ctx = await browser.newContext({ javaScriptEnabled: false });
   const page = await ctx.newPage();

@@ -52,13 +52,21 @@
       "extendInfo": {
         "NSMicrophoneUsageDescription": "JOTR listens to your voice so the script scrolls with you and the glow follows your pitch. Audio stays on your Mac unless you turn on Follow words.",
         "LSUIElement": false
-      }
+      },
+      "artifactName": "JOTR-mac-${arch}.${ext}",
+      "identity": "-"
     },
     "win": {
       "icon": "assets/icon.png",
       "target": [
-        "nsis"
-      ]
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "JOTR-windows-${arch}.${ext}"
     },
     "nsis": {
       "oneClick": true
@@ -66,7 +74,8 @@
     "linux": {
       "target": [
         "AppImage"
-      ]
+      ],
+      "artifactName": "JOTR-linux-${arch}.${ext}"
     },
     "publish": null
   },

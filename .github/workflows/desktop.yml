@@ -1,0 +1,59 @@
+name: Desktop app
+
+# Builds JOTR Desktop for Mac and Windows and attaches them to a GitHub Release.
+# Release: bump "version" in apps/desktop/package.json, then push a tag:  git tag desktop-v0.1.0 && git push origin desktop-v0.1.0
+# The website's download buttons point at the latest release's files.
+on:
+  push:
+    tags: ["desktop-v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            target: --mac
+          - os: windows-latest
+            target: --win
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { package_json_file: package.json }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm, cache-dependency-path: pnpm-lock.yaml }
+      - run: pnpm install --frozen-lockfile --filter "@promptsense/desktop..."
+      - run: pnpm --filter @promptsense/desktop test
+      - name: Build the installer
+        working-directory: apps/desktop
+        run: node build.mjs --minify && pnpm exec electron-builder ${{ matrix.target }} --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.os }}
+          path: |
+            apps/desktop/release/*.dmg
+            apps/desktop/release/*.exe
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/desktop-v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { path: files, merge-multiple: true }
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: JOTR Desktop ${{ github.ref_name }}
+          files: files/*
+          make_latest: true
+          body: |
+            **Mac:** JOTR-mac-arm64.dmg (Apple Silicon) or JOTR-mac-x64.dmg (Intel). First launch: right-click JOTR → Open.
+            **Windows:** JOTR-windows-x64.exe

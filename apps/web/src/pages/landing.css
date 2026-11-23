@@ -2418,3 +2418,32 @@ html.landing-root body {
   color: transparent;
   font-weight: 800;
 }
+
+/* Desktop app downloads, under the hero buttons */
+.lg-downloads {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+.lg-downloads-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+.lg-downloads .lg-btn {
+  height: 44px;
+  padding: 0 18px;
+  font-size: 0.95rem;
+}
+.lg-downloads-note {
+  max-width: 520px;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.86rem;
+  text-align: center;
+}
+.lg-downloads-note a {
+  color: #ffb08a;
+  text-decoration: underline;
+}

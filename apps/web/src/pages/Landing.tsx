@@ -4,6 +4,7 @@ import { Icon, ProIcon, Silhouette, type Hue, type ProIconName } from "./landing
 import type { Laptop3D, ScreenMode } from "./laptop3d";
 import type { StarField } from "./starfield";
 import { AddToChrome } from "../components/AddToChrome";
+import { DownloadDesktop } from "../components/DownloadDesktop";
 import { AnimatedNumber } from "../components/Animated";
 import { useUserCount } from "../lib/counter";
 import "./landing.css";
@@ -306,6 +307,9 @@ function Hero({ onWatch }: { onWatch: () => void }) {
           <button className="lg-btn lg-btn-glass lg" onClick={onWatch}>
             <span className="lg-play">{Icon.play}</span> Watch the demo
           </button>
+        </div>
+        <div data-reveal style={{ ["--d" as string]: "280ms" }}>
+          <DownloadDesktop />
         </div>
         <ul className="lg-ticks" data-reveal style={{ ["--d" as string]: "320ms" }}>
           <li>{Icon.check} Nothing to install</li>

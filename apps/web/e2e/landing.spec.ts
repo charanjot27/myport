@@ -117,3 +117,17 @@ test("the user counter counts a new browser once and shows the total", async ({ 
   await expect(badge).toContainText(/(people use|person uses) JOTR/);
   await expect.poll(async () => Number((await badge.textContent())!.match(/([\d,]+)\s+(people|person)/)?.[1]?.replace(/,/g, "") ?? 0)).toBeGreaterThanOrEqual(first);
 });
+
+test("desktop download buttons point at the latest release, own system first", async ({ browser }) => {
+  const ctx = await browser.newContext({ userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0 Safari/537.36" });
+  const page = await ctx.newPage();
+  await page.addInitScript(() => Object.defineProperty(navigator, "platform", { get: () => "Win32" }));
+  await page.goto(test.info().project.use.baseURL + "/");
+  const win = page.getByTestId("download-windows");
+  await expect(win).toHaveAttribute("href", /releases\/latest\/download\/JOTR-windows-x64\.exe$/);
+  await expect(page.getByTestId("download-mac")).toHaveAttribute("href", /JOTR-mac-(arm64|x64)\.dmg$/);
+  // Windows visitors see the Windows button first.
+  const first = await page.locator(".lg-downloads-row a").first().getAttribute("data-testid");
+  expect(first).toBe("download-windows");
+  await ctx.close();
+});

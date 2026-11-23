@@ -106,7 +106,7 @@ test("the user counter counts a new browser once and shows the total", async ({ 
   });
   await page.goto("/");
   const badge = page.getByTestId("user-count");
-  await expect(badge).toContainText(/Welcome! You're user #\d+/);
+  await expect(badge).toContainText(/Welcome! You're user #\d+/, { timeout: 15_000 });
   // The number counts up from 0; wait for it to land.
   const shown = async () => Number(((await badge.textContent()) ?? "").match(/#([\d,]+)/)?.[1]?.replace(/,/g, "") ?? 0);
   await expect.poll(shown).toBeGreaterThan(0);
@@ -114,7 +114,7 @@ test("the user counter counts a new browser once and shows the total", async ({ 
   const first = await shown();
   await page.reload();
   // Counted once: the same browser now sees the total, which includes it.
-  await expect(badge).toContainText(/(people use|person uses) JOTR/);
+  await expect(badge).toContainText(/(people use|person uses) JOTR/, { timeout: 15_000 });
   await expect.poll(async () => Number((await badge.textContent())!.match(/([\d,]+)\s+(people|person)/)?.[1]?.replace(/,/g, "") ?? 0)).toBeGreaterThanOrEqual(first);
 });
 

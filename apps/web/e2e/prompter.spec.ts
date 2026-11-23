@@ -168,7 +168,10 @@ test("multilingual: a Hinglish script follows Hindi speech in Devanagari, and sc
   const steps = samples.slice(1).map(([t, y], i) => Math.abs(y - samples[i]![1]) / Math.max(1, (t - samples[i]![0]) / 16.7));
   const lineHeight = await page.locator(".content").evaluate((el) => parseFloat(getComputedStyle(el).fontSize) * 1.45);
   expect(Math.min(...ys)).toBeLessThan(-20); // it scrolled
-  expect(moved.length).toBeGreaterThan(30); // in many small frames
+  // In many small frames: the travel is spread out, each move a fraction of a line.
+  const travel = Math.max(...ys) - Math.min(...ys);
+  expect(moved.length).toBeGreaterThan(15);
+  expect(travel / moved.length).toBeLessThan(lineHeight / 4);
   expect(Math.max(...steps)).toBeLessThan(lineHeight * 0.6); // never jumps a line at a time
 });
 

@@ -17,7 +17,17 @@ function counterBase(): string {
   return ((import.meta.env.VITE_COUNTER_URL as string | undefined) || getSettings().apiUrl || "").replace(/\/$/, "");
 }
 
-async function call<T>(path: string, body?: unknown): Promise<T> {
+async function call<T>(path: string, body?: unknown, tries = 2): Promise<T> {
+  try {
+    return await once<T>(path, body);
+  } catch (e) {
+    if (tries <= 1) throw e;
+    await new Promise((r) => setTimeout(r, 600));
+    return call<T>(path, body, tries - 1);
+  }
+}
+
+async function once<T>(path: string, body?: unknown): Promise<T> {
   const res = await fetch(`${counterBase()}${path}`, {
     method: body === undefined ? "GET" : "POST",
     headers: body === undefined ? undefined : { "content-type": "application/json" },

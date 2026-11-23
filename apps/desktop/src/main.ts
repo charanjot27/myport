@@ -258,7 +258,7 @@ const MODES: Array<[Mode, string]> = [
 // Option on Mac (⌘⇧Space is Siri), Ctrl+Alt on Windows (Alt+Space opens the window menu).
 const key = (k: string) => (mac ? `Alt+${k}` : `Control+Alt+${k}`);
 const ALWAYS: Array<[string, Command]> = [
-  ["Space", "toggle-pause"],
+  ["Shift+S", "toggle-pause"],
   ["H", "toggle"],
   ["R", "restart"],
 ];
@@ -292,7 +292,7 @@ function refreshTray(): void {
   if (!tray) return;
   const template: MenuItemConstructorOptions[] = [
     { label: notch?.isVisible() ? "Hide Teleprompter" : "Show Teleprompter", accelerator: key("H"), click: () => command("toggle") },
-    { label: state.running && !state.paused ? "Pause" : "Start", accelerator: key("Space"), click: () => command("toggle-pause") },
+    { label: state.running && !state.paused ? "Pause" : "Start", accelerator: key("Shift+S"), click: () => command("toggle-pause") },
     { label: "Start Over", accelerator: key("R"), click: () => command("restart") },
     { label: "Snap Under the Notch", click: () => command("snap") },
     { type: "separator" },

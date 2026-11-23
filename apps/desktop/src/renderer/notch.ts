@@ -273,7 +273,7 @@ function renderPill(): void {
       pillTitle.textContent = script.sections[i]?.title || "Intro";
     } else {
       pillCount.textContent = running ? `${Math.round((pos / Math.max(1, spans.length)) * 100)}%` : "";
-      pillTitle.textContent = running ? (paused ? "Paused" : settings.mode === "steady" ? `Steady · ${settings.wpm} wpm` : MODE_LABEL[settings.mode]) : `Press ▶ or ${mod}Space to start`;
+      pillTitle.textContent = running ? (paused ? "Paused" : settings.mode === "steady" ? `Steady · ${settings.wpm} wpm` : MODE_LABEL[settings.mode]) : `Press ▶ or ${mod}${window.jotr.platform === "darwin" ? "⇧S" : "Shift+S"} to start`;
     }
   }
   prevBtn.disabled = pos <= 0;

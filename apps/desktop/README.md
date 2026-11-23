@@ -14,7 +14,7 @@ A teleprompter that grows out of your Mac's notch, right under the camera.
 
 | Mac | Windows | |
 |---|---|---|
-| ⌥Space | Ctrl+Alt+Space | start / pause |
+| ⌥⇧S | Ctrl+Alt+Shift+S | start / pause |
 | ⌥H | Ctrl+Alt+H | show / hide |
 | ⌥R | Ctrl+Alt+R | start over |
 | ⌥↑ / ⌥↓ | Ctrl+Alt+↑ / ↓ | previous / next line (only while reading) |

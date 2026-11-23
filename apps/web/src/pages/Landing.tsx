@@ -4,7 +4,7 @@ import { Icon, ProIcon, Silhouette, type Hue, type ProIconName } from "./landing
 import type { Laptop3D, ScreenMode } from "./laptop3d";
 import type { StarField } from "./starfield";
 import { AddToChrome } from "../components/AddToChrome";
-import { DownloadDesktop } from "../components/DownloadDesktop";
+import { DownloadDesktop, GetJotr } from "../components/DownloadDesktop";
 import { AnimatedNumber } from "../components/Animated";
 import { useUserCount } from "../lib/counter";
 import "./landing.css";
@@ -154,6 +154,7 @@ export function LandingPage() {
       <CloserLook />
       <Screens />
       <Features />
+      <GetJotr />
       <HowItWorks />
       <UseCases />
       {TESTIMONIALS.length > 0 && <Testimonials />}
@@ -190,6 +191,9 @@ function Nav() {
       </a>
       <a href="#how" onClick={() => setMenu(false)}>
         How it works
+      </a>
+      <a href="#get" onClick={() => setMenu(false)}>
+        Download
       </a>
       <a href="#faq" onClick={() => setMenu(false)}>
         FAQ

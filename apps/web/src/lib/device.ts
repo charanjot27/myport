@@ -97,12 +97,30 @@ export function cameraXInWindow(p: CameraPlacement): number {
   return p.x * screen.width - (window.screenX - ((screen as Screen & { availLeft?: number }).availLeft ?? 0)) - borders;
 }
 
+/** Phones and small tablets: the camera sits in the screen's top cut-out (notch, Dynamic Island, punch-hole). */
+export function isPhone(): boolean {
+  return typeof window !== "undefined" && (window.matchMedia?.("(pointer: coarse)").matches ?? false) && Math.min(window.innerWidth, window.innerHeight) < 700;
+}
+
+/** Height of the top safe area (status bar and camera cut-out), from CSS env(); 0 where there is none. */
+export function safeAreaTop(): number {
+  if (typeof document === "undefined") return 0;
+  const probe = document.createElement("div");
+  probe.style.cssText = "position:fixed;top:0;height:env(safe-area-inset-top,0px);visibility:hidden;pointer-events:none";
+  document.body.appendChild(probe);
+  const h = probe.getBoundingClientRect().height;
+  probe.remove();
+  return h;
+}
+
 export interface FocusFrame {
   left: number;
   top: number;
   width: number;
   height: number;
   lineHeight: number;
+  /** On phones: the frame hangs from the camera cut-out like a notch. */
+  phone?: boolean;
 }
 
 /**
@@ -110,7 +128,7 @@ export interface FocusFrame {
  * under (or over) the webcam, as close to the lens as the screen allows.
  */
 export function focusFrame(
-  opts: { placement: CameraPlacement; fontSize: number; lines: number; columnWidth: number },
+  opts: { placement: CameraPlacement; fontSize: number; lines: number; columnWidth: number; phone?: boolean; safeTop?: number },
   vw = window.innerWidth,
   vh = window.innerHeight,
   camX = cameraXInWindow(opts.placement),
@@ -119,6 +137,11 @@ export function focusFrame(
   const width = Math.round(Math.max(Math.min(320, vw - 24), Math.min(vw - 24, opts.columnWidth * vw)));
   const height = Math.round(lineHeight * opts.lines + lineHeight * 0.35);
   const left = Math.round(Math.max(12, Math.min(vw - width - 12, camX - width / 2)));
+  if (opts.phone) {
+    // Full width under the cut-out: the camera is top centre on phones.
+    const pw = vw - 24;
+    return { left: 12, top: Math.round((opts.safeTop ?? 0) + 8), width: pw, height, lineHeight, phone: true };
+  }
   const top = opts.placement.edge === "top" ? 6 : Math.max(6, vh - height - 6);
   return { left, top, width, height, lineHeight };
 }

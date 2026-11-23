@@ -1,9 +1,9 @@
 import { detectScriptLanguage, detectStumbles, parseScript, ReadingGate, readingFeatures, readingProbability, FusionTimeline, type ParsedScript } from "@promptsense/core";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { AdaptiveBrightness, AmbientMeter } from "../lib/adaptive";
-import { focusFrame, textColor, type FocusFrame } from "../lib/device";
+import { focusFrame, isPhone, safeAreaTop, textColor, type FocusFrame } from "../lib/device";
 import { EyeGlareMeter } from "../lib/reflection";
 import { openMedia, stopMedia } from "../lib/media";
 import { closeFloatingWindow, floatingSupported, floatingUnavailableReason, openFloatingWindow } from "../lib/pip";
@@ -93,8 +93,11 @@ export function PrompterPage() {
 
   // Camera layout: a few lines right under the webcam. Full layout: the classic full-screen prompter.
   const cameraLayout = settings.layout === "camera";
+  // On phones the text hangs from the camera cut-out (Dynamic Island / punch-hole), at a phone-sized font.
+  const phone = isPhone();
+  const safeTop = useMemo(() => (phone ? safeAreaTop() : 0), [phone, win.w, win.h]);
   const frame: FocusFrame | null = cameraLayout
-    ? focusFrame({ placement: settings.cameraPlacement, fontSize: settings.fontSize, lines: settings.focusLines, columnWidth: settings.columnWidth }, win.w, win.h)
+    ? focusFrame({ placement: settings.cameraPlacement, fontSize: phone ? Math.min(settings.fontSize, 26) : settings.fontSize, lines: settings.focusLines, columnWidth: settings.columnWidth, phone, safeTop }, win.w, win.h)
     : null;
   const language = resolveLanguage(settings.language, script?.source ?? "");
   // Devanagari and Gurmukhi vowel signs sit above and below the line, so they need more room.
@@ -214,7 +217,7 @@ export function PrompterPage() {
   const float = async () => {
     try {
       const s = getSettings();
-      const f = focusFrame({ placement: s.cameraPlacement, fontSize: s.fontSize, lines: s.focusLines, columnWidth: s.columnWidth });
+      const f = focusFrame({ placement: s.cameraPlacement, fontSize: isPhone() ? Math.min(s.fontSize, 26) : s.fontSize, lines: s.focusLines, columnWidth: s.columnWidth, phone: isPhone(), safeTop: safeAreaTop() });
       if (document.fullscreenElement) await document.exitFullscreen().catch(() => undefined);
       attachFloating(await openFloatingWindow({ width: f.width, height: f.height + 34 }));
     } catch (e) {
@@ -230,7 +233,7 @@ export function PrompterPage() {
     let floatWin: Window | null = null;
     if (floating) {
       try {
-        const f = focusFrame({ placement: s.cameraPlacement, fontSize: s.fontSize, lines: s.focusLines, columnWidth: s.columnWidth });
+        const f = focusFrame({ placement: s.cameraPlacement, fontSize: isPhone() ? Math.min(s.fontSize, 26) : s.fontSize, lines: s.focusLines, columnWidth: s.columnWidth, phone: isPhone(), safeTop: safeAreaTop() });
         floatWin = await openFloatingWindow({ width: f.width, height: f.height + 34 });
       } catch (e) {
         setError((e as Error).message);
@@ -507,13 +510,15 @@ export function PrompterPage() {
       : undefined;
   const compact = !!(frame || pip);
   const textWindow = (
+    <>
+    {frame?.phone && !pip && <div className="phone-notch" aria-hidden style={{ height: frame.top + frame.height + 14 }} />}
     <div className="viewport" ref={viewportRef} data-testid="text-window" style={textWindowStyle}>
       <div
         className="content"
         ref={contentRef}
         lang={htmlLang(language)}
         style={{
-          fontSize: settings.fontSize,
+          fontSize: frame?.phone ? Math.min(settings.fontSize, 26) : settings.fontSize,
           lineHeight: indicText ? 1.7 : undefined,
           maxWidth: compact ? "none" : `${settings.lineWidth}ch`,
           paddingTop: readingOffset,
@@ -525,6 +530,7 @@ export function PrompterPage() {
       </div>
       {!compact && <div className="reading-line" style={{ top: readingOffset + settings.fontSize * 0.72 }} />}
     </div>
+    </>
   );
 
   const floatingWindow =
@@ -568,7 +574,7 @@ export function PrompterPage() {
   return (
     <div
       ref={rootRef}
-      className={`prompter${settings.mirror ? " mirrored" : ""}${cameraLayout ? " camera-layout" : ""}${backdrop ? " with-backdrop" : ""}`}
+      className={`prompter${settings.mirror ? " mirrored" : ""}${cameraLayout ? " camera-layout" : ""}${backdrop ? " with-backdrop" : ""}${frame?.phone ? " phone" : ""}`}
       onMouseMove={poke}
       data-testid="prompter"
       data-predictor={hud?.predictor}

@@ -1444,3 +1444,29 @@ input:focus {
     grid-template-columns: 1fr;
   }
 }
+
+/* Phones: the prompter hangs from the camera cut-out (Dynamic Island / punch-hole) like a notch. */
+.prompter.phone .phone-notch {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: 6px;
+  right: 6px;
+  background: #000;
+  border-radius: 0 0 30px 30px;
+  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.08), 0 18px 40px -16px rgba(0, 0, 0, 0.8);
+  animation: phone-notch-in 650ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-origin: 50% 0;
+}
+@keyframes phone-notch-in {
+  from {
+    transform: scale(0.45, 0.2);
+    opacity: 0;
+  }
+}
+.prompter.phone .viewport {
+  z-index: 2;
+}
+.prompter.phone .toolbar {
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+}

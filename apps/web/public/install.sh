@@ -53,4 +53,4 @@ $SUDO xattr -dr com.apple.quarantine "$APP_DIR/JOTR.app" 2>/dev/null || true
 say "Opening JOTR…"
 open "$APP_DIR/JOTR.app"
 printf '\n\033[1;32m✓\033[0m JOTR is installed. Look for the notch under your camera, and the JOTR icon in the menu bar.\n'
-printf '  Press ⌥ Space to start reading.\n'
+printf '  Press ⌥⇧S (Option-Shift-S) to start and stop reading.\n'

@@ -127,7 +127,7 @@ test("desktop download buttons point at the latest release, own system first", a
   await expect(win).toHaveAttribute("href", /releases\/latest\/download\/JOTR-windows-x64\.exe$/);
   await expect(page.getByTestId("download-mac")).toHaveAttribute("href", /JOTR-mac-(arm64|x64)\.dmg$/);
   // Windows visitors see the Windows button first.
-  const first = await page.locator(".lg-downloads-row a").first().getAttribute("data-testid");
+  const first = await page.locator(".lg-downloads-row > *").first().getAttribute("data-testid");
   expect(first).toBe("download-windows");
   await ctx.close();
 });
@@ -140,14 +140,48 @@ test("Mac visitors get a one-line install command they can copy", async ({ brows
     Object.defineProperty(navigator, "userAgentData", { get: () => ({ platform: "macOS", getHighEntropyValues: async () => ({ architecture: "arm" }) }) });
   });
   await page.goto("/");
-  await expect(page.locator(".lg-downloads-row a").first()).toHaveAttribute("href", /JOTR-mac-arm64\.dmg$/); // Mac first, Apple Silicon file
+  await expect(page.locator(".lg-downloads-row > *").first()).toHaveAttribute("href", /JOTR-mac-arm64\.dmg$/); // Mac first, Apple Silicon file
+  await page.locator("#get").scrollIntoViewIfNeeded();
   const cmd = page.getByTestId("mac-install-command");
   await expect(cmd).toHaveText(/^curl -fsSL https?:\/\/.+\/install\.sh \| sh$/);
-  await page.getByRole("button", { name: "Copy", exact: true }).click();
+  await expect(page.getByText(/Why macOS may say “JOTR is damaged”/)).toBeVisible(); // the reason comes first
+  await expect(page.getByTestId("mac-unblock-command")).toHaveText("xattr -dr com.apple.quarantine /Applications/JOTR.app");
+  await cmd.locator("xpath=..").getByRole("button", { name: "Copy" }).click();
   await expect(page.getByRole("button", { name: "Copied ✓" })).toBeVisible();
   expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(/install\.sh \| sh$/);
   // The installer itself is served as a file, not the app's HTML.
   const sh = await page.request.get("/install.sh");
   expect(await sh.text()).toMatch(/^#!\/bin\/sh/);
+  await ctx.close();
+});
+
+test("phones get the phone tab first, and the prompter hangs from the camera like a notch", async ({ browser }) => {
+  const ctx = await browser.newContext({
+    baseURL: test.info().project.use.baseURL,
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+    userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
+  });
+  const page = await ctx.newPage();
+  await page.addInitScript(() => {
+    (window as unknown as { __promptsenseFakeSpeech: boolean }).__promptsenseFakeSpeech = true;
+    localStorage.setItem("promptsense.settings.v1", JSON.stringify({ onboarded: true }));
+  });
+  await page.goto("/");
+  await expect(page.locator(".lg-downloads-row > *").first()).toHaveAttribute("data-testid", "get-phone");
+  await page.locator("#get").scrollIntoViewIfNeeded();
+  await expect(page.getByRole("tab", { name: /iPhone & Android/ })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByText("Add it to your Home Screen")).toBeVisible();
+  // No horizontal scrolling on a phone.
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+
+  await page.goto("/app");
+  await page.getByRole("button", { name: "Try the sample script" }).click();
+  await page.getByRole("button", { name: "Start prompting" }).click();
+  await expect(page.locator(".prompter.phone .phone-notch")).toBeVisible();
+  const box = (await page.getByTestId("text-window").boundingBox())!;
+  expect(box.y).toBeLessThan(80); // right under the camera
+  expect(box.width).toBeGreaterThan(330);
   await ctx.close();
 });

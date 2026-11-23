@@ -46,6 +46,8 @@ const WindowsLogo = () => (
 export function DownloadDesktop({ className = "lg-btn lg-btn-glass" }: { className?: string }) {
   const [os, setOs] = useState<Os>("other");
   const [arch, setArch] = useState<"arm" | "intel" | "unknown">("unknown");
+  const [help, setHelp] = useState(false);
+  const [copied, setCopied] = useState(false);
   useEffect(() => {
     const o = detectOs();
     setOs(o);
@@ -72,6 +74,14 @@ export function DownloadDesktop({ className = "lg-btn lg-btn-glass" }: { classNa
       <div className="lg-downloads-row">{os === "windows" ? [win, mac] : [mac, win]}</div>
       <span className="lg-downloads-note">
         Desktop app: the prompter floats over every app and stays out of screen recordings.
+        {os !== "windows" && (
+          <>
+            {" "}
+            <button className="lg-mac-help-btn" onClick={() => setHelp((h) => !h)} aria-expanded={help}>
+              Mac says “damaged”?
+            </button>
+          </>
+        )}
         {os === "mac" && arch !== "intel" && (
           <>
             {" "}
@@ -79,6 +89,17 @@ export function DownloadDesktop({ className = "lg-btn lg-btn-glass" }: { classNa
           </>
         )}
       </span>
+      {help && (
+        <div className="lg-mac-help" role="note">
+          JOTR isn't signed by Apple yet, so macOS flags any downloaded copy. Drag JOTR into Applications, then run this once in Terminal:
+          <code>xattr -dr com.apple.quarantine /Applications/JOTR.app</code>
+          <button
+            onClick={() => void navigator.clipboard?.writeText("xattr -dr com.apple.quarantine /Applications/JOTR.app").then(() => setCopied(true))}
+          >
+            {copied ? "Copied" : "Copy command"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

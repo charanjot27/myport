@@ -55,5 +55,5 @@ jobs:
           files: files/*
           make_latest: true
           body: |
-            **Mac:** JOTR-mac-arm64.dmg (Apple Silicon) or JOTR-mac-x64.dmg (Intel). First launch: right-click JOTR → Open.
+            **Mac:** JOTR-mac-arm64.dmg (Apple Silicon) or JOTR-mac-x64.dmg (Intel). If macOS says JOTR is damaged (it isn't signed yet), drag it to Applications and run once in Terminal: `xattr -dr com.apple.quarantine /Applications/JOTR.app`
             **Windows:** JOTR-windows-x64.exe

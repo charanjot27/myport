@@ -19,5 +19,10 @@
   },
   "dependencies": {
     "@netlify/blobs": "11.1.6"
+  },
+  "pnpm": {
+    "overrides": {
+      "@electron/node-gyp": "10.2.0-electron.2"
+    }
   }
 }

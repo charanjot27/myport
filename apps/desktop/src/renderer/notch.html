@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src wss://api.deepgram.com; media-src 'self' mediastream: blob:; img-src 'self' data:" />
+    <title>JOTR</title>
+    <link rel="stylesheet" href="notch.css" />
+  </head>
+  <body>
+    <div id="notch" class="notch" role="region" aria-label="JOTR teleprompter">
+      <div class="body">
+        <span class="ear left" aria-hidden="true"></span>
+        <span class="ear right" aria-hidden="true"></span>
+        <div class="glow" aria-hidden="true"></div>
+        <div id="viewport" class="viewport" title="Scroll to move through the script · click a word to jump there">
+          <span id="caret" class="caret" aria-hidden="true"></span>
+          <div id="text" class="text"></div>
+        </div>
+        <div class="controls">
+          <button id="play" class="ctl play" data-state="play" aria-label="Start" title="Start / pause">
+            <svg class="ring" viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="16" class="track" /><circle cx="18" cy="18" r="16" class="bar" id="ring" /></svg>
+            <svg class="ico i-play" viewBox="0 0 24 24"><path d="M9 6.6v10.8a.9.9 0 0 0 1.37.77l8.4-5.4a.9.9 0 0 0 0-1.54l-8.4-5.4A.9.9 0 0 0 9 6.6z" /></svg>
+            <svg class="ico i-pause" viewBox="0 0 24 24"><rect x="7.5" y="6.5" width="3.2" height="11" rx="1" /><rect x="13.3" y="6.5" width="3.2" height="11" rx="1" /></svg>
+          </button>
+          <button id="restart" class="ctl" aria-label="Start over" title="Start over">
+            <svg class="ico line" viewBox="0 0 24 24"><path d="M5.5 12a6.5 6.5 0 1 0 2-4.7M5.5 4.8v3.5H9" /></svg>
+          </button>
+          <button id="editor" class="ctl" aria-label="Open the script editor" title="Script & settings">
+            <svg class="ico line" viewBox="0 0 24 24"><rect x="4.5" y="5" width="15" height="14" rx="3" /><path d="M8 9.5h8M8 13h5" /></svg>
+          </button>
+          <button id="close" class="ctl" aria-label="Hide teleprompter" title="Hide">
+            <svg class="ico line" viewBox="0 0 24 24"><path d="M8 8l8 8M16 8l-8 8" /></svg>
+          </button>
+        </div>
+      </div>
+      <div id="pill" class="pill">
+        <button id="prev" class="pill-arrow" aria-label="Previous section"><svg viewBox="0 0 24 24"><path d="M14.5 6.5 9 12l5.5 5.5" /></svg></button>
+        <span class="pill-label"><span id="live" class="live" aria-hidden="true"></span><b id="pill-count"></b><span id="pill-title"></span></span>
+        <button id="next" class="pill-arrow" aria-label="Next section"><svg viewBox="0 0 24 24"><path d="M9.5 6.5 15 12l-5.5 5.5" /></svg></button>
+      </div>
+    </div>
+    <script src="notch.js"></script>
+  </body>
+</html>

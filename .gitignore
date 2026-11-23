@@ -24,3 +24,4 @@ __pycache__/
 .pytest_cache/
 apps/web/public/downloads/
 apps/extension/jotr-chrome-web-store.zip
+apps/desktop/release/

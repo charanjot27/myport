@@ -1,0 +1,74 @@
+{
+  "name": "@promptsense/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "JOTR Desktop: a notch teleprompter that floats over every app and stays out of screen recordings.",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "node build.mjs",
+    "start": "node build.mjs && electron .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "dist": "node build.mjs --minify && electron-builder",
+    "dist:mac": "node build.mjs --minify && electron-builder --mac",
+    "dist:win": "node build.mjs --minify && electron-builder --win"
+  },
+  "dependencies": {
+    "@promptsense/core": "workspace:*"
+  },
+  "devDependencies": {
+    "electron": "45.2.3",
+    "esbuild": "^0.25.0",
+    "typescript": "~5.9.3",
+    "vitest": "^3.2.7",
+    "@types/node": "^22.15.0",
+    "electron-builder": "26.0.12"
+  },
+  "author": "Charanjot Singh",
+  "build": {
+    "appId": "app.jotr.desktop",
+    "productName": "JOTR",
+    "copyright": "\u00a9 Charanjot Singh",
+    "directories": {
+      "output": "release",
+      "buildResources": "assets"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "icon": "assets/icon.png",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
+      "extendInfo": {
+        "NSMicrophoneUsageDescription": "JOTR listens to your voice so the script scrolls with you and the glow follows your pitch. Audio stays on your Mac unless you turn on Follow words.",
+        "LSUIElement": false
+      }
+    },
+    "win": {
+      "icon": "assets/icon.png",
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": true
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ]
+    },
+    "publish": null
+  },
+  "repository": "github:charanjot27/myport"
+}

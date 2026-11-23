@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:" />
+    <title>JOTR</title>
+    <link rel="stylesheet" href="control.css" />
+  </head>
+  <body>
+    <header class="titlebar">
+      <img src="../icons/logo.svg" width="26" height="26" alt="" />
+      <b>JOTR</b>
+      <span id="status" class="status off">Ready</span>
+    </header>
+
+    <main>
+      <section class="hero">
+        <button id="start" class="btn primary"><span id="start-label">Start</span><kbd class="mod">⇧Space</kbd></button>
+        <button id="show" class="btn"><span id="show-label">Show prompter</span><kbd class="mod">⇧J</kbd></button>
+      </section>
+
+      <section class="group">
+        <div class="group-head">
+          <h2>Script</h2>
+          <button id="import" class="link">Import .txt / .md</button>
+          <input id="file" type="file" accept=".txt,.md,text/plain,text/markdown" hidden />
+        </div>
+        <input id="title" class="title-input" placeholder="Title" aria-label="Script title" />
+        <textarea id="script" spellcheck="false" aria-label="Script" placeholder="Paste or write your script. English, हिन्दी, ਪੰਜਾਬੀ or Hinglish."></textarea>
+        <div class="meta"><span id="words">0 words</span><span id="duration"></span></div>
+      </section>
+
+      <section class="group">
+        <h2>Scrolling</h2>
+        <div class="segmented" role="radiogroup" aria-label="Scrolling">
+          <button role="radio" data-mode="pace">Voice pace</button>
+          <button role="radio" data-mode="words">Follow words</button>
+          <button role="radio" data-mode="steady">Steady</button>
+        </div>
+        <p id="mode-help" class="help"></p>
+        <div id="words-settings" class="rows" hidden>
+          <label class="row">
+            <span>Deepgram API key<small>Audio goes only to Deepgram. <a href="https://console.deepgram.com/signup" class="ext">Get a free key</a></small></span>
+            <input id="dg-key" type="password" autocomplete="off" placeholder="Paste key" />
+          </label>
+          <label class="row">
+            <span>Language</span>
+            <select id="language">
+              <option value="auto">Auto (from the script)</option>
+              <option value="en-US">English</option>
+              <option value="en-IN">English (India)</option>
+              <option value="hi-IN">हिन्दी · Hindi</option>
+              <option value="hinglish">Hinglish</option>
+              <option value="es-ES">Español</option>
+              <option value="fr-FR">Français</option>
+              <option value="de-DE">Deutsch</option>
+            </select>
+          </label>
+        </div>
+        <div class="rows">
+          <label class="row slider-row"><span>Speed<output id="wpm-out"></output></span><input id="wpm" type="range" min="60" max="260" step="5" /></label>
+        </div>
+      </section>
+
+      <section class="group">
+        <h2>Look</h2>
+        <div class="swatches" id="themes" role="radiogroup" aria-label="Theme"></div>
+        <div class="rows">
+          <label class="row slider-row"><span>Text size<output id="fs-out"></output></span><input id="fs" type="range" min="14" max="40" /></label>
+          <label class="row slider-row"><span>Lines<output id="lines-out"></output></span><input id="lines" type="range" min="1" max="6" /></label>
+          <label class="row slider-row"><span>Width<output id="width-out"></output></span><input id="width" type="range" min="360" max="1000" step="10" /></label>
+        </div>
+      </section>
+
+      <section class="group">
+        <h2>Privacy & behaviour</h2>
+        <div class="rows">
+          <label class="row"><span>Invisible to screen recording<small>Hidden from screenshots, recordings and screen sharing. You still see it.</small></span><input id="invisible" type="checkbox" role="switch" class="switch" /></label>
+          <label class="row"><span>Voice glow<small>Rises with your pitch, brightens with your loudness.</small></span><input id="glow" type="checkbox" role="switch" class="switch" /></label>
+          <label class="row"><span>Mirror text<small>For teleprompter glass.</small></span><input id="mirror" type="checkbox" role="switch" class="switch" /></label>
+          <div class="row"><span>Position<small id="pos-help">Under the notch. Drag the prompter anywhere; drop it near the top to snap back.</small></span><button id="snap" class="btn small">Snap to notch</button></div>
+        </div>
+      </section>
+
+      <section class="shortcuts">
+        <div><kbd class="mod">⇧J</kbd> show / hide</div>
+        <div><kbd class="mod">⇧Space</kbd> start / pause</div>
+        <div><kbd class="mod">⇧↑</kbd><kbd class="mod">⇧↓</kbd> line back / forward</div>
+        <div><kbd class="mod">⇧R</kbd> start over</div>
+      </section>
+      <footer><a href="https://jotr1.netlify.app" class="ext">jotr1.netlify.app</a></footer>
+    </main>
+    <script src="control.js"></script>
+  </body>
+</html>

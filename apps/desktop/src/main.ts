@@ -241,6 +241,8 @@ function update(patch: Partial<DesktopSettings>): DesktopSettings {
 
 function sendState(): void {
   state = { ...state, visible: !!notch?.isVisible() };
+  if (shortcutProblems.length && !state.detail) state.detail = `Another app is using ${shortcutProblems.join(", ")}; use the buttons or the menu-bar icon instead.`;
+  syncReadingKeys();
   if (control && !control.isDestroyed()) control.webContents.send("state", state);
   refreshTray();
 }
@@ -253,12 +255,43 @@ const MODES: Array<[Mode, string]> = [
   ["words", "Follow my words (Deepgram)"],
   ["steady", "Steady speed"],
 ];
-const key = (k: string) => `CommandOrControl+Shift+${k}`;
+// Option on Mac (⌘⇧Space is Siri), Ctrl+Alt on Windows (Alt+Space opens the window menu).
+const key = (k: string) => (mac ? `Alt+${k}` : `Control+Alt+${k}`);
+const ALWAYS: Array<[string, Command]> = [
+  ["Space", "toggle-pause"],
+  ["H", "toggle"],
+  ["R", "restart"],
+];
+// Arrow shortcuts only while reading, so ⌥ + arrows keep working in other apps the rest of the time.
+const WHILE_READING: Array<[string, Command]> = [
+  ["Up", "back"],
+  ["Down", "forward"],
+  ["Left", "prev-section"],
+  ["Right", "next-section"],
+];
+let readingKeys = false;
+const shortcutProblems: string[] = [];
+
+function registerShortcuts(): void {
+  for (const [k, c] of ALWAYS) {
+    if (!globalShortcut.register(key(k), () => command(c))) shortcutProblems.push(key(k));
+  }
+}
+
+function syncReadingKeys(): void {
+  const want = state.running && !state.paused;
+  if (want === readingKeys) return;
+  readingKeys = want;
+  for (const [k, c] of WHILE_READING) {
+    if (want) globalShortcut.register(key(k), () => command(c));
+    else globalShortcut.unregister(key(k));
+  }
+}
 
 function refreshTray(): void {
   if (!tray) return;
   const template: MenuItemConstructorOptions[] = [
-    { label: notch?.isVisible() ? "Hide Teleprompter" : "Show Teleprompter", accelerator: key("J"), click: () => command("toggle") },
+    { label: notch?.isVisible() ? "Hide Teleprompter" : "Show Teleprompter", accelerator: key("H"), click: () => command("toggle") },
     { label: state.running && !state.paused ? "Pause" : "Start", accelerator: key("Space"), click: () => command("toggle-pause") },
     { label: "Start Over", accelerator: key("R"), click: () => command("restart") },
     { label: "Snap Under the Notch", click: () => command("snap") },
@@ -321,13 +354,7 @@ if (!app.requestSingleInstanceLock()) {
       if (/^https:\/\//.test(url)) void shell.openExternal(url);
     });
 
-    globalShortcut.register(key("J"), () => command("toggle"));
-    globalShortcut.register(key("Space"), () => command("toggle-pause"));
-    globalShortcut.register(key("R"), () => command("restart"));
-    globalShortcut.register(key("Up"), () => command("back"));
-    globalShortcut.register(key("Down"), () => command("forward"));
-    globalShortcut.register(key("Left"), () => command("prev-section"));
-    globalShortcut.register(key("Right"), () => command("next-section"));
+    registerShortcuts();
 
     screen.on("display-metrics-changed", applyWindow);
     screen.on("display-removed", applyWindow);

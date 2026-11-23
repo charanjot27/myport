@@ -11,7 +11,7 @@ const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as 
 const mac = window.jotr.platform === "darwin";
 document.body.classList.toggle("mac", mac);
 // Show ⌘ on Mac and Ctrl elsewhere in every shortcut hint.
-document.querySelectorAll<HTMLElement>("kbd.mod").forEach((k) => (k.textContent = (mac ? "⌘" : "Ctrl+") + k.textContent));
+document.querySelectorAll<HTMLElement>("kbd.mod").forEach((k) => (k.textContent = (mac ? "⌥" : "Ctrl+Alt+") + k.textContent));
 
 const HELP: Record<Mode, string> = {
   chrome: "Follows your exact words, word by word, with Chrome's free speech recognition (the same as the JOTR website). Press Start and JOTR opens a small Chrome window that listens: keep it open, behind other windows is fine. Needs Google Chrome and internet.",

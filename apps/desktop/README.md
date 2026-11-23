@@ -10,15 +10,15 @@ A teleprompter that grows out of your Mac's notch, right under the camera.
 - **Voice glow.** The glow under the text rises with your pitch and brightens with your loudness.
 - **Manual control.** Scroll over the text to move line by line, click any word to continue from there, and use the sections pill (`# Heading` lines in the script) to jump around.
 
-## Shortcuts (⌘ on Mac, Ctrl on Windows)
+## Shortcuts (⌥ Option on Mac, Ctrl+Alt on Windows)
 
-| | |
-|---|---|
-| ⌘⇧J | show / hide |
-| ⌘⇧Space | start / pause |
-| ⌘⇧↑ / ⌘⇧↓ | previous / next line |
-| ⌘⇧← / ⌘⇧→ | previous / next section |
-| ⌘⇧R | start over |
+| Mac | Windows | |
+|---|---|---|
+| ⌥Space | Ctrl+Alt+Space | start / pause |
+| ⌥H | Ctrl+Alt+H | show / hide |
+| ⌥R | Ctrl+Alt+R | start over |
+| ⌥↑ / ⌥↓ | Ctrl+Alt+↑ / ↓ | previous / next line (only while reading) |
+| ⌥← / ⌥→ | Ctrl+Alt+← / → | previous / next section (only while reading) |
 
 ## Run it
 
@@ -41,4 +41,5 @@ security warnings, sign and notarize it with an Apple Developer account ($99/yea
 pnpm --filter @promptsense/desktop test                         # voice analysis + placement
 xvfb-run -a npx electron --no-sandbox -r ./test/app.e2e.cjs .            # launches the real app (Linux)
 xvfb-run -a npx electron --no-sandbox -r ./test/chrome-voice.e2e.cjs .   # Chrome voice relay, word by word
+xvfb-run -a npx electron --no-sandbox -r ./test/shortcuts.e2e.cjs .       # global shortcuts
 ```

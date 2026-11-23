@@ -20,7 +20,7 @@ const pillCount = $("pill-count");
 const pillTitle = $("pill-title");
 const prevBtn = $<HTMLButtonElement>("prev");
 const nextBtn = $<HTMLButtonElement>("next");
-const mod = window.jotr.platform === "darwin" ? "⌘⇧" : "Ctrl+Shift+";
+const mod = window.jotr.platform === "darwin" ? "⌥" : "Ctrl+Alt+";
 
 let settings: DesktopSettings;
 let script: ParsedScript;

@@ -7,6 +7,9 @@ import { AddToChrome } from "../components/AddToChrome";
 import { DownloadDesktop, GetJotr } from "../components/DownloadDesktop";
 import { AnimatedNumber } from "../components/Animated";
 import { useUserCount } from "../lib/counter";
+import { TimeMachine, type TimeCard } from "../components/TimeMachine";
+import { CLOSING_SCENE, SCENES, SceneBook } from "../components/SceneBook";
+import { WaveLoader } from "../components/WaveLoader";
 import "./landing.css";
 
 /**
@@ -45,7 +48,7 @@ const FAQ: Array<{ q: string; a: ReactNode }> = [
           <b>JOTR</b> = <span>Charanjot</span> + <span>Teleprompter</span>
         </span>
         Built by Charanjot Singh. Say hi, share feedback, or follow along as the iPhone and Android apps come together.
-        <span className="lg-socials">
+        <span className="lg-socials focus-group">
           {SOCIALS.map((s) => (
             <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" className="lg-social">
               {s.icon}
@@ -157,8 +160,9 @@ export function LandingPage() {
       <GetJotr />
       <HowItWorks />
       <UseCases />
-      {TESTIMONIALS.length > 0 && <Testimonials />}
+      <Stories />
       <Faq />
+      <Connect />
       <FinalCta onWatch={() => setDemoOpen(true)} />
       <Footer />
       <DemoPopup open={demoOpen} setOpen={setDemoOpen} />
@@ -484,7 +488,14 @@ function CloserLook() {
       </h2>
       <div className="lg-look-panel" data-reveal>
         <div className="lg-look-stage" onPointerMove={onPointer} onPointerLeave={() => engine.current?.setPointer(0, 0)}>
-          {fallback ? <CssLaptop /> : <canvas ref={canvas} className="lg-look-canvas" role="img" aria-label="A laptop running JOTR, with the script right under the camera" />}
+          {fallback ? (
+            <CssLaptop />
+          ) : (
+            <>
+              <canvas ref={canvas} className="lg-look-canvas" role="img" aria-label="A laptop running JOTR, with the script right under the camera" />
+              <WaveLoader className="lg-look-loader" label="Loading the 3D laptop" />
+            </>
+          )}
         </div>
         <div className="lg-look-pills" role="tablist" aria-label="Closer look">
           {LOOKS.map((l) => {
@@ -517,119 +528,124 @@ function CloserLook() {
 
 /* ---------------------------------------------------------- screenshots */
 
+const SHOTS: TimeCard[] = [
+  {
+    label: "Eye contact",
+    title: "Keep eye contact with your audience",
+    tone: "rose",
+    body: (
+      <div className="sh-phone">
+        <div className="sh-island" />
+        <NotchDemo className="in-phone" lines={4} speed={420} script="Your words sit right under the lens, so every viewer feels you're talking to them, and only them." />
+        <Silhouette className="sh-sil" />
+      </div>
+    ),
+  },
+  {
+    label: "Floats anywhere",
+    title: "Floats over Meet, Zoom & any tab",
+    tone: "amber",
+    body: (
+      <div className="sh-mac">
+        <div className="sh-mac-screen">
+          <div className="sh-grid">
+            {Array.from({ length: 6 }, (_, k) => (
+              <span key={k}>
+                <Silhouette />
+              </span>
+            ))}
+          </div>
+          <div className="sh-float">Thanks for joining. Today I'll walk you through the plan…</div>
+        </div>
+      </div>
+    ),
+  },
+  {
+    label: "Stumble alert",
+    title: "Warns you before you stumble",
+    tone: "violet",
+    body: (
+      <div className="sh-phone">
+        <div className="sh-island" />
+        <div className="sh-text">
+          <span className="said">It slows down and lights up </span>
+          <span className="sh-hard">psycholinguistics</span>
+          <span> a second before you reach it.</span>
+        </div>
+        <div className="sh-risk">
+          <span />
+        </div>
+      </div>
+    ),
+  },
+  {
+    label: "No glare",
+    title: "No glare in your glasses",
+    tone: "ink",
+    body: (
+      <div className="sh-lenses">
+        <figure>
+          <div className="lens bad">
+            <i />
+          </div>
+          <figcaption>Bright prompter</figcaption>
+        </figure>
+        <figure>
+          <div className="lens good" />
+          <figcaption className="ok">JOTR</figcaption>
+        </figure>
+        <div className="sh-auto">
+          <span>Auto brightness</span>
+          <div className="bar">
+            <i />
+          </div>
+        </div>
+      </div>
+    ),
+  },
+  {
+    label: "Coach report",
+    title: "A coach after every take",
+    tone: "mint",
+    body: (
+      <div className="sh-report">
+        <div className="ring">
+          <b>86</b>
+          <small>score</small>
+        </div>
+        <ul>
+          <li>
+            <span>Pace</span>
+            <b>148 wpm</b>
+          </li>
+          <li>
+            <span>Fillers</span>
+            <b>2</b>
+          </li>
+          <li>
+            <span>Eye contact</span>
+            <b>94%</b>
+          </li>
+          <li>
+            <span>Stumbles caught early</span>
+            <b>3 of 4</b>
+          </li>
+        </ul>
+      </div>
+    ),
+  },
+];
+
 function Screens() {
-  const ref = useRef<HTMLDivElement>(null);
-  const [page, setPage] = useState(0);
-  const count = 5;
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const on = () => {
-      const card = el.firstElementChild as HTMLElement | null;
-      if (card) setPage(Math.round(el.scrollLeft / (card.offsetWidth + 20)));
-    };
-    el.addEventListener("scroll", on, { passive: true });
-    return () => el.removeEventListener("scroll", on);
-  }, []);
-  const go = (n: number) => {
-    const el = ref.current;
-    const card = el?.firstElementChild as HTMLElement | null;
-    if (el && card) el.scrollTo({ left: Math.max(0, Math.min(count - 1, n)) * (card.offsetWidth + 20), behavior: "smooth" });
-  };
   return (
-    <section className="lg-section">
+    <section className="lg-section lg-screens">
       <div className="lg-head" data-reveal>
         <span className="lg-eyebrow">See it in action</span>
         <h2>Made for talking to a camera</h2>
+        <p>Scroll, swipe or tap the timeline to travel through it.</p>
       </div>
-      <div className="lg-shots-wrap">
-        <div className="lg-shots" ref={ref}>
-          <Shot tone="rose" title="Keep eye contact with your audience" d={0}>
-            <div className="sh-phone">
-              <div className="sh-island" />
-              <NotchDemo className="in-phone" lines={4} speed={420} script="Your words sit right under the lens, so every viewer feels you're talking to them, and only them." />
-              <Silhouette className="sh-sil" />
-            </div>
-          </Shot>
-          <Shot tone="amber" title="Floats over Meet, Zoom & any tab" d={80}>
-            <div className="sh-mac">
-              <div className="sh-mac-screen">
-                <div className="sh-grid">
-                  {Array.from({ length: 6 }, (_, k) => (
-                    <span key={k}>
-                      <Silhouette />
-                    </span>
-                  ))}
-                </div>
-                <div className="sh-float">Thanks for joining. Today I'll walk you through the plan…</div>
-              </div>
-            </div>
-          </Shot>
-          <Shot tone="violet" title="Warns you before you stumble" d={160}>
-            <div className="sh-phone">
-              <div className="sh-island" />
-              <div className="sh-text">
-                <span className="said">It slows down and lights up </span>
-                <span className="sh-hard">psycholinguistics</span>
-                <span> a second before you reach it.</span>
-              </div>
-              <div className="sh-risk">
-                <span />
-              </div>
-            </div>
-          </Shot>
-          <Shot tone="ink" title="No glare in your glasses" d={240}>
-            <div className="sh-lenses">
-              <figure>
-                <div className="lens bad">
-                  <i />
-                </div>
-                <figcaption>Bright prompter</figcaption>
-              </figure>
-              <figure>
-                <div className="lens good" />
-                <figcaption className="ok">JOTR</figcaption>
-              </figure>
-              <div className="sh-auto">
-                <span>Auto brightness</span>
-                <div className="bar">
-                  <i />
-                </div>
-              </div>
-            </div>
-          </Shot>
-          <Shot tone="mint" title="A coach after every take" d={320}>
-            <div className="sh-report">
-              <div className="ring">
-                <b>86</b>
-                <small>score</small>
-              </div>
-              <ul>
-                <li>
-                  <span>Pace</span>
-                  <b>148 wpm</b>
-                </li>
-                <li>
-                  <span>Fillers</span>
-                  <b>2</b>
-                </li>
-                <li>
-                  <span>Eye contact</span>
-                  <b>94%</b>
-                </li>
-                <li>
-                  <span>Stumbles caught early</span>
-                  <b>3 of 4</b>
-                </li>
-              </ul>
-            </div>
-          </Shot>
-        </div>
-        <div className="lg-dots" role="tablist" aria-label="Screenshots">
-          {Array.from({ length: count }, (_, k) => (
-            <button key={k} role="tab" aria-selected={page === k} aria-label={`Screenshot ${k + 1}`} className={page === k ? "on" : ""} onClick={() => go(k)} />
-          ))}
-        </div>
+      <div data-reveal>
+        <TimeMachine cards={SHOTS} />
       </div>
       <div className="lg-stores" data-reveal>
         <span className="lg-store">
@@ -646,20 +662,6 @@ function Screens() {
         </span>
       </div>
     </section>
-  );
-}
-
-function Shot({ title, tone, children, d }: { title: string; tone: string; children: ReactNode; d: number }) {
-  const ref = useTilt<HTMLElement>(6);
-  return (
-    // The wrapper reveals on scroll; the card inside tilts (separate transforms, so neither lags the other).
-    <div className="lg-shot-cell" data-reveal style={{ ["--d" as string]: `${d}ms` }}>
-      <article ref={ref} className={`lg-shot tone-${tone}`}>
-        <div className="lg-shot-shine" aria-hidden />
-        <h3>{title}</h3>
-        <div className="lg-shot-stage">{children}</div>
-      </article>
-    </div>
   );
 }
 
@@ -782,6 +784,62 @@ function UseCases() {
             <span key={k}>{u}</span>
           ))}
         </div>
+      </div>
+    </section>
+  );
+}
+
+function Stories() {
+  return (
+    <section className="lg-section lg-stories" id="stories">
+      <div className="lg-head" data-reveal>
+        <span className="lg-eyebrow">Wherever you talk</span>
+        <h2>One teleprompter, every room</h2>
+        <p>Turn the pages to see where JOTR fits. Open the print settings to play with the dither.</p>
+      </div>
+      <div data-reveal>
+        <SceneBook
+          scenes={SCENES}
+          closing={{
+            ...CLOSING_SCENE,
+            extra: (
+              <div className="sb-cta">
+                <FocusLinks links={[...SOCIALS.map((x) => ({ ...x, label: `@${x.label}` }))]} tone="paper" />
+              </div>
+            ),
+          }}
+        />
+      </div>
+      {TESTIMONIALS.length > 0 && <Testimonials />}
+    </section>
+  );
+}
+
+/** Links that pull focus: hover (or tab to) one and the others blur back. */
+function FocusLinks({ links, tone = "dark" }: { links: Array<{ label: string; href: string; icon?: ReactNode }>; tone?: "dark" | "paper" }) {
+  return (
+    <span className={`focus-links ${tone}`}>
+      {links.map((l) => (
+        <a key={l.href} href={l.href} target="_blank" rel="noopener noreferrer" className="focus-link">
+          {l.icon}
+          {l.label}
+        </a>
+      ))}
+    </span>
+  );
+}
+
+function Connect() {
+  return (
+    <section className="lg-connect" aria-label="Connect">
+      <div className="lg-connect-card" data-reveal>
+        <span className="lg-eyebrow">Say hi</span>
+        <FocusLinks
+          links={[
+            ...SOCIALS.map((x) => ({ label: `@${x.label}`, href: x.href })),
+            { label: "★ Star on GitHub", href: REPO_URL },
+          ]}
+        />
       </div>
     </section>
   );

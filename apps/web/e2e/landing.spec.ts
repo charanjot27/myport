@@ -185,3 +185,51 @@ test("phones get the phone tab first, and the prompter hangs from the camera lik
   expect(box.width).toBeGreaterThan(330);
   await ctx.close();
 });
+
+test("time machine stack, scene book and focus links", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await page.goto("/");
+
+  // Time Machine: the timeline jumps straight to a card.
+  await page.locator(".lg-screens").scrollIntoViewIfNeeded();
+  await page.getByRole("tab", { name: "No glare in your glasses" }).click();
+  await expect(page.locator('.tm-card[data-state="now"] h3')).toHaveText("No glare in your glasses");
+  await page.locator(".tm-stage").press("ArrowUp");
+  await expect(page.locator('.tm-card[data-state="now"] h3')).toHaveText("Warns you before you stumble");
+
+  // Scene book: dithered prints load, pages turn both ways, and the last page invites your story.
+  await page.locator("#stories").scrollIntoViewIfNeeded();
+  await expect(page.locator(".sb-art img").first()).toBeVisible({ timeout: 15_000 });
+  const next = page.getByRole("button", { name: "Next scene" });
+  await next.click();
+  await expect(page.locator(".sb-caption")).toHaveText(/Scene 02/);
+  await page.getByRole("button", { name: "Previous scene" }).click();
+  await expect(page.locator(".sb-caption")).toHaveText(/Scene 01/);
+  for (let k = 0; k < 5; k++) {
+    await next.click();
+    await expect(page.locator(".sb-caption")).toHaveText(new RegExp(`Scene 0${k + 2}`));
+  }
+  await expect(next).toBeDisabled();
+  await expect(page.locator("#stories")).toContainText("Your story, next");
+
+  // Print settings open.
+  await page.getByRole("button", { name: "Print settings" }).click();
+  await expect(page.getByRole("dialog", { name: "Print settings" })).toContainText("Dither");
+
+  // Connect: hovering one link blurs the others.
+  await page.locator(".lg-connect").scrollIntoViewIfNeeded();
+  const links = page.locator(".lg-connect .focus-link");
+  await links.nth(1).hover();
+  await expect.poll(() => links.nth(0).evaluate((el) => getComputedStyle(el).filter)).toContain("blur");
+  expect(errors).toEqual([]);
+});
+
+test("the boot screen shows the wave loader before any script runs", async ({ browser }) => {
+  const ctx = await browser.newContext({ javaScriptEnabled: false });
+  const page = await ctx.newPage();
+  await page.goto("/");
+  await expect(page.getByRole("status", { name: "Loading JOTR" })).toBeVisible();
+  await expect(page.locator(".wl-row i")).toHaveCount(15);
+  await ctx.close();
+});

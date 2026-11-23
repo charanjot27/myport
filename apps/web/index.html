@@ -14,9 +14,78 @@
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <title>JOTR — your script, right under your camera</title>
+    <style>
+      html, body { margin: 0; background: #0a0810; }
+      .boot { position: fixed; inset: 0; display: grid; place-items: center; animation: boot-in 400ms 150ms both; }
+      @keyframes boot-in { from { opacity: 0; } }
+      .wave-loader {
+        --wl-t: 2.4s;
+        --wl-step: calc(var(--wl-t) * 0.05);
+        display: grid;
+        place-items: center;
+        color: #fff;
+      }
+      .wl-row {
+        position: relative;
+        display: flex;
+        align-items: flex-end;
+        gap: 9px;
+        height: 72px;
+      }
+      .wl-row i {
+        width: 8px;
+        height: 8px;
+        border-radius: 99px;
+        background: currentColor;
+        opacity: 0.28;
+        animation: wl-bar var(--wl-t) linear infinite;
+        animation-delay: calc((var(--k) - 0.6) * var(--wl-step));
+      }
+      .wl-ball {
+        position: absolute;
+        left: 0;
+        bottom: 46px;
+        width: 12px;
+        height: 12px;
+        margin-left: -2px;
+        animation: wl-travel var(--wl-t) linear infinite;
+      }
+      .wl-ball span {
+        display: block;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: currentColor;
+        box-shadow: 0 0 14px 2px rgba(255, 255, 255, 0.35);
+        animation: wl-hop var(--wl-step) cubic-bezier(0.33, 0, 0.67, 1) infinite;
+      }
+      @keyframes wl-bar {
+        0% { height: 8px; opacity: 0.28; }
+        5% { height: 42px; opacity: 1; }
+        8% { height: 31px; }
+        11% { height: 37px; opacity: 0.9; }
+        28% { height: 12px; opacity: 0.45; }
+        38%, 100% { height: 8px; opacity: 0.28; }
+      }
+      @keyframes wl-travel {
+        0% { transform: translateX(-17px); opacity: 0; }
+        4% { opacity: 1; }
+        80% { transform: translateX(255px); opacity: 1; }
+        86%, 100% { transform: translateX(255px); opacity: 0; }
+      }
+      @keyframes wl-hop {
+        0%, 100% { transform: translateY(0) scale(1.15, 0.85); }
+        12% { transform: translateY(-7px) scale(1); }
+        50% { transform: translateY(-18px) scale(0.95, 1.05); }
+        88% { transform: translateY(-7px) scale(1); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .wave-loader { --wl-t: 6s; }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><div class="boot"><div class="wave-loader" role="status" aria-label="Loading JOTR"><div class="wl-row"><i style="--k:0"></i><i style="--k:1"></i><i style="--k:2"></i><i style="--k:3"></i><i style="--k:4"></i><i style="--k:5"></i><i style="--k:6"></i><i style="--k:7"></i><i style="--k:8"></i><i style="--k:9"></i><i style="--k:10"></i><i style="--k:11"></i><i style="--k:12"></i><i style="--k:13"></i><i style="--k:14"></i><b class="wl-ball"><span></span></b></div></div></div></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

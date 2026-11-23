@@ -1,0 +1,183 @@
+/* Time Machine stack: cards recede up and back; the rail on the right is the timeline. */
+.tm {
+  --tm-w: min(360px, calc(100vw - 112px));
+  --tm-h: 540px;
+  --tm-lift: 30px;
+  position: relative;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+.tm-stage {
+  position: relative;
+  height: calc(var(--tm-h) + 4 * var(--tm-lift));
+  perspective: 1400px;
+  outline: none;
+  touch-action: pan-y;
+  border-radius: 40px;
+}
+.tm-stage:focus-visible {
+  box-shadow: 0 0 0 2px rgba(255, 138, 61, 0.7);
+}
+.tm-card {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: var(--tm-w);
+  height: var(--tm-h);
+  transform-origin: 50% 0;
+  transform: translateX(-50%) translateY(calc(var(--o) * var(--tm-lift) * -1)) scale(calc(1 - var(--o) * 0.075));
+  opacity: calc(1 - var(--o) * 0.2);
+  filter: brightness(calc(1 - var(--o) * 0.22)) saturate(calc(1 - var(--o) * 0.15));
+  z-index: calc(30 - var(--o));
+  transition: transform 800ms var(--spring, cubic-bezier(0.16, 1, 0.3, 1)), opacity 600ms ease, filter 600ms ease;
+  will-change: transform, opacity;
+}
+.tm-card[data-state="next"] {
+  cursor: pointer;
+}
+.tm-card[data-state="next"] .lg-shot-stage,
+.tm-card[data-state="next"] h3 {
+  pointer-events: none;
+}
+/* Cards over five back fade away entirely. */
+.tm-card[data-far] {
+  opacity: 0;
+}
+.tm-card[data-state="past"] {
+  transform: translateX(-50%) translateY(120px) scale(1.08);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 40;
+  transition: transform 700ms var(--spring, cubic-bezier(0.16, 1, 0.3, 1)), opacity 380ms ease;
+}
+.tm-card .lg-shot {
+  height: 100%;
+  transform: none;
+}
+
+/* Timeline rail */
+.tm-rail {
+  position: absolute;
+  z-index: 50;
+  top: 50%;
+  left: calc(50% + var(--tm-w) / 2 + clamp(10px, 4vw, 56px));
+  transform: translateY(-30%);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  padding: 6px 0;
+}
+.tm-tick {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+.tm-tick i {
+  position: relative;
+  width: 26px;
+  height: 3px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.32);
+  transition: width 500ms var(--spring, ease), background 300ms;
+}
+/* Minor ticks between the labelled ones, like a real timeline. */
+.tm-tick i::before,
+.tm-tick i::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  width: 16px;
+  height: 2px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.14);
+}
+.tm-tick i::before { top: -9px; }
+.tm-tick i::after { top: 10px; }
+.tm-tick:first-child i::before { display: none; }
+.tm-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  color: rgba(255, 255, 255, 0.5);
+  opacity: 0;
+  transform: translateX(6px);
+  transition: opacity 300ms, transform 400ms var(--spring, ease), color 300ms;
+}
+.tm-tick:hover .tm-label,
+.tm-tick:focus-visible .tm-label {
+  opacity: 1;
+  transform: none;
+}
+.tm-tick:hover i {
+  background: rgba(255, 255, 255, 0.7);
+}
+.tm-tick.on i {
+  width: 44px;
+  background: linear-gradient(90deg, #ff4d6d, #ff8a3d);
+  box-shadow: 0 0 12px rgba(255, 110, 70, 0.6);
+}
+.tm-tick.on .tm-label {
+  opacity: 1;
+  transform: none;
+  color: #ff9a5c;
+}
+.tm-tick:focus-visible {
+  outline: 2px solid rgba(255, 138, 61, 0.7);
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+
+/* Phones: a smaller stack, the rail keeps only ticks with the active label. */
+@media (max-width: 560px) {
+  .tm-stage .tm-card {
+    left: calc(50% - 20px);
+  }
+  .tm-rail {
+    left: auto;
+    right: 6px;
+  }
+  .tm {
+    --tm-h: 480px;
+    --tm-lift: 22px;
+    --tm-w: calc(100vw - 96px);
+    padding: 0 12px;
+  }
+  .tm-tick:not(.on) .tm-label {
+    display: none;
+  }
+  .tm-tick.on .tm-label {
+    position: absolute;
+    right: 0;
+    top: -18px;
+    font-size: 0.68rem;
+  }
+  .tm-tick i {
+    width: 18px;
+  }
+  .tm-tick.on i {
+    width: 30px;
+  }
+}
+/* Tall tablets and laptops get a taller card. */
+@media (min-width: 900px) and (min-height: 800px) {
+  .tm {
+    --tm-h: 580px;
+    --tm-w: 380px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tm-card {
+    transition-duration: 1ms;
+  }
+}

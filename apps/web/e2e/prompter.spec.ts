@@ -57,7 +57,7 @@ test("sample script: voice-following, pause, finish and report", async ({ page }
   await expect(page.getByRole("status")).toContainText("Paused");
   await page.keyboard.press("Space");
 
-  await page.getByTestId("stop").click();
+  await page.keyboard.press("Escape");
   await expect(page.getByTestId("report")).toBeVisible();
   await expect(page.getByText("Pace", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Script review" })).toBeVisible();
